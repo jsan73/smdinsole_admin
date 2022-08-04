@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+      <meta charset="UTF-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title><%= htmlWebpackPlugin.options.title %></title>
+
+      <!-- Google Fonts -->
+      <link href="https://fonts.gstatic.com" rel="preconnect">
+      <link
+              href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
+              rel="stylesheet">
+
+      <!-- Vendor CSS Files -->
+      <!-- CSS only -->
+<!--      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">-->
+<!--          <link href="/static/css/bootstrap.min.css" rel="stylesheet">-->
+<!--      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css" integrity="sha384-eoTu3+HydHRBIjnCVwsFyCpUDZHZSFKEJD0mc3ZqSBSb6YhZzRHeiomAUWCstIWo" crossorigin="anonymous">-->
+<!--      <link href="/assets/vendor/simple-datatables/style.css" rel="stylesheet">-->
+
+      <!-- Template Main CSS File -->
+<!--      <link rel="stylesheet" href="/static/css/admin_style.css" />-->
+      <link rel="stylesheet" href="/static/css/admin.css" />
+<!--      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>-->
+
+      <script type="text/javascript">
+          function openPopUp() {
+              //window.open("[팝업을 띄울 파일명 path]", "[별칭]", "[팝업 옵션]")
+              window.open("admin_popmodifyDevice.html", "popup1", "width=650, height=480, top=10, left=10");
+          }
+          function showHidden() {
+              alert(document.testForm.flag.value);
+          }
+          function openPopUp_addDevice(data) {
+              //window.open("[팝업을 띄울 파일명 path]", "[별칭]", "[팝업 옵션]")
+              alert(data)
+              window.open("/deviceadd", "popup2", "width=650, height=480, top=10, left=10");
+          }
+          function openPopUp_addcsvDevice() {
+              //window.open("[팝업을 띄울 파일명 path]", "[별칭]", "[팝업 옵션]")
+              window.open("admin_popaddcsvDevice.html", "popup3", "width=1000, height=450, top=10, left=10");
+          }
+      </script>
+  </head>
+  <body>
+    <noscript>
+      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+
+    <!-- Scripts -->
+    <!-- JavaScript Bundle with Popper -->
+<!--    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>-->
+
+    <!-- Vendor JS Files -->
+    <script src="/assets/vendor/echarts/echarts.min.js"></script>
+    <script src="/assets/vendor/simple-datatables/simple-datatables.js"></script>
+    <script src="/assets/vendor/tinymce/tinymce.min.js"></script>
+
+<!--     Template Main JS File-->
+    <script src="/static/js/admin_main.js"></script>
+  </body>
+</html>
