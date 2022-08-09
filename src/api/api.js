@@ -19,6 +19,12 @@ export default {
 	insDevice(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/ins', param)
 	},
+	updDevice(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/upd', param)
+	},
+	delDevice(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/del/' + param);
+	},
 	// 단순 단말 조회
 	getDeviceInfo(deviceIMEI) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/get/' + deviceIMEI);

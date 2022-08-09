@@ -61,10 +61,12 @@ start();
 // }
 
 function start() {
-    new Vue({
+    var vm = new Vue({
         store,
         router,
         render: h => h(App),
     }).$mount("#app");
+
+    window.app = vm;
 }
 

@@ -10,8 +10,8 @@
           <tbody>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">IMEI</th>
-            <td><input type="text" v-model="device.deviceIMEI" id="userName" name="userName" class="form-control d-inline-flex" style="width: 150px;">
-              &nbsp;<button type="button" class="btn btn-secondary btn-sm">일련번호 체크</button>
+            <td><input type="text" v-model="device.deviceIMEI" id="userName" name="userName" class="form-control d-inline-flex" style="width: 150px;" :readonly="popupState == 'upd'">
+              &nbsp;<button v-if="popupState == 'ins'" type="button" class="btn btn-secondary btn-sm">일련번호 체크</button>
             </td>
           </tr>
           <tr>
@@ -70,7 +70,9 @@
       </div>
     </div>
     <p class="text-end">
-      <button class="btn btn-primary mb-1 ms-1" @click="regDevice">등록</button>
+      <button v-if="popupState == 'ins'" class="btn btn-primary mb-1 ms-1"  @click="regDevice">등록</button>
+      <button v-if="popupState == 'upd'" class="btn btn-primary mb-1 ms-1" @click="delDevice">삭제</button>
+      <button v-if="popupState == 'upd'" class="btn btn-primary mb-1 ms-1" @click="updDevice">수정</button>
     </p>
   </div>
 
@@ -85,6 +87,7 @@ export default {
   data() {
     return {
       device: {
+        deviceNo:0,
         deviceIMEI:'12345678',
         deviceNumber:'',
         guardPhone:'',
@@ -97,20 +100,72 @@ export default {
       gphone1:'010',
       gphone2:'3333',
       gphone3:'4444',
-      regDate:''
+      regDate:'',
+      deviceIMEI:'',
+      popupState:"ins"
+    }
+  },
+  mounted() {
+    this.deviceIMEI = this.$route.query.device;
+    if(utils.isNotEmpty(this.deviceIMEI )) {
+      this.popupState = "upd"
+      this.getDeviceInfo(this.deviceIMEI);
+    }else{
+      // this.geolocate();
     }
   },
   methods: {
-    async insDevice() {
+    async getDeviceInfo(deviceIMEI) {
+
+        let res = await api.getDeviceInfo(deviceIMEI);
+        if(res.data.status === "SUCCESS") {
+          this.device = res.data.data;
+          console.log(this.device)
+          if(utils.isNotEmpty(this.device.deviceNumber)) {
+            const phone = utils.telForm(this.device.deviceNumber).split("-");
+            this.dphone1 = phone[0];
+            this.dphone2 = phone[1];
+            this.dphone3 = phone[2];
+          }
+          if(utils.isNotEmpty(this.device.guardPhone)) {
+            const phone = utils.telForm(this.device.guardPhone).split("-");
+            this.gphone1 = phone[0];
+            this.gphone2 = phone[1];
+            this.gphone3 = phone[2];
+          }
+          if(utils.isNotEmpty(this.device.memberDate)) {
+            this.regDate = utils.dateForm(this.device.memberDate);
+          }
+        }
+    },
+    setDevice() {
       this.device.deviceNumber = this.dphone1 + this.dphone2 + this.dphone3;
       if(utils.isNotEmpty(this.gphone2) && utils.isNotEmpty(this.gphone3)) {
         this.device.guardPhone = this.gphone1 + this.gphone2 + this.gphone3;
       }
 
       this.device.memberDate = this.regDate.replace(/-/gi, "");
+    },
+    async insDevice() {
+      this.setDevice();
       const res = await api.insDevice(this.device);
       if(res.data.status === "SUCCESS") {
           alert("추가 되었습니다.")
+      }
+    },
+    async updDevice() {
+      this.setDevice();
+      const res = await api.updDevice(this.device);
+      if(res.data.status === "SUCCESS") {
+        alert("수정 되었습니다.")
+      }
+    },
+    async delDevice() {
+      if(confirm("삭제 하시겠습니까?")) {
+        const res = await api.delDevice(this.deviceNo);
+        if(res.data.status === "SUCCESS") {
+          alert("삭제 되었습니다.")
+        }
       }
     },
     regDevice() {
@@ -118,10 +173,8 @@ export default {
         opener.location.reload();
         window.close();
       })
-
     }
   }
-
 
 }
 </script>

@@ -25,6 +25,8 @@
 <!--      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>-->
 
       <script type="text/javascript">
+
+
           function openPopUp() {
               //window.open("[팝업을 띄울 파일명 path]", "[별칭]", "[팝업 옵션]")
               window.open("admin_popmodifyDevice.html", "popup1", "width=650, height=480, top=10, left=10");
@@ -32,10 +34,16 @@
           function showHidden() {
               alert(document.testForm.flag.value);
           }
-          function openPopUp_addDevice(data) {
+          function modDevice(data) {
               //window.open("[팝업을 띄울 파일명 path]", "[별칭]", "[팝업 옵션]")
-              alert(data)
-              window.open("/deviceadd", "popup2", "width=650, height=480, top=10, left=10");
+
+              const root = window.app.$root;
+              root.$open(
+                  "/devicepopup?device=" + data,
+                  "기기 등록",
+                  "width=650,height=480,left=0,top=0"
+              );
+              //window.open("/devicepopup", "popup2", "width=650, height=480, top=10, left=10");
           }
           function openPopUp_addcsvDevice() {
               //window.open("[팝업을 띄울 파일명 path]", "[별칭]", "[팝업 옵션]")

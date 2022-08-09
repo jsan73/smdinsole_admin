@@ -21,7 +21,7 @@ var menu = [
 	{ menuId: "Device", parentId: 0, menuName: "기기 관리", icon: "description", componentName: "DeviceManager", pagePath:"views/device",url: "/device" },
 	{ menuId: "Org", parentId: 0, menuName: "기관 관리", icon: "description", componentName: "OrgManager", pagePath:"views/org",url: "/org" },
 	{ menuId: "Login", parentId: 0, menuName: "로그인", icon: "description",pagePath: "views/login",  componentName: "Login", url: "/login", meta: { layout: 'Main' }},
-	{ menuId: "DeviceAdd", parentId: 0, menuName: "기기 등록", icon: "description",pagePath: "views/device",  componentName: "DeviceAdd", url: "/deviceadd", meta: { layout: 'Popup' }, popup:false},
+	{ menuId: "DevicePopup", parentId: 0, menuName: "기기 등록", icon: "description",pagePath: "views/device",  componentName: "DevicePopup", url: "/devicepopup", meta: { layout: 'Popup' }, popup:false},
 	{ menuId: "OganiAdd", parentId: 0, menuName: "기기 등록", icon: "description",pagePath: "views/ogni",  componentName: "OganiAdd", url: "/oganiadd", meta: { layout: 'Main' }, popup:false},
 
 	// // { menuId: "MN70", parentId: 0, menuName: "콜팝업", icon: "description", pagePath: "views/ui/temp", componentName: "CallPopup", url: "/ui/callpopup", popup: true, meta: { layout: 'Popup' }, tempmenu: "temp" },

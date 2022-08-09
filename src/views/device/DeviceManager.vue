@@ -62,7 +62,7 @@
               <p class="text-end">
                 <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>
                 <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>
-                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addDevice()">기기 등록</button>
+                <button class="btn btn-primary mt-2 ms-1" @click="addDevice">기기 등록</button>
               </p>
             </div>
           </div><!--// 목록 테이블 -->
@@ -103,7 +103,7 @@ export default {
           }
         },
         {select:1, render: function(data, cell, row) {
-            var html = "<a class='text-primary' href=\"javascript:openPopUp_addDevice('" + data + "')\">" + data + "</a>";
+            var html = "<a class='text-primary' href=\"javascript:modDevice('" + data + "')\">" + data + "</a>";
             return html;
           }
         },
@@ -128,7 +128,13 @@ export default {
 
   },
   methods: {
-
+    addDevice() {
+      this.$open(
+          "/devicepopup",
+          "기기 등록",
+          "width=650,height=480,left=0,top=0"
+      );
+    },
     telForm(data) {
       return utils.telForm(data, 1);
     },
@@ -193,29 +199,6 @@ export default {
             columns: this.columns
           });
         }
-        // const data = [
-        //   ["6",
-        //   "123456789012345",
-        //   "0103335552",
-        //   "0103335552",
-        //   "성북장애인재단",
-        //   "2021-04-23",
-        //   "2021-04-23",
-        //   "2021-04-23 12:00",
-        //   "202"],
-        //   ["7",
-        //     "123456789012345",
-        //     "0103335552",
-        //     "0103335552",
-        //     "성북장애인재단",
-        //     "2021-04-23",
-        //     "2021-04-23",
-        //     "2021-04-23 12:00",
-        //     "202"]
-        // ]
-        //this.dataList.put("headings", this.headings);
-
-
       }
     }
   },
