@@ -39,6 +39,17 @@ export default {
 				name,
 				_style,
 			);
+		},
+		Vue.prototype.$datatable = function (datatable, headings, dataList, columns) {
+			const tables = this.$refs.datatable
+
+			const data = dataList.map(item => Object.values(item))
+			dataList ={"headings": headings, "data": data}
+			if(datatable) datatable.destroy();
+			return new window.simpleDatatables.DataTable(tables, {
+				data: dataList,
+				columns: columns
+			});
 		}
 
     }

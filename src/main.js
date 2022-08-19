@@ -67,6 +67,7 @@ function start() {
         render: h => h(App),
     }).$mount("#app");
 
+    // javascript 에서 vue 함수 호출 하기 위한 설정
     window.app = vm;
 }
 

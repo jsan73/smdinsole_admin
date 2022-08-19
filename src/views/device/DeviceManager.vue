@@ -12,15 +12,15 @@
           <!-- 검색조건 -->
           <div class="card">
             <div class="card-body pb-0">
-              <form>
+<!--              <form>-->
                 <div class="row my-1">
                   <div class="col-3 d-flex">
                     <label for="deviceID" class="col-form-label pe-4">IMEI</label>
-                    <input name="textfield" type="text" id="IMEI" class="form-control d-inline-flex" style="width: 180px;">
+                    <input v-model="search.deviceIMEI" name="textfield" type="text" id="IMEI" class="form-control d-inline-flex" style="width: 180px;">
                   </div>
                   <div class="col-4 d-flex">
                     <label for="Set" class="col-form-label pe-4">사용자 전화번호0</label>
-                    <input name="textfield" type="text" id="phone" class="form-control d-inline-flex" style="width: 180px;">
+                    <input v-model="search.guardPhone" name="textfield" type="text" id="phone" class="form-control d-inline-flex" style="width: 180px;">
                     <!-- <select id="isAssign" class="form-select d-inline-flex" style="width: 120px;">
                         <option value=""> - 전체 - </option>
                         <option value="true">할당</option>
@@ -29,18 +29,18 @@
                   </div>
                   <div class="col-3 d-flex">
                     <label for="deviceID" class="col-form-label pe-4">소속 기관</label>
-                    <select id="group" name="group" class="form-select d-inline-flex" style="width: 70%;">
-                      <option value=""> - 선택 -</option>
-                      <option value="true"> 개인 </option>
-                      <option value="false">홀트복지재단</option>
-                      <option value="false">성북장애인재단</option>
+                    <select v-model="search.orgCd" id="group" name="group" class="form-select d-inline-flex" style="width: 70%;">
+                      <option value=""> - 선택 - </option>
+                      <option value="G001"> 개인 </option>
+                      <option value="G002">홀트복지재단</option>
+                      <option value="G003">성북장애인재단</option>
                     </select>
                   </div>
                   <div class="col-2 text-end">
-                    <button class="btn btn-secondary" onclick="javascript:search()">조회</button>
+                    <button class="btn btn-secondary" @click="selectDeviceList">조회</button>
                   </div>
                 </div>
-              </form>
+<!--              </form>-->
             </div>
           </div><!--/ 검색조건 -->
         </div>
@@ -86,16 +86,21 @@ export default {
   name: "DeviceManager",
   data() {
     return {
-      datatable:Object,
-      data: {
+      datatable:'',
+      // data: {
+      //   deviceIMEI:'',
+      //   deviceNumber:'',
+      //   guardPhone:'',
+      //   orgNm:'',
+      //   memberDate:'',
+      //   expDate:'',
+      //   lastSignal:'',
+      //   locCnt:0
+      // },
+      search: {
         deviceIMEI:'',
-        deviceNumber:'',
         guardPhone:'',
-        orgNm:'',
-        memberDate:'',
-        expDate:'',
-        lastSignal:'',
-        locCnt:0
+        orgCd:''
       },
       columns:[
         {select:0, render: function(data, cell, row) {
@@ -115,7 +120,7 @@ export default {
         {select:7, scope:'row', render: this.lastSignal},
         {select:8, scope:'row'},
       ],
-      dataList:[],
+      // dataList:[],
       headings:["No", "IMEI", "기기 전화번호", "사용자 전화번호0", "소속 기관", "가입일", "만료일", "마지막 신호", "위치전송횟수"],
 
     }
@@ -182,28 +187,19 @@ export default {
       return reportDate + ' <img src="/static/images/' + cell + '" alt="none" width="42" height="20">' +  ' <img src="/static/images/' + battery + '" alt="battery_charge" width="30">';
     },
     async selectDeviceList() {
-      const tables = this.$refs.datatable
-      if(tables) {
-        const param = {}
-        const res = await api.selDeviceList(param);
-        if(res.data.status === "SUCCESS") {
-          this.dataList = res.data.data;
+      const param = this.search;
+      const res = await api.selDeviceList(param);
+      if(res.data.status === "SUCCESS") {
+        let dataList = res.data.data;
 
-          const data = this.dataList.map(item => Object.values(item))
-
-          console.log(data);
-          this.dataList ={"headings": this.headings, "data": data}
-          console.log(this.dataList)
-          this.datatable = new window.simpleDatatables.DataTable(tables, {
-            data: this.dataList,
-            columns: this.columns
-          });
-        }
+        this.datatable = this.$datatable(this.datatable, this.headings, dataList, this.columns)
       }
-    }
+
+    },
   },
   created(){
-
+    // 팝업창에서 selectDeviceList 를 호출하기 위한 설정
+    window.vueComponent = this;
   }
 }
 

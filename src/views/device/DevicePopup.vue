@@ -170,7 +170,8 @@ export default {
     },
     regDevice() {
       this.insDevice().then(() => {
-        opener.location.reload();
+        //opener.location.reload();
+        window.opener.vueComponent.selectDeviceList();
         window.close();
       })
     }
