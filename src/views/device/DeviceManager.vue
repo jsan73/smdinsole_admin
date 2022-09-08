@@ -60,8 +60,8 @@
               </table>
               <!-- End Table with stripped rows -->
               <p class="text-end">
-                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>
-                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>
+<!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>-->
+<!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>-->
                 <button class="btn btn-primary mt-2 ms-1" @click="addDevice">기기 등록</button>
               </p>
             </div>
@@ -108,7 +108,11 @@ export default {
           }
         },
         {select:1, render: function(data, cell, row) {
-            var html = "<a class='text-primary' href=\"javascript:modDevice('" + data + "')\">" + data + "</a>";
+            let url = "/devicepopup?device=" + data;
+            let name = "기기 수정";
+            let style = "width=650,height=480,left=0,top=0";
+            let param = "'" + url + "','" + name + "','" + style + "'";
+            let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + data + "</a>";
             return html;
           }
         },

@@ -25,29 +25,12 @@
 <!--      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>-->
 
       <script type="text/javascript">
-
-
-          function openPopUp() {
-              //window.open("[팝업을 띄울 파일명 path]", "[별칭]", "[팝업 옵션]")
-              window.open("admin_popmodifyDevice.html", "popup1", "width=650, height=480, top=10, left=10");
-          }
           function showHidden() {
               alert(document.testForm.flag.value);
           }
-          function modDevice(data) {
-              //window.open("[팝업을 띄울 파일명 path]", "[별칭]", "[팝업 옵션]")
-
+          function openPopup(url, name, style) {
               const root = window.app.$root;
-              root.$open(
-                  "/devicepopup?device=" + data,
-                  "기기 등록",
-                  "width=650,height=480,left=0,top=0"
-              );
-              //window.open("/devicepopup", "popup2", "width=650, height=480, top=10, left=10");
-          }
-          function openPopUp_addcsvDevice() {
-              //window.open("[팝업을 띄울 파일명 path]", "[별칭]", "[팝업 옵션]")
-              window.open("admin_popaddcsvDevice.html", "popup3", "width=1000, height=450, top=10, left=10");
+              root.$open(url, name, style);
           }
       </script>
   </head>
@@ -69,5 +52,6 @@
 
 <!--     Template Main JS File-->
     <script src="/static/js/admin_main.js"></script>
+    <script src="/static/js/bootstrap.bundle.js"></script>
   </body>
 </html>

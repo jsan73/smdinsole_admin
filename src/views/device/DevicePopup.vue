@@ -1,7 +1,7 @@
 <template>
   <div class="m-4">
     <h5 class="pb-2">
-      <i class="bi bi-caret-right-square"></i> 기기 등록
+      <i class="bi bi-caret-right-square"></i> <div v-if="popupState=='ins'">기기 등록</div><div v-else>기기 수정</div>
     </h5>
 
     <div class="card">
@@ -153,19 +153,27 @@ export default {
           alert("추가 되었습니다.")
       }
     },
-    async updDevice() {
+    updDevice() {
       this.setDevice();
-      const res = await api.updDevice(this.device);
-      if(res.data.status === "SUCCESS") {
-        alert("수정 되었습니다.")
-      }
-    },
-    async delDevice() {
-      if(confirm("삭제 하시겠습니까?")) {
-        const res = await api.delDevice(this.deviceNo);
+      api.updDevice(this.device).then(res => {
         if(res.data.status === "SUCCESS") {
-          alert("삭제 되었습니다.")
+          alert("수정 되었습니다.")
+          window.opener.vueComponent.selectDeviceList();
+          window.close();
         }
+      });
+
+    },
+    delDevice() {
+      if(confirm("삭제 하시겠습니까?")) {
+        api.delDevice(this.deviceIMEI).then(res => {
+          if(res.data.status === "SUCCESS") {
+            alert("삭제 되었습니다.")
+            window.opener.vueComponent.selectDeviceList();
+            window.close();
+          }
+        });
+
       }
     },
     regDevice() {

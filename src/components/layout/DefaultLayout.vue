@@ -1,6 +1,6 @@
 <template>
   <main id="wrap">
-    <Header ref="header" :title="menu_title" :logout="logout"></Header>
+    <Header ref="header" :title="menu_title" :logout="logout" :menuId="menuId"></Header>
     <router-view v-on:change="setTitle"></router-view>
     <Footer ref="footer" v-if="is_footer"></Footer>
   </main>
@@ -14,7 +14,8 @@ export default {
     return {
       menu_title: "",
       is_footer:false,
-      logout:false
+      logout:false,
+      menuId:''
     };
   },
   watch: {
@@ -30,6 +31,8 @@ export default {
       this.menu_title = this.$route.meta.title;
       this.is_footer = this.$route.meta.footer;
       this.logout = this.$route.meta.logout;
+      this.menuId = this.$route.name;
+      console.log(this.$route)
     },
     setTitle(title) {
       this.menu_title = title;

@@ -7,9 +7,11 @@ import mixin from "./utils/mixin"
 import ui from "./components";
 import util from "./assets/js/util"
 // import BootstrapVue from 'bootstrap-vue'
-import 'bootstrap/dist/css/bootstrap.min.css'
+import 'bootstrap/dist/css/bootstrap.css'
 import '../public/static/css/admin_style.css'
+// import '../public/static/css/bootstrap.min.css'
 import '../public/assets/vendor/simple-datatables/style.css'
+import '../public/assets/vendor/bootstrap-icons/bootstrap-icons.css'
 // import 'bootstrap-vue/dist/bootstrap-vue.css'
 
 Vue.use(Vuex);

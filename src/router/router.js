@@ -21,8 +21,6 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
 
-
-
 	if(to?.path == "/login") return next()
 	let token = store.getters['adminStore/getToken'];
 
