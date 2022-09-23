@@ -52,6 +52,12 @@ export default {
 	selAddrList() {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/addr/list');
 	},
+
+	selStatAcid() {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/stat/acid/list');
+	},
+
+
 	// 공통코드 가져오기
 	getCommCode(params) {
 		return http.post(process.env.VUE_APP_ADMIN_PJT + `/api/get/commcode`, params)

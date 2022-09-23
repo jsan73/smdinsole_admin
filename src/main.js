@@ -13,7 +13,30 @@ import '../public/static/css/admin_style.css'
 import '../public/assets/vendor/simple-datatables/style.css'
 import '../public/assets/vendor/bootstrap-icons/bootstrap-icons.css'
 // import 'bootstrap-vue/dist/bootstrap-vue.css'
+import ECharts from 'vue-echarts'
+import 'echarts/lib/chart/bar'
+import 'echarts/lib/component/tooltip'
+import { use } from 'echarts/core'
 
+import {
+    CanvasRenderer
+} from 'echarts/renderers'
+import {
+    BarChart
+} from 'echarts/charts'
+import {
+    GridComponent,
+    TooltipComponent
+} from 'echarts/components'
+
+use([
+    CanvasRenderer,
+    BarChart,
+    GridComponent,
+    TooltipComponent
+]);
+
+Vue.component('v-chart', ECharts)
 Vue.use(Vuex);
 Vue.use(ui);
 Vue.use(util);
