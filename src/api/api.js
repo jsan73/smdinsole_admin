@@ -35,6 +35,9 @@ export default {
 		console.log(param)
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guard/list', param)
 	},
+	selGuardPhoneList(deviceIMEI) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guard/phonelist', deviceIMEI)
+	},
 	insGuard(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guard/ins', param)
 	},
@@ -53,10 +56,13 @@ export default {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/addr/list');
 	},
 
-	selStatAcid() {
-		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/stat/acid/list');
+	selStatAcid(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/stat/acid/list', param);
 	},
 
+	selStatAcidTime(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/stat/acid/list/time', param);
+	},
 
 	// 공통코드 가져오기
 	getCommCode(params) {

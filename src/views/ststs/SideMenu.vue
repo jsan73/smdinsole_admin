@@ -16,7 +16,7 @@
             </a>
 
             <ul :id="'sublocal' + idx1 + '-nav'" class="nav-content collapse" data-bs-parent="#local-nav" v-for="(sub, idx2) in addr.addrList">
-              <li><a href="#" v-if="idx2==0" :class="{'active':(selectAddr2 == '0')}" @click="selectAddr2 = '0'"><i class="bi bi-circle"></i><span>전체</span></a></li>
+              <li><a href="#" v-if="idx2==0" :class="{'active':(selectAddr2 == '')}" @click="selectAddr2 = ''"><i class="bi bi-circle"></i><span>전체</span></a></li>
               <li><a href="#" :class="{'active':(selectAddr2 == sub.addrCode)}" @click="selectAddr2 = sub.addrCode"><i class="bi bi-circle"></i><span>{{ sub.addr2 }}</span></a></li>
             </ul>
           </li>
@@ -56,7 +56,8 @@ export default {
   },
   watch:{
     selectAddr2() {
-      console.log(this.selectAddr2)
+      // console.log(this.selectAddr2)
+      this.$emit("chooseArea", this.selectAddr1, this.selectAddr2);
     }
   },
   methods: {

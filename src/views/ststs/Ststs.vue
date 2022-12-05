@@ -1,6 +1,6 @@
 <template>
   <div>
-    <SideMenu></SideMenu>
+    <SideMenu @chooseArea="selStat"></SideMenu>
   <main id="main" class="">
     <div class="pagetitle">
       <h4>경보발생 통계</h4>
@@ -15,25 +15,25 @@
 
           <div class="card">
             <div class="card-body pb-0">
-              <form>
+
                 <div class="row my-1">
                   <div class="col-4">
                     <div class="d-flex ">
                       <legend class="col-form-label pe-3">기간</legend>
                       <div class="form-check col-form-label">
-                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios1" value="option1" checked>
+                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios1" v-model="period" value="1">
                         <label class="form-check-label" for="gridRadios1">
                           일간
                         </label>
                       </div>
                       <div class="form-check col-form-label">
-                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios2" value="option2">
+                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios2" v-model="period" value="7">
                         <label class="form-check-label" for="gridRadios2">
                           주간
                         </label>
                       </div>
                       <div class="form-check col-form-label">
-                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios" value="option" >
+                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios" v-model="period" value="30" >
                         <label class="form-check-label" for="gridRadios3">
                           월간
                         </label>
@@ -43,16 +43,16 @@
                   <div class="col-6 ">
                     <div class="d-flex">
                       <label for="inputDate" class="col-form-label pe-3">날짜선택</label>
-                      <input type="date" class="form-control" style="width: 150px;">
+                      <input type="date" class="form-control" style="width: 150px;" v-model="search.sdate">
                       <span class="col-form-label px-2"> ~ </span>
-                      <input type="date" class="form-control" style="width: 150px;">
+                      <input type="date" class="form-control" style="width: 150px;" v-model="search.edate">
                     </div>
                   </div>
                   <div class="col-2 text-end">
-                    <button class="btn btn-secondary" onclick="javascript:search()">조회</button>
+                    <button class="btn btn-secondary" @click="selSearch">조회</button>
                   </div>
                 </div>
-              </form>
+
             </div>
           </div>
 
@@ -61,10 +61,10 @@
 
 
       <div class="row">
-        <div class="col-xxl-12 col-xl-12">
+        <div class="col-xxl-4 col-xl-12">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">경보발생 <span>(125건)</span></h5>
+              <h5 class="card-title">경보발생 <span>({{ alram_count1 }}건)</span></h5>
 
               <!-- Bar Chart -->
 <!--              <div id="barChart" style="min-height: 400px;" class="echart"></div>-->
@@ -97,7 +97,7 @@
         <div class="col-xxl-4 col-xl-12">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">발생유형 <span>(125건)</span></h5>
+              <h5 class="card-title">발생유형 <span>({{ alram_count2 }}건)</span></h5>
 
               <!-- Bar Chart -->
 <!--              <div id="barChart1" style="min-height: 400px;" class="echart"></div>-->
@@ -128,10 +128,10 @@
         <div class="col-xxl-4 col-xl-12">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">발생시간대별 건수 <span>(125건)</span></h5>
+              <h5 class="card-title">발생시간대별 건수 <span>({{ alram_count3 }}건)</span></h5>
               <!-- Bar Chart -->
-              <div id="barChart2" style="min-height: 400px;" class="echart"></div>
-
+<!--              <div id="barChart2" style="min-height: 400px;" class="echart"></div>-->
+              <v-chart :option="acidTime" style="min-height: 400px;" class="echart" />
 <!--              <script>-->
 <!--                document.addEventListener("DOMContentLoaded", () => {-->
 <!--                  echarts.init(document.querySelector("#barChart2")).setOption({-->
@@ -217,6 +217,13 @@ export default {
   },
   data() {
     return {
+      period:1,
+      search: {
+        sdate:'',
+        edate:'',
+        addr1:'',
+        addr2:''
+      },
       acid : {
         xAxis: {
           type: 'category',
@@ -266,15 +273,52 @@ export default {
         // {select:5, scope:'row'},
         // {select:6, scope:'row'},
       ],
-      gridHeadings:["code", "구분", "기기대수", "경보발생수", "안심존이탈", "배터리방전","현재위치찾기"]
+      gridHeadings:["code", "구분", "기기대수", "경보발생수", "안심존이탈", "배터리방전","현재위치찾기"],
+      alram_count1:0,
+      alram_count2:0,
+      alram_count3:0,
+    }
+  },
+  watch: {
+    period(){
+      this.calcPeriod();
     }
   },
   mounted() {
+    this.calcPeriod();
     this.selStatAcid();
+    this.selStatAcidTime();
   },
   methods: {
+    selSearch() {
+      this.selStatAcid();
+      this.selStatAcidTime();
+    },
+    calcPeriod() {
+
+      let sdate = "";
+      let today = new Date();
+      if(this.period == 7) {
+        let diff = today.getDate() - today.getDay() + (today.getDay() == 0 ? -6 : 1);
+        sdate = new Date(today.setDate(diff));
+      }else if(this.period == 30) {
+        sdate = new Date(today.getFullYear(), today.getMonth(), 1);
+      }else{
+        sdate =  new Date();
+      }
+      this.search.sdate = utils.getYmd10(sdate);
+      this.search.edate = utils.getYmd10(new Date());
+    },
+    selStat(addr1, addr2) {
+      this.search.addr1 = addr1;
+      this.search.addr2 = addr2;
+      this.selSearch();
+    },
     selStatAcid() {
-      api.selStatAcid().then(res => {
+      let param = {"addr1":this.search.addr1, "addr2": this.search.addr2,
+        "sdate": this.search.sdate.replaceAll('-','') + "000000"
+      ,"edate": this.search.edate.replaceAll('-','') + "999999"}
+      api.selStatAcid(param).then(res => {
         if(res.data.status === "SUCCESS") {
           let dataList = res.data.data;
           console.log(dataList)
@@ -282,17 +326,39 @@ export default {
           console.log(data)
 
           let safe=0, bettery=0, cloc = 0
+          this.acid.xAxis.data = new Array();
+          this.acid.series[0].data = new Array();
           data.forEach(function (val) {
             this.acid.xAxis.data.push(val[1])
             this.acid.series[0].data.push(val[3])
+            this.alram_count1 += val[3];
             safe += val[4]
             bettery += val[5]
             cloc += val[6]
           }.bind(this))
 
+          this.alram_count2 = safe + bettery + cloc;
           this.acidType.series[0].data = [safe, bettery, cloc];
-          console.log(this.acid.xAxis.data)
+          console.log(this.acidType.series[0].data)
           this.datatable = this.$datatable(this.datatable, this.gridHeadings, dataList, this.columns)
+        }
+      })
+    },
+    selStatAcidTime() {
+      let param = {"addr1":this.search.addr1, "addr2": this.search.addr2,
+        "sdate": this.search.sdate.replaceAll('-','') + "000000"
+        ,"edate": this.search.edate.replaceAll('-','') + "999999"}
+      api.selStatAcidTime(param).then(res => {
+        if(res.data.status === "SUCCESS") {
+          let dataList = res.data.data;
+          let data = new Array(24);
+          dataList.forEach(function (time) {
+            //this.acidTime.series[0].data[time.REPORT_HOUR] = time.ALERT_COUNT;
+            data[time.REPORT_HOUR] = time.ALERT_COUNT;
+            this.alram_count3 += time.ALERT_COUNT;
+          }.bind(this))
+          this.acidTime.series[0].data = data;
+          console.log("data",this.acidTime.series[0].data )
         }
       })
     }
