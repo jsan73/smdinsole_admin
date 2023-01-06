@@ -44,7 +44,7 @@
               <!-- End Table with stripped rows -->
               <p  class="text-end">
                 <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>
-                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addUser()">사용자 등록</button>
+<!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addUser()">사용자 등록</button>-->
               </p>
             </div>
           </div><!--// 목록 테이블 -->
@@ -111,6 +111,7 @@ export default {
     }
   },
   created() {
+    // 팝업창에서 selectDeviceList 를 호출하기 위한 설정
     window.vueComponent = this;
   }
 }
