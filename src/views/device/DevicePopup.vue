@@ -11,7 +11,7 @@
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">IMEI</th>
             <td><input type="text" v-model="device.deviceIMEI" id="userName" name="userName" class="form-control d-inline-flex" style="width: 150px;" :readonly="popupState == 'upd'">
-              &nbsp;<button v-if="popupState == 'ins'" type="button" class="btn btn-secondary btn-sm">일련번호 체크</button>
+              &nbsp;<button v-if="popupState == 'ins'" type="button" class="btn btn-secondary btn-sm" @click="chkIMEI">일련번호 체크</button>
             </td>
           </tr>
           <tr>
@@ -92,7 +92,8 @@ export default {
         deviceNumber:'',
         guardPhone:'',
         memberDate:'',
-        orgCd:''
+        orgCd:'',
+        chkdevice:false
       },
       dphone1:'011',
       dphone2:'1111',
@@ -177,10 +178,27 @@ export default {
       }
     },
     regDevice() {
-      this.insDevice().then(() => {
-        //opener.location.reload();
-        window.opener.vueComponent.selectDeviceList();
-        window.close();
+      if(this.device.chkdevice) {
+        this.insDevice().then(() => {
+          //opener.location.reload();
+          window.opener.vueComponent.selectDeviceList();
+          window.close();
+        })
+      }else{
+        alert("IMEI 값이 이미 존재합니다.")
+      }
+    },
+    chkIMEI() {
+      api.getDeviceInfo(this.device.deviceIMEI).then(res => {
+        if(res.data.status === "SUCCESS") {
+          if(utils.isNotEmpty(res.data.data)) {
+            alert("중복입니다.");
+          }else{
+            this.device.chkdevice = true;
+            alert("사용 가능 합니다.");
+
+          }
+        }
       })
     }
   }

@@ -15,7 +15,7 @@
           </tr>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">사용자명</th>
-            <td><input v-model="guard.guardName" type="text" class="form-control d-inline-flex" id="userName" name="userName" readonly></td>
+            <td><input v-model="guard.guardName" type="text" class="form-control d-inline-flex" id="userName" name="userName"></td>
           </tr>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">이메일</th>
@@ -202,6 +202,7 @@ export default {
     },
     updateGuard() {
       var reqGuard = {
+            guardName:'',
             email:'',
             phoneList : [],
             masterGuardNo : 0,
@@ -224,7 +225,7 @@ export default {
             if (this.guard.phoneList[idx].guardNo == "0") status = "I"; // this.guard.phoneList[idx].status = "I"
             else status = "U"; // this.guard.phoneList[idx].status = "U"
 
-            reqGuard.phoneList.push({"guardNo" : this.guard.phoneList[idx].guardNo, "phoneNumber": phoneNumber, "status":status});
+            reqGuard.phoneList.push({"guardNo" : this.guard.phoneList[idx].guardNo, "phoneNumber": phoneNumber, "status":status, "idx":idx});
           }else{
             if(utils.isEmpty(phone2) && utils.isEmpty(phone3)) {
               if(this.guard.phoneList[idx].guardNo != "0") {
@@ -238,11 +239,18 @@ export default {
         reqGuard.status = "U"
         reqGuard.email = this.guard.email;
       }
+      if(this.orgGuard.guardName != this.guard.guardName) {
+        reqGuard.status = "U"
+        reqGuard.guardName = this.guard.guardName;
+      }
 
       //let params = reqGuard;
       api.updGuard(reqGuard).then(res => {
         if(res.data.status === "SUCCESS") {
 
+          alert("수정 되었습니다.");
+          window.opener.vueComponent.selectGuardList();
+          window.close();
         }
       })
       console.log(this.guard);

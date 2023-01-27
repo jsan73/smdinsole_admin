@@ -83,11 +83,11 @@ export default {
             return html;
           }
         },
-        {select:3, scope:'row', render: this.telForm},
         {select:4, scope:'row', render: this.telForm},
         {select:5, scope:'row', render: this.telForm},
         {select:6, scope:'row', render: this.telForm},
         {select:7, scope:'row', render: this.telForm},
+        {select:8, scope:'row', render: this.telForm},
       ],
       headings:["No", "IMEI", "사용자명", "이메일", "전화번호0", "전화번호1", "전화번호2", "전화번호3", "전화번호4"],
     }
