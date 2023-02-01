@@ -10,7 +10,7 @@
           <tbody>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">IMEI</th>
-            <td><input type="text" v-model="device.deviceIMEI" id="userName" name="userName" class="form-control d-inline-flex" style="width: 150px;" :readonly="popupState == 'upd'">
+            <td><input type="text"  @input="clear" v-model="device.deviceIMEI" id="userName" name="userName" class="form-control d-inline-flex" style="width: 150px;" :readonly="popupState == 'upd'">
               &nbsp;<button v-if="popupState == 'ins'" type="button" class="btn btn-secondary btn-sm" @click="chkIMEI">일련번호 체크</button>
             </td>
           </tr>
@@ -18,7 +18,7 @@
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;"scope="col">기기 전화번호</th>
             <td>
               <select id="protectorPhone1" v-model="dphone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">
-                <option value="010"> 010 </option>
+                <option value="010">010</option>
                 <option value="011">011</option>
                 <option value="016">016</option>
                 <option value="017">017</option>
@@ -88,19 +88,19 @@ export default {
     return {
       device: {
         deviceNo:0,
-        deviceIMEI:'12345678',
+        deviceIMEI:'',
         deviceNumber:'',
         guardPhone:'',
         memberDate:'',
         orgCd:'',
-        chkdevice:false
+        chkdevice:''
       },
       dphone1:'011',
-      dphone2:'1111',
-      dphone3:'2222',
+      dphone2:'',
+      dphone3:'',
       gphone1:'010',
-      gphone2:'3333',
-      gphone3:'4444',
+      gphone2:'',
+      gphone3:'',
       regDate:'',
       deviceIMEI:'',
       popupState:"ins"
@@ -178,6 +178,11 @@ export default {
       }
     },
     regDevice() {
+      if(this.device.chkdevice === "") {
+        alert("IMEI 체크를 먼저 진행해 주세요.");
+        return;
+      }
+
       if(this.device.chkdevice) {
         this.insDevice().then(() => {
           //opener.location.reload();
@@ -185,13 +190,19 @@ export default {
           window.close();
         })
       }else{
+        this.device.chkdevice = false;
         alert("IMEI 값이 이미 존재합니다.")
       }
     },
     chkIMEI() {
+      if(this.device.deviceIMEI === "") {
+        alert("IMEI값을 입력해 주세요");
+        return;
+      }
       api.getDeviceInfo(this.device.deviceIMEI).then(res => {
         if(res.data.status === "SUCCESS") {
           if(utils.isNotEmpty(res.data.data)) {
+            this.device.chkdevice = false;
             alert("중복입니다.");
           }else{
             this.device.chkdevice = true;
@@ -200,6 +211,9 @@ export default {
           }
         }
       })
+    },
+    clear() {
+      this.device.chkdevice = "";
     }
   }
 

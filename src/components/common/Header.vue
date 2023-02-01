@@ -15,7 +15,7 @@
             <li class="nav-item"><a class="nav-link" style="cursor:pointer":class="[menuId=='Org'?'active':'']" @click="goMenu('org')" id="group">기관 관리</a></li>
           </ul>
           <div class="tLogo_login">
-            <button type="button" class="btn btn-secondary">
+            <button type="button" class="btn btn-secondary" @click="goLogout">
               <i class="bi bi-box-arrow-right"></i>
             </button>
           </div>
@@ -26,6 +26,8 @@
 </template>
 
 <script>
+import {mapActions} from "vuex";
+
 export default {
   name: "Header",
   props:{
@@ -34,12 +36,19 @@ export default {
     menuId:String
   },
   methods: {
+    ...mapActions("adminStore", ["commitAdminInfo", "commitToken"]),
+
     //뒤로가기
     backHandler(){
       this.$router.go(-1);
     },
     goMenu(url) {
       this.$router.push(url);
+    },
+    goLogout() {
+
+      this.commitToken('');
+      window.location.href = "/login"
     }
   }
 }

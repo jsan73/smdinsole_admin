@@ -80,14 +80,14 @@ instance.interceptors.response.use(
 			// var ssoUrl = protocol + "//" + hostName;
 			// if (port != "" && port != "443") ssoUrl += ":" + port;
 			//
-			window.location.href = "/login";
+			if(!window.location.href.includes("login")) window.location.href = "/login";
 		}
 		/*
 			http status가 200이 아닌 경우
 			응답 에러 처리를 작성합니다.
 			이곳 먼저 처리 후 화면단에서 호출한 .catch() 으로 이어집니다.
 		*/
-		alert("ERROR : " + error.response.status);
+		// alert("ERROR : " + error.response.status);
 		return Promise.reject(error);
 		//return error.response;
 	}

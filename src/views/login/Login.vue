@@ -17,7 +17,7 @@
                   </li>
                   <li class="login_te">Password</li>
                   <li class="login_bar">
-                    <input type="password" class="input_txt" id="password" name="password" v-model="password">
+                    <input type="password" class="input_txt" id="password" name="password" v-model="password" @keyup.enter="login">
                   </li>
                   <li class="login_radio">
                     <label>
@@ -64,19 +64,18 @@ export default {
 
     login() {
       if(utils.isEmpty(this.loginId)) {
-        alert("핸드폰 번호를 입력해 주세요.");
+        alert("아이디를 입력해 주세요.");
         return;
       }
       if(utils.isEmpty(this.password)) {
-        alert("비밀 번호를 입력해 주세요.");
+        alert("비밀번호를 입력해 주세요.");
         return;
       }
       const params = {loginId: this.loginId, password: this.password};
 
       api.login(params).then(res => {
         if(res.data.status === "SUCCESS") {
-          let tokenData = res.data.data;
-
+          let tokenData = res.data.data.token;
 
           let payload = {adminId: this.loginId, autoLogin: "N"};
           this.commitAdminInfo(payload);
