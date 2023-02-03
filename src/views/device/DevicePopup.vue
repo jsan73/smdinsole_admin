@@ -19,6 +19,7 @@
             <td>
               <select id="protectorPhone1" v-model="dphone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">
                 <option value="010">010</option>
+                <option value="012">012</option>
                 <option value="011">011</option>
                 <option value="016">016</option>
                 <option value="017">017</option>
