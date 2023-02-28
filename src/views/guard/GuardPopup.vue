@@ -6,6 +6,7 @@
 
     <div class="card">
       <div class="card-body pb-0">
+        사용자 전화번호0 수정은 기기관리에서 하세요.
         <table class="table table-sm table-bordered">
           <tbody>
           <tr>
@@ -40,7 +41,7 @@
 
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">사용자 전화번호{{idx}}</th>
             <td>
-              <select v-model="phone.phone[0]" id="protectorPhone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">
+              <select v-model="phone.phone[0]" id="protectorPhone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;" >
                 <option value="010">010</option>
                 <option value="011">011</option>
                 <option value="016">016</option>
@@ -49,9 +50,9 @@
                 <option value="019">019</option>
               </select>
               -
-              <input type="text" id="protectorPhone2" name="protectorPhone2" v-model="phone.phone[1]" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">
+              <input type="text" id="protectorPhone2" name="protectorPhone2" v-model="phone.phone[1]" class="form-control d-inline-flex" style="width: 100px;" maxlength="4" :readonly="idx == 0">
               -
-              <input type="text" id="protectorPhone3" name="protectorPhone3" v-model="phone.phone[2]" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">
+              <input type="text" id="protectorPhone3" name="protectorPhone3" v-model="phone.phone[2]" class="form-control d-inline-flex" style="width: 100px;" maxlength="4" :readonly="idx == 0">
             </td>
           </tr>
 <!--          <tr>-->
@@ -155,7 +156,8 @@ export default {
         phoneList : []
       },
       deviceIMEI:'',
-      popupState:"ins"
+      popupState:"ins",
+      phoneCount:0
     }
   },
   created: function () {
@@ -185,6 +187,7 @@ export default {
       let phoneList = res.data.data;
       this.initPhoneList();
 
+      this.phoneCount = phoneList.length
 
       for(let index = 0; index < phoneList.length; index++) {
         // let guardPhone = utils.telForm(phone.guardPhone).split("-");
@@ -201,7 +204,11 @@ export default {
       }
     },
     updateGuard() {
+      if(this.phoneCount == 0) {
+        alert("사용자가 없을때는 수정 불가합니다. 기기관리에서 진행 바랍니다.");
+      }
       var reqGuard = {
+            deviceIMEI:'',
             guardName:'',
             email:'',
             phoneList : [],
@@ -209,7 +216,7 @@ export default {
             status:'N'    // I, U, D, N
           }
       reqGuard.masterGuardNo = this.guard.phoneList[0].guardNo;
-
+      reqGuard.deviceIMEI = this.deviceIMEI;
       for(let idx = 0; idx < this.orgGuard.phoneList.length; idx++) {
 
         if(this.guard.phoneList[idx].phone.toString() == this.orgGuard.phoneList[idx].phone.toString()) {
@@ -229,7 +236,11 @@ export default {
           }else{
             if(utils.isEmpty(phone2) && utils.isEmpty(phone3)) {
               if(this.guard.phoneList[idx].guardNo != "0") {
-                reqGuard.phoneList.push({"guardNo" : this.guard.phoneList[idx].guardNo, "phoneNumber": "", "status":"D"});
+                  reqGuard.phoneList.push({
+                    "guardNo": this.guard.phoneList[idx].guardNo,
+                    "phoneNumber": "",
+                    "status": "D"
+                  });
               }
             }
           }

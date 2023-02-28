@@ -31,9 +31,10 @@
                     <label for="deviceID" class="col-form-label pe-4">소속 기관</label>
                     <select v-model="search.orgCd" id="group" name="group" class="form-select d-inline-flex" style="width: 70%;">
                       <option value=""> - 선택 - </option>
-                      <option value="G001"> 개인 </option>
-                      <option value="G002">홀트복지재단</option>
-                      <option value="G003">성북장애인재단</option>
+                      <option value="G001">개인</option>
+                      <option value="G002">인천부평구</option>
+                      <option value="G003">강화군</option>
+                      <option value="G004">충주시</option>
                     </select>
                   </div>
                   <div class="col-2 text-end">
@@ -151,38 +152,40 @@ export default {
       return utils.convertFromStrToDate(data);
     },
     lastSignal(data) {
+
       const signal = data.split(',')
+      console.log(signal[2]);
       var reportDate = signal[0];
 
       //(GPS:4, CELL:5, SAVE-WIFI:6,없음:7)
       var cell = "icon_none.svg";
       switch (signal[1]) {
-        case 4:
+        case '4':
           cell = "icon_GPS.svg";
           break;
-        case 5:
+        case '5':
           cell = "icon_Cell.svg";
           break;
-        case 6:
+        case '6':
           cell = "icon_WIFI.svg";
           break;
       }
 
       var battery = "battery/0.svg";
       switch (signal[2]) {
-        case 0:
+        case '0':
           battery = "battery/Warn.svg";
           break;
-        case 1:
-        case 2:
-        case 3:
+        case '1':
+        case '2':
+        case '3':
           battery = "battery/" + signal[2] + ".svg";
           break;
-        case 4:
+        case '4':
           // 충전중
           battery = "battery/Chg.svg";
           break;
-        case 5:
+        case '5':
           // 충전완료
           battery = "battery/Complete.svg";
           break;

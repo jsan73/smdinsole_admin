@@ -55,8 +55,9 @@
               <select id="protectorPhone1" v-model="device.orgCd" name="protectorPhone1" class="form-select d-inline-flex">
                 <option value=""> - 선택 - </option>
                 <option value="G001"> 개인 </option>
-                <option value="G002">홀트복지재단</option>
-                <option value="G003">성북장애인재단</option>
+                <option value="G002">인천부평구</option>
+                <option value="G003">강화군</option>
+                <option value="G004">충주시</option>
               </select>
             </td>
           </tr>

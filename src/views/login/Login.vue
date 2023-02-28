@@ -3,7 +3,7 @@
   <div class="wrap ">
     <div class="img_item row">
       <div class="col-6 text-center" style="padding-top: 120px;">
-        <div><img src="static/images/ktkokasin_logoB.png" alt="ktkokasin" /></div>
+        <div><img src="static/images/kokasin_admin_logo.png" alt="ktkokasin" /></div>
       </div>
       <div class="col-6">
 

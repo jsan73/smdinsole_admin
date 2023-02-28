@@ -30,9 +30,10 @@
           <i class="bi bi-card-list"></i><span>기관별 (전체 00대)</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="center-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li><a href="#"><i class="bi bi-circle"></i><span>홀트복지재단</span></a></li>
-          <li><a href=""><i class="bi bi-circle"></i><span>노인재단</span></a></li>
-          <li><a href=""><i class="bi bi-circle"></i><span>경기장애인재단</span></a></li>
+          <li><a href="#"><i class="bi bi-circle"></i><span>개인</span></a></li>
+          <li><a href="#"><i class="bi bi-circle"></i><span>인천부평구</span></a></li>
+          <li><a href=""><i class="bi bi-circle"></i><span>강화군</span></a></li>
+          <li><a href=""><i class="bi bi-circle"></i><span>충주시</span></a></li>
         </ul>
       </li><!-- End center Nav -->
 
