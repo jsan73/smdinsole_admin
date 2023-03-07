@@ -1,10 +1,10 @@
 <template>
   <div>
-    <SideMenu @chooseArea="selStat"></SideMenu>
+    <SideMenu @chooseArea="selStat" :totalCount=totalCount ></SideMenu>
   <main id="main" class="">
     <div class="pagetitle">
       <h4>경보발생 통계</h4>
-      <small class="text-muted fs-6">서울특별시</small>
+      <small class="text-muted fs-6">{{addrName1}} {{addrName2}}</small>
 
     </div><!-- End Page Title -->
 
@@ -277,6 +277,9 @@ export default {
       alram_count1:0,
       alram_count2:0,
       alram_count3:0,
+      totalCount:0,
+      addrName1:'',
+      addrName2:''
     }
   },
   watch: {
@@ -309,21 +312,28 @@ export default {
       this.search.sdate = utils.getYmd10(sdate);
       this.search.edate = utils.getYmd10(new Date());
     },
-    selStat(addr1, addr2) {
+    selStat(addr1, addr2, addrName1, addrName2) {
       this.search.addr1 = addr1;
       this.search.addr2 = addr2;
+      this.addrName1 = addrName1;
+      this.addrName2 = addrName2;
       this.selSearch();
     },
     selStatAcid() {
       let param = {"addr1":this.search.addr1, "addr2": this.search.addr2,
         "sdate": this.search.sdate.replaceAll('-','') + "000000"
       ,"edate": this.search.edate.replaceAll('-','') + "999999"}
+      this.totalCount = 0
       api.selStatAcid(param).then(res => {
         if(res.data.status === "SUCCESS") {
           let dataList = res.data.data;
           console.log(dataList)
+          dataList.forEach(function (val){
+            this.totalCount += parseInt(val.DEVICE_COUNT);
+          }.bind(this))
           const data = dataList.map(item => Object.values(item))
-          console.log(data)
+
+          // console.log(data)
 
           let safe=0, bettery=0, cloc = 0
           this.acid.xAxis.data = new Array();
@@ -339,7 +349,7 @@ export default {
 
           this.alram_count2 = safe + bettery + cloc;
           this.acidType.series[0].data = [safe, bettery, cloc];
-          console.log(this.acidType.series[0].data)
+          // console.log(this.acidType.series[0].data)
           this.datatable = this.$datatable(this.datatable, this.gridHeadings, dataList, this.columns)
         }
       })

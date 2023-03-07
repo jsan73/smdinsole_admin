@@ -9,7 +9,7 @@ module.exports = {
 
   productionSourceMap: active,
 
-  outputDir: "./dist/" + process.env.VUE_APP_PJT,
+  outputDir: "./dist/" + process.env.VUE_APP_PJT + "_" + process.env.VUE_APP_MODE,
 
   css: {
     loaderOptions: {

@@ -95,7 +95,8 @@ export default {
         guardPhone:'',
         memberDate:'',
         orgCd:'',
-        chkdevice:''
+        chkdevice:'',
+        deviceCount:1
       },
       dphone1:'011',
       dphone2:'',
@@ -105,7 +106,8 @@ export default {
       gphone3:'',
       regDate:'',
       deviceIMEI:'',
-      popupState:"ins"
+      popupState:"ins",
+      orgGuardPhone:''
     }
   },
   mounted() {
@@ -135,6 +137,8 @@ export default {
             this.gphone1 = phone[0];
             this.gphone2 = phone[1];
             this.gphone3 = phone[2];
+            this.orgGuardPhone = this.gphone1 + this.gphone2 + this.gphone3;
+            console.log(this.orgGuardPhone);
           }
           if(utils.isNotEmpty(this.device.memberDate)) {
             this.regDate = utils.dateForm(this.device.memberDate);
@@ -158,6 +162,11 @@ export default {
     },
     updDevice() {
       this.setDevice();
+      if(this.orgGuardPhone != this.device.guardPhone && this.device.deviceCount > 1) {
+        if(!confirm("사용자 전화번호0 은 다른 기기에서도 사용중입니다.\n수정하시면 다른 기기 전화 번호도 변경 됩니다.")){
+          return;
+        }
+      }
       api.updDevice(this.device).then(res => {
         if(res.data.status === "SUCCESS") {
           alert("수정 되었습니다.")
