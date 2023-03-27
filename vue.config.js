@@ -9,8 +9,8 @@ module.exports = {
 
   productionSourceMap: active,
 
-  outputDir: "./dist/" + process.env.VUE_APP_PJT + "_" + process.env.VUE_APP_MODE,
-
+  // outputDir: "./dist/" + process.env.VUE_APP_PJT + "_" + process.env.VUE_APP_MODE,
+  outputDir: "c:/kokasin_build/" + process.env.VUE_APP_MODE + "/" + process.env.VUE_APP_PJT,
   css: {
     loaderOptions: {
       // sass: {
