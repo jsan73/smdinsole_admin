@@ -154,7 +154,7 @@ export default {
     lastSignal(data) {
 
       const signal = data.split(',')
-      console.log(signal[2]);
+      //console.log(signal[2]);
       var reportDate = signal[0];
 
       //(GPS:4, CELL:5, SAVE-WIFI:6,없음:7)
@@ -190,7 +190,11 @@ export default {
           battery = "battery/Complete.svg";
           break;
       }
-
+      let date1 = utils.convertFromStrToDate("20230706170000")
+      let date2 = new Date()
+      console.log(date1)
+      console.log(date2)
+      console.log(utils.getTimeDiff(date1, date2 ))
       return utils.convertFromStrToDate(reportDate) + ' <img src="/static/images/' + cell + '" alt="none" width="42" height="20">' +  ' <img src="/static/images/' + battery + '" alt="battery_charge" width="30">';
     },
     async selectDeviceList() {

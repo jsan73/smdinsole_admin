@@ -64,6 +64,25 @@ export default {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/stat/acid/list/time', param);
 	},
 
+	// 기관관리
+	selOrgcList(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/orgc/list', param)
+	},
+	insOrgc(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/orgc/ins', param)
+	},
+	updOrgc(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/orgc/upd', param)
+	},
+	delOrgc(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/orgc/del/' + param);
+	},
+	// 단순 단말 조회
+	getOrgcInfo(orgcNo) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/orgc/info/' + orgcNo);
+	},
+
+
 	// 공통코드 가져오기
 	getCommCode(params) {
 		return http.post(process.env.VUE_APP_ADMIN_PJT + `/api/get/commcode`, params)

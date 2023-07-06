@@ -19,11 +19,11 @@ var menu = [
 	{ menuId: "Ststs", parentId: 0, menuName: "대시보드", icon: "description", componentName: "Ststs", pagePath:"views/ststs", url: "/ststs", },
 	{ menuId: "Guard", parentId: 0, menuName: "사용자 관리", icon: "description", componentName: "GuardManager", pagePath:"views/guard", url: "/guard"},
 	{ menuId: "Device", parentId: 0, menuName: "기기 관리", icon: "description", componentName: "DeviceManager", pagePath:"views/device",url: "/device" },
-	{ menuId: "Org", parentId: 0, menuName: "기관 관리", icon: "description", componentName: "OrgManager", pagePath:"views/org",url: "/org" },
+	{ menuId: "Orgc", parentId: 0, menuName: "기관 관리", icon: "description", componentName: "OrgcManager", pagePath:"views/orgc",url: "/orgc" },
 	{ menuId: "Login", parentId: 0, menuName: "로그인", icon: "description",pagePath: "views/login",  componentName: "Login", url: "/login", meta: { layout: 'Main' }},
 	{ menuId: "DevicePopup", parentId: 0, menuName: "기기 등록", icon: "description",pagePath: "views/device",  componentName: "DevicePopup", url: "/devicepopup", meta: { layout: 'Popup' }, popup:true},
 	{ menuId: "GuardPopup", parentId: 0, menuName: "사용자 등록", icon: "description",pagePath: "views/guard",  componentName: "GuardPopup", url: "/guardpopup", meta: { layout: 'Popup' }, popup:true},
-	{ menuId: "OganiAdd", parentId: 0, menuName: "기관 등록", icon: "description",pagePath: "views/ogni",  componentName: "OganiAdd", url: "/oganiadd", meta: { layout: 'Main' }, popup:false},
+	{ menuId: "OrgcPopup", parentId: 0, menuName: "기관 등록", icon: "description",pagePath: "views/orgc",  componentName: "OrgcPopup", url: "/orgcpopup", meta: { layout: 'Popup' }, popup:true},
 
 	// // { menuId: "MN70", parentId: 0, menuName: "콜팝업", icon: "description", pagePath: "views/ui/temp", componentName: "CallPopup", url: "/ui/callpopup", popup: true, meta: { layout: 'Popup' }, tempmenu: "temp" },
 	// // { menuId: "MN70", parentId: 0, menuName: "콜팝업", icon: "description", pagePath: "views/ui/temp", componentName: "CallPopup", url: "/ui/callpopup", popup: true, meta: { layout: 'Popup' }, tempmenu: "temp" },

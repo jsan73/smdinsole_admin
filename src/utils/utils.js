@@ -74,10 +74,19 @@ export default {
         let d1 = new Date(this.getYmd10(date1));
         let d2 = new Date(this.getYmd10(date2));
 
-        const diffDate = d2.getTime() - d1.getTime();
-        return Math.abs(diffDate / (1000 * 60 * 60 * 24));
-
+        return  d2.getTime() - d1.getTime();
+        // return Math.abs(diffDate / (1000 * 60 * 60 * 24));
     },
+
+    getTimeDiff(date1, date2) {
+        let d1 = new Date(date1);
+        let d2 = new Date(date2);
+        let diff = d2.getTime() - d1.getTime();
+      console.log(diff)
+      return Math.abs(diff  / (60 * 1000));
+    },
+
+
     getYmd10(d) {
         //yyyy-mm-dd 포맷 날짜 생성
         return d.getFullYear() + "-" + ((d.getMonth() + 1) > 9 ? (d.getMonth() + 1).toString() : "0" + (d.getMonth() + 1)) + "-" + (d.getDate() > 9 ? d.getDate().toString() : "0" + d.getDate().toString());
