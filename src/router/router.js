@@ -19,7 +19,10 @@ const router = new VueRouter({
 	routes,
 })
 
+let nextPath;
+
 router.beforeEach((to, from, next) => {
+	nextPath = to.fullPath;
 
 	if(to?.path == "/login") return next()
 	let token = store.getters['adminStore/getToken'];
@@ -42,4 +45,9 @@ router.beforeEach((to, from, next) => {
 	window.scrollTo(0,0);
 })
 
+router.onError((error) => {
+	if(error.name === 'ChunkLoadError') {
+		window.location.href = nextPath || '/';
+	}
+})
 export default router

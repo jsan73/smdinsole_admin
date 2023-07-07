@@ -72,7 +72,7 @@ export default {
     }
   },
   mounted() {
-    this.orgcNo = this.$route.query.orgc;
+    this.orgcNo = this.$route.query.orgcNo;
     if(utils.isNotEmpty(this.orgcNo )) {
       this.popupState = "upd"
       this.getOrgcInfo(this.orgcNo);

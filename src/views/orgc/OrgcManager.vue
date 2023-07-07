@@ -87,19 +87,18 @@ export default {
       orgcList : [],
       columns:[
         {select:0, render: function(data, cell, row) {
-            return row.dataIndex + 1
-          }
-        },
-        {select:1, render: function(data, cell, row) {
-          console.log(this.orgcList)
-            let url = "/orgcpopup?orgc=" + data;
+            let url = "/orgcpopup?orgcNo=" + data;
             let name = "기관 수정";
             let style = "width=650,height=480,left=0,top=0";
             let param = "'" + url + "','" + name + "','" + style + "'";
-            let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + data + "</a>";
+            let display = row.dataIndex + 1
+            let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + display + "</a>";
             return html;
+
+            //return row.dataIndex + 1
           }
         },
+        {select:1, scope:'row'},
         {select:2, scope:'row'},
         {select:3, scope:'row'},
         {select:4, scope:'row', render: this.telForm},
