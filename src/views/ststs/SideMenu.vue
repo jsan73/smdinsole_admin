@@ -25,17 +25,15 @@
         </ul>
       </li><!-- End local Nav -->
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#center-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-card-list"></i><span>기관별 (전체 00대)</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="center-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li><a href="#"><i class="bi bi-circle"></i><span>개인</span></a></li>
-          <li><a href="#"><i class="bi bi-circle"></i><span>인천부평구</span></a></li>
-          <li><a href=""><i class="bi bi-circle"></i><span>강화군</span></a></li>
-          <li><a href=""><i class="bi bi-circle"></i><span>충주시</span></a></li>
-        </ul>
-      </li><!-- End center Nav -->
+<!--      <li class="nav-item">-->
+<!--        <a class="nav-link collapsed" data-bs-target="#center-nav" data-bs-toggle="collapse" href="#">-->
+<!--          <i class="bi bi-card-list"></i><span>기관별 (전체 00대)</span><i class="bi bi-chevron-down ms-auto"></i>-->
+<!--        </a>-->
+<!--        <ul id="center-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">-->
+<!--          <li v-for="(orgc,index) in orgcList" ><a href="#"><i class="bi bi-circle"></i><span>{{orgc.ORGC_NAME}}</span></a></li>-->
+
+<!--        </ul>-->
+<!--      </li>&lt;!&ndash; End center Nav &ndash;&gt;-->
 
 
 
@@ -55,6 +53,8 @@ export default {
       selectAddr2:'',
       selectAddrName1:'',
       selectAddrName2:'',
+
+      orgcList:''
     }
   },
   props:{
@@ -88,10 +88,19 @@ export default {
     click2(addrCode, addrName) {
       this.selectAddr2 = addrCode;
       this.selectAddrName2 = addrName;
-    }
+    },
+    async selectOrgcList() {
+      const param = {};
+      const res = await api.selOrgcList(param);
+      if(res.data.status === "SUCCESS") {
+        this.orgcList = res.data.data;
+      }
+
+    },
   },
   created() {
     this.selAddrList();
+    this.selectOrgcList();
   }
 }
 </script>

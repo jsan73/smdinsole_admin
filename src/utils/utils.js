@@ -82,7 +82,7 @@ export default {
         let d1 = new Date(date1);
         let d2 = new Date(date2);
         let diff = d2.getTime() - d1.getTime();
-      console.log(diff)
+
       return Math.abs(diff  / (60 * 1000));
     },
 

@@ -29,12 +29,9 @@
                   </div>
                   <div class="col-3 d-flex">
                     <label for="deviceID" class="col-form-label pe-4">소속 기관</label>
-                    <select v-model="search.orgCd" id="group" name="group" class="form-select d-inline-flex" style="width: 70%;">
+                    <select v-model="search.orgcNo" id="group" name="group" class="form-select d-inline-flex" style="width: 70%;">
                       <option value=""> - 선택 - </option>
-                      <option value="G001">개인</option>
-                      <option value="G002">인천부평구</option>
-                      <option value="G003">강화군</option>
-                      <option value="G004">충주시</option>
+                      <option v-for="(orgc, index) in orgcList" :key="index" :value="orgc.ORGC_NO">{{orgc.ORGC_NAME}}</option>
                     </select>
                   </div>
                   <div class="col-2 text-end">
@@ -101,8 +98,9 @@ export default {
       search: {
         deviceIMEI:'',
         guardPhone:'',
-        orgCd:''
+        orgcNo:''
       },
+      orgcList:'',
       columns:[
         {select:0, render: function(data, cell, row) {
             return row.dataIndex + 1
@@ -133,7 +131,7 @@ export default {
   mounted() {
 
     this.selectDeviceList();
-
+    this.selectOrgcList();
 
 
   },
@@ -190,11 +188,14 @@ export default {
           battery = "battery/Complete.svg";
           break;
       }
-      let date1 = utils.convertFromStrToDate("20230706170000")
+      let date1 = utils.convertFromStrToDate(reportDate)
       let date2 = new Date()
-      console.log(date1)
-      console.log(date2)
-      console.log(utils.getTimeDiff(date1, date2 ))
+      const diff = utils.getTimeDiff(date1, date2);
+      if(diff > 90) {
+        cell = "icon_none.svg";
+        battery = "battery/0.svg"
+      }
+
       return utils.convertFromStrToDate(reportDate) + ' <img src="/static/images/' + cell + '" alt="none" width="42" height="20">' +  ' <img src="/static/images/' + battery + '" alt="battery_charge" width="30">';
     },
     async selectDeviceList() {
@@ -204,6 +205,14 @@ export default {
         let dataList = res.data.data;
 
         this.datatable = this.$datatable(this.datatable, this.headings, dataList, this.columns)
+      }
+
+    },
+    async selectOrgcList() {
+      const param = {};
+      const res = await api.selOrgcList(param);
+      if(res.data.status === "SUCCESS") {
+        this.orgcList = res.data.data;
       }
 
     },

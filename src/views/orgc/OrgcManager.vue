@@ -81,7 +81,8 @@ export default {
       //   locCnt:0
       // },
       search: {
-        orgcName:''
+        orgcName:'',
+        dbState:'A'
       },
       orgcList : [],
       columns:[

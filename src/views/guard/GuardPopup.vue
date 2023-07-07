@@ -147,7 +147,7 @@ export default {
       guard: {
         email:'',
         guardName:'',
-        orgCd:'',
+        orgcNo:'',
         phoneList : [],
         status:'N'    // I, U, D, N
       },
