@@ -1,8 +1,13 @@
 const webpack = require('webpack');
+const os = require('os')
 
 let active = true;
 if(process.env.VUE_APP_MODE === 'prod') {
   //active = false;
+}
+var osDir = "c:/kokasin_build/"
+if (os.platform() === "darwin") {
+  osDir = "/Users/jsan/kokasin/kokasin_build/"
 }
 
 module.exports = {
@@ -10,7 +15,7 @@ module.exports = {
   productionSourceMap: active,
 
   // outputDir: "./dist/" + process.env.VUE_APP_PJT + "_" + process.env.VUE_APP_MODE,
-  outputDir: "c:/kokasin_build/" + process.env.VUE_APP_MODE + "/" + process.env.VUE_APP_PJT,
+  outputDir: osDir + process.env.VUE_APP_MODE + "/" + process.env.VUE_APP_PJT,
   css: {
     loaderOptions: {
       // sass: {
