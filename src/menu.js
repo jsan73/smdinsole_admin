@@ -21,6 +21,7 @@ var menu = [
 	{ menuId: "Device", parentId: 0, menuName: "기기 관리", icon: "description", componentName: "DeviceManager", pagePath:"views/device",url: "/device" },
 	{ menuId: "Orgc", parentId: 0, menuName: "기관 관리", icon: "description", componentName: "OrgcManager", pagePath:"views/orgc",url: "/orgc" },
 	{ menuId: "Login", parentId: 0, menuName: "로그인", icon: "description",pagePath: "views/login",  componentName: "Login", url: "/login", meta: { layout: 'Main' }},
+	{ menuId: "PwdChange", parentId: 0, menuName: "비밀번호 변경", icon: "description",pagePath: "views/login",  componentName: "PwdChange", url: "/pwdchange", meta: { layout: 'Main' }},
 	{ menuId: "DevicePopup", parentId: 0, menuName: "기기 등록", icon: "description",pagePath: "views/device",  componentName: "DevicePopup", url: "/devicepopup", meta: { layout: 'Popup' }, popup:true},
 	{ menuId: "GuardPopup", parentId: 0, menuName: "사용자 등록", icon: "description",pagePath: "views/guard",  componentName: "GuardPopup", url: "/guardpopup", meta: { layout: 'Popup' }, popup:true},
 	{ menuId: "OrgcPopup", parentId: 0, menuName: "기관 등록", icon: "description",pagePath: "views/orgc",  componentName: "OrgcPopup", url: "/orgcpopup", meta: { layout: 'Popup' }, popup:true},

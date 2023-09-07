@@ -27,6 +27,7 @@
                                     <input type="radio" name="logintype" value="organization" class="form-check-input ms-5"> 기관 관리자
                                 </label> -->
                   </li>
+                  <li class="login_fail" v-html="failMessage"></li>
                   <li><button id="submit" class="btn mt-4" @click="login">로그인</button></li>
                 </ul>
               </div>
@@ -38,7 +39,7 @@
     </div>
   </div>
   <div class="login_copy">
-    Copyright ⓒ SmartMedicalDevice Co., Ltd. All Rights Reserved.<!-- 　 |　 Phone : 070-7525-2100　Email : sales@smd21.com -->
+    Copyright ⓒ SmartMedicalDevice Co., Ltd. All Rights Reserved.
   </div>
   </div>
 
@@ -56,13 +57,16 @@ export default {
   data() {
     return {
       loginId:'',
-      password:''
+      password:'',
+      failMessage:''
     }
   },
   methods: {
     ...mapActions("adminStore", ["commitAdminInfo", "commitToken"]),
 
     login() {
+      // let payload = {adminId: this.loginId, autoLogin: "N"};
+      // this.commitAdminInfo(payload);
       if(utils.isEmpty(this.loginId)) {
         alert("아이디를 입력해 주세요.");
         return;
@@ -76,16 +80,28 @@ export default {
       api.login(params).then(res => {
         if(res.data.status === "SUCCESS") {
           let tokenData = res.data.data.token;
+          let pwdChange = res.data.data.pwdChange;
 
-          let payload = {adminId: this.loginId, autoLogin: "N"};
+          let payload = {adminId: this.loginId, autoLogin: "N", pwdChange: pwdChange};
           this.commitAdminInfo(payload);
           this.commitToken(tokenData);
           http.setToken(tokenData);
-          this.$router.replace("/device");
+          if(pwdChange === "Y") {
+            this.$router.replace("/pwdchange");
+          }else {
+            this.$router.replace("/device");
+          }
         }
       }).catch(e => {
         // 로그인 실패
-        alert(e.response.data.message);
+        this.failMessage = e.response.data.message
+        let failcnt = e.response.data.data
+        if(failcnt >= 1) {
+          this.failMessage += "<br> 5회 이상 실패 시 임시 번호가 발급 됩니다."
+          this.failMessage += "- (" + failcnt + ")회 실패"
+        }
+        this.password = ""
+        //alert(e.response.data.message);
       });
     },
   }

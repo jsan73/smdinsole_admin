@@ -1314,6 +1314,13 @@ input:-webkit-autofill {
   color: #2CBBB6;
 }
 
+.login_area ul li.login_fail {
+  height: 24px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #ef4949;
+}
+
 .login_area ul li.login_bar {
   border-bottom: 1px solid #d1dae9;
   margin-bottom: 30px;

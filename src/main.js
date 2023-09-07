@@ -46,15 +46,15 @@ Vue.mixin(mixin);
 Vue.config.productionTip = false;
 Vue.prototype.store = store;
 
-let _gKey = process.env.VUE_APP_GOOGLE_MAP_KEY;
+// let _gKey = process.env.VUE_APP_GOOGLE_MAP_KEY;
 
 
 //Skip token Key for UI - 여기 변경해야 모바일 빌드가능
-var _skipToken = false;
+// var _skipToken = false;
 
-if(location.pathname === "/login") {
-    _skipToken = true;
-    Vue.prototype.$skipToken = true;
+if(location.pathname === "/login" || location.pathname === "/pwdchange") {
+        // _skipToken = true;
+        Vue.prototype.$skipToken = true;
 }
 
 start();

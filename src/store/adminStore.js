@@ -8,15 +8,19 @@ const adminStore = {
             adminId: '',
             autoLogin:'',
             token:'',
+            pwdChange:''
 
         },
     },
     getters: {
-        getAdminInfo: state => {
-            return state.adminInfo
-        },
+        // getAdminInfo: state => {
+        //     return state.adminInfo
+        // },
         getToken: state=> {
             return state.adminInfo.token
+        },
+        getPwdChange: state=> {
+            return state.adminInfo.pwdChange
         },
 
     },
@@ -24,6 +28,7 @@ const adminStore = {
         setAdminInfo: (state, payload) => {
             state.adminInfo.adminId = payload.adminId;
             state.adminInfo.autoLogin = payload.autoLogin;
+            state.adminInfo.pwdChange = payload.pwdChange;
         },
         setToken: (state, token) => {
             state.adminInfo.token = token;

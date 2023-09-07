@@ -82,6 +82,11 @@ export default {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/orgc/info/' + orgcNo);
 	},
 
+	// 패스워드 변경
+	updChangePwd(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/upd/pwd', param)
+	},
+
 
 	// 공통코드 가져오기
 	getCommCode(params) {

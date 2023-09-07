@@ -24,11 +24,20 @@ let nextPath;
 router.beforeEach((to, from, next) => {
 	nextPath = to.fullPath;
 
-	if(to?.path == "/login") return next()
-	let token = store.getters['adminStore/getToken'];
+	if(to?.path === "/login") return next()
+	if(to?.path === "/pwdchange") return next()
 
-	if(utils.isEmpty(token) && to?.path != "/login") {
+	let token = store.getters['adminStore/getToken'];
+	let pwdChange = store.getters['adminStore/getPwdChange']
+
+	if(pwdChange === 'Y' ) {
+		console.log("!!!! change password", pwdChange)
+		return next('/pwdchange')
+	}
+
+	if(utils.isEmpty(token) && to?.path !== "/login") {
 		return next('/login')
+		// return next('/chgpw')
 	} else {
 		console.log("router token : " + token)
 		if(utils.isNotEmpty(token)) {
