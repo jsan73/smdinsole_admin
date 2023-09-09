@@ -20,6 +20,8 @@ var menu = [
 	{ menuId: "Guard", parentId: 0, menuName: "사용자 관리", icon: "description", componentName: "GuardManager", pagePath:"views/guard", url: "/guard"},
 	{ menuId: "Device", parentId: 0, menuName: "기기 관리", icon: "description", componentName: "DeviceManager", pagePath:"views/device",url: "/device" },
 	{ menuId: "Orgc", parentId: 0, menuName: "기관 관리", icon: "description", componentName: "OrgcManager", pagePath:"views/orgc",url: "/orgc" },
+	{ menuId: "LocationLog", parentId: 0, menuName: "위치정보 수집 정보", icon: "description", componentName: "LocationLog", pagePath:"views/manage",url: "/loclog" },
+	{ menuId: "LoginLog", parentId: 0, menuName: "로그인 정보", icon: "description", componentName: "LoginLog", pagePath:"views/manage",url: "/loginlog" },
 	{ menuId: "Login", parentId: 0, menuName: "로그인", icon: "description",pagePath: "views/login",  componentName: "Login", url: "/login", meta: { layout: 'Main' }},
 	{ menuId: "PwdChange", parentId: 0, menuName: "비밀번호 변경", icon: "description",pagePath: "views/login",  componentName: "PwdChange", url: "/pwdchange", meta: { layout: 'Main' }},
 	{ menuId: "DevicePopup", parentId: 0, menuName: "기기 등록", icon: "description",pagePath: "views/device",  componentName: "DevicePopup", url: "/devicepopup", meta: { layout: 'Popup' }, popup:true},

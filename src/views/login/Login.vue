@@ -97,8 +97,13 @@ export default {
         this.failMessage = e.response.data.message
         let failcnt = e.response.data.data
         if(failcnt >= 1) {
-          this.failMessage += "<br> 5회 이상 실패 시 임시 번호가 발급 됩니다."
+          this.failMessage += "<br> 5회 이상 실패 시 로그인 불가"
           this.failMessage += "- (" + failcnt + ")회 실패"
+
+          if(failcnt === 5) {
+            alert("등록된 휴대번호로 임시 비밀번호가 발급 되었습니다.");
+            this.failMessage = "";
+          }
         }
         this.password = ""
         //alert(e.response.data.message);

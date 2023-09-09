@@ -87,6 +87,14 @@ export default {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/upd/pwd', param)
 	},
 
+	selLocationLog(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/location/log', param)
+	},
+
+	selLoginLog(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/login/log', param)
+	},
+
 
 	// 공통코드 가져오기
 	getCommCode(params) {

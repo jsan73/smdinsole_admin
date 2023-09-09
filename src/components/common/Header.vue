@@ -11,8 +11,10 @@
           <ul class="nav nav-pills nav-fill me-auto mb-2 mb-lg-0">
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Ststs'?'active':'']"  @click="goMenu('/ststs')" id="ststs">대시보드</a></li>
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Guard'?'active':'']"  @click="goMenu('/guard')" id="user">사용자 관리</a></li>
-            <li class="nav-item"><a class="nav-link" style="cursor:pointer":class="[menuId=='Device'?'active':'']" @click="goMenu('/device')" id="device">기기 관리</a></li>
-            <li class="nav-item"><a class="nav-link" style="cursor:pointer":class="[menuId=='Orgc'?'active':'']" @click="goMenu('/orgc')" id="orgc">기관 관리</a></li>
+            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Device'?'active':'']" @click="goMenu('/device')" id="device">기기 관리</a></li>
+            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Orgc'?'active':'']" @click="goMenu('/orgc')" id="orgc">기관 관리</a></li>
+            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LocationLog'?'active':'']" @click="goMenu('/loclog')" id="orgc">위치정보 확인</a></li>
+            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LoginLog'?'active':'']" @click="goMenu('/loginlog')" id="orgc">접근기록 확인</a></li>
           </ul>
           <div class="tLogo_login">
             <button type="button" class="btn btn-secondary" @click="goLogout">
