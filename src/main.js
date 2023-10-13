@@ -22,18 +22,25 @@ import {
     CanvasRenderer
 } from 'echarts/renderers'
 import {
-    BarChart
+    BarChart,
+    LineChart
 } from 'echarts/charts'
 import {
     GridComponent,
-    TooltipComponent
+    TooltipComponent,
+    LegendComponent,
+    TitleComponent
 } from 'echarts/components'
+
 
 use([
     CanvasRenderer,
     BarChart,
+    LineChart,
     GridComponent,
-    TooltipComponent
+    TooltipComponent,
+    LegendComponent,
+    TitleComponent
 ]);
 
 Vue.component('v-chart', ECharts)
@@ -45,6 +52,7 @@ Vue.mixin(mixin);
 
 Vue.config.productionTip = false;
 Vue.prototype.store = store;
+
 
 // let _gKey = process.env.VUE_APP_GOOGLE_MAP_KEY;
 

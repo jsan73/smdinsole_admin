@@ -95,7 +95,9 @@ export default {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/login/log', param)
 	},
 
-
+	selDeviceLog(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/device/log', param)
+	},
 	// 공통코드 가져오기
 	getCommCode(params) {
 		return http.post(process.env.VUE_APP_ADMIN_PJT + `/api/get/commcode`, params)
