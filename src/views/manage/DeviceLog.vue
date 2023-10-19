@@ -3,52 +3,60 @@
 
     <h4 class="my-4 ps-3">
       <i class="bi bi-calendar2-check"></i> 관리자 접근 기록 확인
-
     </h4>
-
     <section class="section dashboard">
       <div class="row">
-        <div class="col-lg-12">
-          <!-- 검색조건 -->
+        <div class=col>
           <div class="card">
             <div class="card-body pb-0">
-              <!--              <form>-->
-              <div class="row my-1">
-                <div class="col-3 d-flex">
-                  <label for="deviceID" class="col-form-label pe-4">대상 계정</label>
+              <div class="d-flex justify-content-start">
+                <div class="d-flex justify-content-start" style="width: 250px;">
+                  <label for="deviceID" class="col-form-label pe-4">ID</label>
                   <input v-model="search.deviceCode" name="textfield" type="text" id="IMEI" class="form-control d-inline-flex" style="width: 180px;">
                 </div>
-                <div class="col-4 d-flex">
-
+                <div class="d-flex justify-content-start" style="width: 400px;">
+                  <div class="form-check col-form-label" style="width: 100px;">
+                    <input class="form-check-input" type="radio" name="insole" id="insole1" v-model="insole" value="1">
+                    <label class="form-check-label" for="insole1">
+                      insole1
+                    </label>
+                  </div>
+                  <div class="form-check col-form-label" style="width: 100px;">
+                    <input class="form-check-input" type="radio" name="insole" id="insole2" v-model="insole" value="7">
+                    <label class="form-check-label" for="insole2">
+                      insole2
+                    </label>
+                  </div>
+                  <div class="form-check col-form-label" style="width: 100px;">
+                    <input class="form-check-input" type="radio" name="insole" id="insole3" v-model="insole" value="30" >
+                    <label class="form-check-label" for="insole3">
+                      insole3
+                    </label>
+                  </div>
                 </div>
-                <div class="col-2 text-end">
-                  <button class="btn btn-secondary" @click="searchLog()">조회</button>
+                <div class="d-flex justify-content-between" style="width: 200px;">
+                  <div><button class="btn btn-outline-secondary" @click="start()">시작</button></div>
+                  <div><button class="btn btn-outline-secondary" @click="reset()">리셋</button></div>
+                  <div><button class="btn btn-outline-secondary" @click="save()">저장</button></div>
                 </div>
               </div>
-              <!--              </form>-->
             </div>
           </div><!--/ 검색조건 -->
-        </div>
-      </div>
-
-      <div class="row">
-        <div class=col>
-          aaa
+          <div>
+            <div class="editable" contenteditable="true">
+              {{rawData}}
+            </div>
+          </div>
         </div>
         <div class=col>
           <div class="row">
             <div class="card">
-              <v-chart :option="option1" style="min-height: 300px;" class="echart" />
-<!--              <v-chart :option="option1" style="min-height: 300px;" class="echart" />-->
-<!--              <v-chart :option="option1" style="min-height: 300px;" class="echart" />-->
+              <v-chart :option="option1" style="min-height: 250px;" class="echart" />
+              <v-chart :option="option2" style="min-height: 250px;" class="echart" />
+              <v-chart :option="option3" style="min-height: 250px;" class="echart" />
             </div>
           </div>
-          <div class="row">
-            2
-          </div>
-          <div class="row">
-            3
-          </div>
+
         </div>
       </div>
 
@@ -63,7 +71,6 @@
 <script>
 import api from '@/api/api';
 import utils from "@/utils/utils";
-import io from 'socket.io-client'
 
 export default {
   name: "DeviceLog",
@@ -73,11 +80,98 @@ export default {
       search: {
         deviceCode:'',
         insoleNum:'',
-        idx:0
+        idx:0,
+        next:0,
+        insole:0
       },
       idx:0,
+      rawData:'',
       option1: {
         title:{text:"ACC"},
+        tooltip:{trigger: 'axis'},
+        elements: {
+          point:{
+            pointStyle:'cross'
+          },
+        },
+
+        // pointBorderColor:'rgba(0, 0, 0, 0.1)',
+        legend: {
+          data: ['X', 'Y', 'Z']
+        },
+        xAxis: {
+          type: 'value',
+          name:'Iteration'
+        },
+        yAxis:{
+          type:'value',
+          name:'value'
+        },
+        series: [
+          {
+            name: 'X',
+            type: 'line',
+            showSymbol: false,
+            data: []
+          },
+          {
+            name: 'Y',
+            type: 'line',
+            showSymbol: false,
+            data: []
+          },
+          {
+            name: 'Z',
+            type: 'line',
+            showSymbol: false,
+            data: []
+          }
+        ]
+      },
+      option2: {
+        title:{text:"GYR"},
+        tooltip:{trigger: 'axis'},
+        elements: {
+          point:{
+            pointStyle:'cross'
+          },
+        },
+
+        // pointBorderColor:'rgba(0, 0, 0, 0.1)',
+        legend: {
+          data: ['X', 'Y', 'Z']
+        },
+        xAxis: {
+          type: 'value',
+          name:'Iteration'
+        },
+        yAxis:{
+          type:'value',
+          name:'value'
+        },
+        series: [
+          {
+            name: 'X',
+            type: 'line',
+            showSymbol: false,
+            data: []
+          },
+          {
+            name: 'Y',
+            type: 'line',
+            showSymbol: false,
+            data: []
+          },
+          {
+            name: 'Z',
+            type: 'line',
+            showSymbol: false,
+            data: []
+          }
+        ]
+      },
+      option3: {
+        title:{text:"MAG"},
         tooltip:{trigger: 'axis'},
         elements: {
           point:{
@@ -123,7 +217,7 @@ export default {
     }
   },
   mounted() {
-    this.get_message();
+    this.get_message(0);
     // this.searchLog();
 
   },
@@ -145,25 +239,41 @@ export default {
       }
 
     },
-    async get_message() {
+    async get_message(next_idx) {
       console.log("get_messate")
       const param = {
-        "protocolId":2, "idx":1
+        "protocolId":2, "idx":next_idx
       }
       const res = await api.selDeviceLog(param);
       if(res.data.status === "SUCCESS") {
         let dataList = res.data.data;
 
         const data = dataList.map(item => Object.values(item))
+        console.log(data)
 
+        this.next = data[data.length - 1][1]
         data.forEach(function (val) {
-
+          let displayVal = [val[1]]
+          for(var i=3; i < 12; i++) {
+            displayVal.push(val[i])
+          }
+          this.rawData = (displayVal.join()).concat('\n').concat(this.rawData)
           this.option1.series[0].data.push([this.idx, val[3]])
           this.option1.series[1].data.push([this.idx, val[4]])
           this.option1.series[2].data.push([this.idx, val[5]])
+
+          this.option2.series[0].data.push([this.idx, val[6]])
+          this.option2.series[1].data.push([this.idx, val[7]])
+          this.option2.series[2].data.push([this.idx, val[8]])
+
+          this.option3.series[0].data.push([this.idx, val[9]])
+          this.option3.series[1].data.push([this.idx, val[10]])
+          this.option3.series[2].data.push([this.idx, val[11]])
+
+
           this.idx++;
         }.bind(this))
-        console.log(this.option1.series[0].data)
+
       }
     }
 
@@ -174,7 +284,9 @@ export default {
 
 
     // setInterval(() => {
-    //   this.get_message()
+    //   if(this.next > 0) {
+    //     this.get_message(this.next)
+    //   }
     // }, 1000)
   }
 }
@@ -182,5 +294,12 @@ export default {
 </script>
 
 <style scoped>
-
+div.editable {
+  width: 100%;
+  height: 650px;
+  border: 1px solid #000000;
+  background-color: #1a1e21;
+  color: #3dd5f3;
+  overflow-y: auto;
+}
 </style>
