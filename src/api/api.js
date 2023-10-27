@@ -94,9 +94,18 @@ export default {
 	selLoginLog(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/login/log', param)
 	},
-
+	insDevicePtl(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/device/ins', param)
+	},
 	selDeviceLog(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/device/log', param)
+	},
+
+	saveDeviceLog(param) {
+		return http.postParamFileDn(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/device/download', param)
+	},
+	resetDeviceLog(param) {
+		return http.postParam(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/device/reset', param)
 	},
 	// 공통코드 가져오기
 	getCommCode(params) {

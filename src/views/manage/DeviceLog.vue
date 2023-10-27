@@ -7,43 +7,52 @@
     <section class="section dashboard">
       <div class="row">
         <div class=col>
-          <div class="card">
+          <div class="card" style="width: 800px;">
             <div class="card-body pb-0">
-              <div class="d-flex justify-content-start">
+              <div class="d-flex justify-content-start" >
                 <div class="d-flex justify-content-start" style="width: 250px;">
-                  <label for="deviceID" class="col-form-label pe-4">ID</label>
-                  <input v-model="search.deviceCode" name="textfield" type="text" id="IMEI" class="form-control d-inline-flex" style="width: 180px;">
+                  <div class="col">
+                    <label for="deviceID" class="col-form-label pe-4">ID</label>
+                    <input v-model="deviceCode" name="textfield" type="text" id="IMEI" class="form-control d-inline-flex" style="width: 180px;">
+                  </div>
                 </div>
-                <div class="d-flex justify-content-start" style="width: 400px;">
-                  <div class="form-check col-form-label" style="width: 100px;">
-                    <input class="form-check-input" type="radio" name="insole" id="insole1" v-model="insole" value="1">
+                <div class="col" style="width: 200px;">
+                  <div class="d-flex" style="width: 100px;">
+                    <input class="form-check-input" type="radio" name="insole" id="insole1" v-model="insole" value="0">
                     <label class="form-check-label" for="insole1">
                       insole1
                     </label>
                   </div>
-                  <div class="form-check col-form-label" style="width: 100px;">
-                    <input class="form-check-input" type="radio" name="insole" id="insole2" v-model="insole" value="7">
+                  <div class="d-flex" style="width: 100px;">
+                    <input class="form-check-input" type="radio" name="insole" id="insole2" v-model="insole" value="1">
                     <label class="form-check-label" for="insole2">
                       insole2
                     </label>
                   </div>
-                  <div class="form-check col-form-label" style="width: 100px;">
-                    <input class="form-check-input" type="radio" name="insole" id="insole3" v-model="insole" value="30" >
+                  <div class="d-flex" style="width: 100px;">
+                    <input class="form-check-input" type="radio" name="insole" id="insole3" v-model="insole" value="2" >
                     <label class="form-check-label" for="insole3">
                       insole3
                     </label>
                   </div>
                 </div>
-                <div class="d-flex justify-content-between" style="width: 200px;">
-                  <div><button class="btn btn-outline-secondary" @click="start()">시작</button></div>
-                  <div><button class="btn btn-outline-secondary" @click="reset()">리셋</button></div>
-                  <div><button class="btn btn-outline-secondary" @click="save()">저장</button></div>
+                <div class="d-flex flex-column bd-highlight mb-3" style="width: 200px;">
+                  <div class="p-2 bd-highlight"><button v-if="!incoming && counter == 60" class="btn btn-outline-secondary" style="width: 100px;height: 50px" @click="start()">Start</button></div>
+                  <div class="p-2 bd-highlight"><button v-if="!incoming && counter == 0" class="btn btn-outline-secondary" style="width: 100px;height: 50px" @click="reset()">Reset</button></div>
+
+                  <div class="p-2 bd-highlight" style="width: 100px;"><button v-if="!incoming && counter == 0" class="btn btn-outline-secondary" style="width: 100px;height: 30px" @click="save()">Save</button></div>
                 </div>
+                <div class="d-flex flex-column bd-highlight mb-3" style="width: 200px;">
+                  <div class="p-2 bd-highlight" >Count down</div>
+                  <div class="p-2 bd-highlight counter" contenteditable="false" >{{counter}}</div>
+
+                </div>
+
               </div>
             </div>
           </div><!--/ 검색조건 -->
           <div>
-            <div class="editable" contenteditable="true">
+            <div class="editable" contenteditable="false">
               {{rawData}}
             </div>
           </div>
@@ -51,7 +60,7 @@
         <div class=col>
           <div class="row">
             <div class="card">
-              <v-chart :option="option1" style="min-height: 250px;" class="echart" />
+              <v-chart :option="option1" style="min-height: 250px; width: 100%" class="echart" />
               <v-chart :option="option2" style="min-height: 250px;" class="echart" />
               <v-chart :option="option3" style="min-height: 250px;" class="echart" />
             </div>
@@ -71,21 +80,23 @@
 <script>
 import api from '@/api/api';
 import utils from "@/utils/utils";
+import router from "@/router/router";
 
 export default {
   name: "DeviceLog",
   data() {
     return {
-      datatable:'',
-      search: {
-        deviceCode:'',
-        insoleNum:'',
-        idx:0,
-        next:0,
-        insole:0
-      },
       idx:0,
+      deviceLogSeq:0,
+      next_seq:0,
       rawData:'',
+      counter:60,
+      interval: '',
+      incoming:false,
+      insole:0,
+      devicePhoneNumber:['01229834851'],
+      deviceCode:'',
+      devicePtlSeq:0,
       option1: {
         title:{text:"ACC"},
         tooltip:{trigger: 'axis'},
@@ -217,41 +228,77 @@ export default {
     }
   },
   mounted() {
-    this.get_message(0);
+    // this.get_message();
     // this.searchLog();
 
   },
   methods: {
-    calcPeriod() {
-      let today = new Date();
-      this.startDate = utils.getYmd10(today);
-      this.endDate = utils.getYmd10(today);
-    },
-    async searchLog() {
-      this.search.sdate = this.startDate.replaceAll('-','') + "000000"
-      this.search.edate = this.endDate.replaceAll('-','') + "999999"
-      const param = this.search;
-      const res = await api.selLoginLog(param);
-      if(res.data.status === "SUCCESS") {
-        let dataList = res.data.data;
 
-        this.datatable = this.$datatable(this.datatable, this.headings, dataList, this.columns)
+    countdown() {
+      if(this.counter === 0) {
+        clearInterval(this.interval);
+        this.incoming = false
+      }else{
+        this.counter--
+        this.get_message()
+      }
+    },
+    async start() {
+      if(utils.isEmpty(this.deviceCode)) {
+        alert("Code 정보를 입력 하세요")
+        return false;
+      }
+      let param = {
+        "deviceCode":this.deviceCode,
+        "devicePhoneNumber":this.devicePhoneNumber[this.insole],
+        "insoleNum":this.insole
+      }
+
+      const res = await api.insDevicePtl(param);
+      if(res.data.status === "SUCCESS") {
+         this.devicePtlSeq = res.data.data;
+        console.log(this.devicePtlSeq)
+        this.counter = 60
+        // this.incoming = true
+        this.interval = setInterval(this.countdown, 1000);
       }
 
     },
-    async get_message(next_idx) {
-      console.log("get_messate")
+    save() {
+      let param = {"devicePtlSeq": this.devicePtlSeq}
+
+      api.saveDeviceLog(param).then(res => {
+        let fileName = this.deviceCode + ".csv"
+        console.log(fileName)
+        utils.fileDownload(res.data, fileName)
+        router.go(0)
+      })
+
+
+    },
+    async reset(){
+      let param = {"devicePtlSeq": this.devicePtlSeq}
+      await api.resetDeviceLog(param)
+      router.go(0)
+    },
+    async get_message() {
+      if(this.devicePtlSeq === 0) return;
       const param = {
-        "protocolId":2, "idx":next_idx
+        "devicePtlSeq":this.devicePtlSeq, "deviceLogSeq":this.next_seq
       }
       const res = await api.selDeviceLog(param);
       if(res.data.status === "SUCCESS") {
         let dataList = res.data.data;
 
         const data = dataList.map(item => Object.values(item))
-        console.log(data)
 
-        this.next = data[data.length - 1][1]
+        if(data.length > 0) {
+          // this.counter--
+          if(this.next_seq === 0) this.incoming = true
+
+          this.next_seq = data[data.length - 1][0]
+
+        }
         data.forEach(function (val) {
           let displayVal = [val[1]]
           for(var i=3; i < 12; i++) {
@@ -295,11 +342,21 @@ export default {
 
 <style scoped>
 div.editable {
-  width: 100%;
+  width: 800px;
   height: 650px;
   border: 1px solid #000000;
   background-color: #1a1e21;
   color: #3dd5f3;
   overflow-y: auto;
+}
+div.counter {
+  width: 150px;
+  height: 60px;
+  border: 1px solid #000000;
+  background-color: #ffc107;
+  color: #000000;
+  font-size: 20pt;
+  text-align: center;
+  //overflow-y: auto;
 }
 </style>

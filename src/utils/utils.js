@@ -130,5 +130,20 @@ export default {
         let userInfo = dToken;
 
         return userInfo;
-    }
+    },
+
+    // 파일 다운로드
+    fileDownload(blob, fileName) {
+        const link = document.createElement('a');
+
+        if(window.navigator.msSaveOrOpenBlob) { // IE blob Download
+            link.onclick = function() {
+                window.navigator.msSaveOrOpenBlob(blob, fileName);
+            };
+        } else {
+            link.href = window.URL.createObjectURL(blob);
+            link.download = fileName;
+        }
+        link.click();
+    },
 }
