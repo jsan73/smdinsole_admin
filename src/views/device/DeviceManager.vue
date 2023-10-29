@@ -4,6 +4,9 @@
     <h4 class="my-4 ps-3">
       <i class="bi bi-calendar2-check"></i> 기기 관리
       <small class="text-muted fs-6">기기 정보를 등록 및 수정 할 수 있습니다.</small>
+      <div class="text-end">
+        <button class="btn btn-primary mt-2 ms-1" @click="gogo()">기기 데이터 분석</button>
+      </div>
     </h4>
 
     <section class="section dashboard">
@@ -136,6 +139,9 @@ export default {
 
   },
   methods: {
+    gogo() {
+      this.$router.push('/devicelog')
+    },
     addDevice() {
       this.$open(
           "/devicepopup",

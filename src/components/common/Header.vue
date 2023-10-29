@@ -15,6 +15,7 @@
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Orgc'?'active':'']" @click="goMenu('/orgc')" id="orgc">기관 관리</a></li>
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LocationLog'?'active':'']" @click="goMenu('/loclog')" id="orgc">위치정보 확인</a></li>
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LoginLog'?'active':'']" @click="goMenu('/loginlog')" id="orgc">접근기록 확인</a></li>
+
           </ul>
           <div class="tLogo_login">
             <button type="button" class="btn btn-secondary" @click="goLogout">

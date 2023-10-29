@@ -5,8 +5,8 @@
       <i class="bi bi-calendar2-check"></i> 관리자 접근 기록 확인
     </h4>
     <section class="section dashboard">
-      <div class="row">
-        <div class=col>
+      <div class="flex-container">
+        <div class="flex-item-none">
           <div class="card" style="width: 800px;">
             <div class="card-body pb-0">
               <div class="d-flex justify-content-start" >
@@ -57,14 +57,14 @@
             </div>
           </div>
         </div>
-        <div class=col>
-          <div class="row">
+        <div class="flex-item">
+<!--          <div class="row">-->
             <div class="card">
               <v-chart :option="option1" style="min-height: 250px; width: 100%" class="echart" />
               <v-chart :option="option2" style="min-height: 250px;" class="echart" />
               <v-chart :option="option3" style="min-height: 250px;" class="echart" />
             </div>
-          </div>
+<!--          </div>-->
 
         </div>
       </div>
@@ -94,7 +94,7 @@ export default {
       interval: '',
       incoming:false,
       insole:0,
-      devicePhoneNumber:['01229834851'],
+      devicePhoneNumber:['01229834851','01229834851','01229834851'],
       deviceCode:'',
       devicePtlSeq:0,
       option1: {
@@ -112,7 +112,10 @@ export default {
         },
         xAxis: {
           type: 'value',
-          name:'Iteration'
+          name:'Count',
+          min:0,
+          max:2000,
+          interval:100
         },
         yAxis:{
           type:'value',
@@ -123,7 +126,14 @@ export default {
             name: 'X',
             type: 'line',
             showSymbol: false,
-            data: []
+            data: [],
+            // lineStyle: {
+            //   width:0.5,
+            //
+            // },
+            // itemStyle: {
+            //   color: '#555555'
+            // },
           },
           {
             name: 'Y',
@@ -154,7 +164,10 @@ export default {
         },
         xAxis: {
           type: 'value',
-          name:'Iteration'
+          name:'Count',
+          min:0,
+          max:2000,
+          interval:100
         },
         yAxis:{
           type:'value',
@@ -196,7 +209,10 @@ export default {
         },
         xAxis: {
           type: 'value',
-          name:'Iteration'
+          name:'Count',
+          min:0,
+          max:2000,
+          interval:100
         },
         yAxis:{
           type:'value',
@@ -319,6 +335,7 @@ export default {
 
 
           this.idx++;
+          console.log(this.idx)
         }.bind(this))
 
       }
