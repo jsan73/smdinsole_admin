@@ -2,7 +2,7 @@
   <main class="container-fluid">
 
     <h4 class="my-4 ps-3">
-      <i class="bi bi-calendar2-check"></i> 관리자 접근 기록 확인
+      <i class="bi bi-calendar2-check"></i> 기기 데이터 분석
     </h4>
     <section class="section dashboard">
       <div class="flex-container">
@@ -94,7 +94,7 @@ export default {
       interval: '',
       incoming:false,
       insole:0,
-      devicePhoneNumber:['01229834851','01229834851','01229834851'],
+      devicePhoneNumber:['01229834851','01229834813','01229834786'],
       deviceCode:'',
       devicePtlSeq:0,
       option1: {
