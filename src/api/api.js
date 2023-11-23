@@ -97,6 +97,9 @@ export default {
 	insDevicePtl(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/device/ins', param)
 	},
+	stopDevicePtl(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/device/stop', param)
+	},
 	selDeviceLog(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/device/log', param)
 	},
