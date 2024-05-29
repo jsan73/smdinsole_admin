@@ -10,8 +10,14 @@
           <tbody>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">IMEI</th>
-            <td><input type="text"  @input="clear" v-model="device.deviceIMEI" id="userName" name="userName" class="form-control d-inline-flex" style="width: 150px;" :readonly="popupState == 'upd'">
+            <td><input type="text"  @input="clear" v-model="device.deviceIMEI" id="userName" name="userName" class="form-control d-inline-flex" style="width: 180px;" :readonly="popupState == 'upd'">
               &nbsp;<button v-if="popupState == 'ins'" type="button" class="btn btn-secondary btn-sm" @click="chkIMEI">일련번호 체크</button>
+            </td>
+          </tr>
+          <tr>
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">ICCID</th>
+            <td>
+              <input type="text"  @input="clear" v-model="device.iccId" id="iccID" name="iccID" class="form-control d-inline-flex" style="width: 250px;" >&nbsp;
             </td>
           </tr>
           <tr>
@@ -89,6 +95,7 @@ export default {
       device: {
         deviceNo:0,
         deviceIMEI:'',
+        iccId:'',
         deviceNumber:'',
         guardPhone:'',
         memberDate:'',
@@ -168,6 +175,10 @@ export default {
           return;
         }
       }
+      if(this.device.orgcNo === ""){
+        alert("소속 기관은 필수 입니다.");
+        return;
+      }
       api.updDevice(this.device).then(res => {
         if(res.data.status === "SUCCESS") {
           alert("수정 되었습니다.")
@@ -192,6 +203,10 @@ export default {
     regDevice() {
       if(this.device.chkdevice === "") {
         alert("IMEI 체크를 먼저 진행해 주세요.");
+        return;
+      }
+      if(this.device.orgcNo === ""){
+        alert("소속 기관은 필수 입니다.");
         return;
       }
 

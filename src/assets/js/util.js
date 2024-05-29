@@ -48,7 +48,8 @@ export default {
 			if(datatable) datatable.destroy();
 			return new window.simpleDatatables.DataTable(tables, {
 				data: dataList,
-				columns: columns
+				columns: columns,
+				perPageSelect: [5, 10, 15, 20, 25, 50, 100],
 			});
 		}
 

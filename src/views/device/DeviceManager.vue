@@ -119,7 +119,8 @@ export default {
           }
         },
         {select:2, scope:'row', render: this.telForm},
-        {select:3, scope:'row', render: this.telForm},
+        {select:3, scope:'row'},
+        {select:4, scope:'row', render: this.telForm},
         // {select:4, scope:'row'},
         {select:5, scope:'row', render: this.dateForm},
         {select:6, scope:'row', render: this.dateForm},
@@ -127,7 +128,7 @@ export default {
         {select:8, scope:'row'},
       ],
       // dataList:[],
-      headings:["No", "IMEI", "기기 전화번호", "사용자 전화번호0", "소속 기관", "가입일", "만료일", "마지막 신호", "위치전송횟수"],
+      headings:["No", "IMEI", "기기 전화번호", "ICCID", "사용자 전화번호0", "소속 기관", "가입일", "만료일", "마지막 신호", "위치전송횟수"],
 
     }
   },

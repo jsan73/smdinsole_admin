@@ -68,7 +68,7 @@
 
               <!-- Bar Chart -->
 <!--              <div id="barChart" style="min-height: 400px;" class="echart"></div>-->
-              <v-chart :option="acid" style="min-height: 400px;" class="echart" />
+              <v-chart :option="acid" style="min-height: 400px; min-width:200px; height: 400px;" class="echart" />
 <!--              <script>-->
 <!--                document.addEventListener("DOMContentLoaded", () => {-->
 <!--                  echarts.init(document.querySelector("#barChart")).setOption({-->
@@ -101,7 +101,7 @@
 
               <!-- Bar Chart -->
 <!--              <div id="barChart1" style="min-height: 400px;" class="echart"></div>-->
-              <v-chart :option="acidType" style="min-height: 400px;" class="echart" />
+              <v-chart :option="acidType" style="min-height: 400px; min-width:200px; height: 400px;" class="echart" />
 <!--              <script>-->
 <!--                document.addEventListener("DOMContentLoaded", () => {-->
 <!--                  echarts.init(document.querySelector("#barChart1")).setOption({-->
@@ -131,7 +131,7 @@
               <h5 class="card-title">발생시간대별 건수 <span>({{ alram_count3 }}건)</span></h5>
               <!-- Bar Chart -->
 <!--              <div id="barChart2" style="min-height: 400px;" class="echart"></div>-->
-              <v-chart :option="acidTime" style="min-height: 400px;" class="echart" />
+              <v-chart :option="acidTime" style="min-height: 400px; min-width:200px; height: 400px;" class="echart" />
 <!--              <script>-->
 <!--                document.addEventListener("DOMContentLoaded", () => {-->
 <!--                  echarts.init(document.querySelector("#barChart2")).setOption({-->
