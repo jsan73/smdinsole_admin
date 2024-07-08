@@ -17,11 +17,15 @@
             <div class="card-body pb-0">
 <!--              <form>-->
                 <div class="row my-1">
-                  <div class="col-3 d-flex">
+                  <div class="col-2 d-flex">
                     <label for="deviceID" class="col-form-label pe-4">IMEI</label>
                     <input v-model="search.deviceIMEI" name="textfield" type="text" id="IMEI" class="form-control d-inline-flex" style="width: 180px;">
                   </div>
-                  <div class="col-4 d-flex">
+                  <div class="col-2 d-flex">
+                    <label for="deviceID" class="col-form-label pe-4">ICCID</label>
+                    <input v-model="search.iccId" name="textfield" type="text" id="ICCID" class="form-control d-inline-flex" style="width: 280px;">
+                  </div>
+                  <div class="col-3 d-flex">
                     <label for="Set" class="col-form-label pe-4">사용자 전화번호0</label>
                     <input v-model="search.guardPhone" name="textfield" type="text" id="phone" class="form-control d-inline-flex" style="width: 180px;">
                     <!-- <select id="isAssign" class="form-select d-inline-flex" style="width: 120px;">
@@ -121,11 +125,11 @@ export default {
         {select:2, scope:'row', render: this.telForm},
         {select:3, scope:'row'},
         {select:4, scope:'row', render: this.telForm},
-        // {select:4, scope:'row'},
-        {select:5, scope:'row', render: this.dateForm},
+        {select:5, scope:'row'},
         {select:6, scope:'row', render: this.dateForm},
-        {select:7, scope:'row', render: this.lastSignal},
-        {select:8, scope:'row'},
+        {select:7, scope:'row', render: this.dateForm},
+        {select:8, scope:'row', render: this.lastSignal},
+        {select:9, scope:'row'},
       ],
       // dataList:[],
       headings:["No", "IMEI", "기기 전화번호", "ICCID", "사용자 전화번호0", "소속 기관", "가입일", "만료일", "마지막 신호", "위치전송횟수"],
@@ -157,7 +161,7 @@ export default {
       return utils.convertFromStrToDate(data);
     },
     lastSignal(data) {
-
+      console.log(data);
       const signal = data.split(',')
       //console.log(signal[2]);
       var reportDate = signal[0];
@@ -167,12 +171,15 @@ export default {
       switch (signal[1]) {
         case '4':
           cell = "icon_GPS.svg";
+          console.log("icon_GPS.svg")
           break;
         case '5':
           cell = "icon_Cell.svg";
+          console.log("icon_Cell.svg")
           break;
         case '6':
           cell = "icon_WIFI.svg";
+          console.log("icon_WIFI.svg")
           break;
       }
 

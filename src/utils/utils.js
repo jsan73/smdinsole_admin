@@ -83,7 +83,8 @@ export default {
         let d2 = new Date(date2);
         let diff = d2.getTime() - d1.getTime();
 
-      return Math.abs(diff  / (60 * 1000));
+        // 분차이 계산
+        return Math.abs(diff  / (60 * 1000));
     },
 
 
