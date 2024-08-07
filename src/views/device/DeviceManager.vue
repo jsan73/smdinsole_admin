@@ -4,7 +4,7 @@
     <h4 class="my-4 ps-3">
       <i class="bi bi-calendar2-check"></i> 기기 관리
       <small class="text-muted fs-6">기기 정보를 등록 및 수정 할 수 있습니다.</small>
-      <div class="text-end">
+      <div class="text-end" v-if="isDev">
         <button class="btn btn-primary mt-2 ms-1" @click="gogo()">기기 데이터 분석</button>
       </div>
     </h4>
@@ -144,6 +144,12 @@ export default {
 
   },
   methods: {
+    isDev() {
+      if(process.env.VUE_APP_MODE === "dev") {
+        return true;
+      }
+      return false;
+    },
     gogo() {
       this.$router.push('/devicelog')
     },
@@ -166,24 +172,26 @@ export default {
       //console.log(signal[2]);
       var reportDate = signal[0];
 
-      //(GPS:4, CELL:5, SAVE-WIFI:6,없음:7)
+      //(GPS:4, CELL:5, 4,5가 아니면 WIFI)
       var cell = "icon_none.svg";
-      switch (signal[1]) {
-        case '4':
-          cell = "icon_GPS.svg";
-          console.log("icon_GPS.svg")
-          break;
-        case '5':
-          cell = "icon_Cell.svg";
-          console.log("icon_Cell.svg")
-          break;
-        case '6':
-          cell = "icon_WIFI.svg";
-          console.log("icon_WIFI.svg")
-          break;
+      if(signal[1] !== undefined) {
+        switch (signal[1]) {
+          case '4':
+            cell = "icon_GPS.svg";
+            console.log("icon_GPS.svg")
+            break;
+          case '5':
+            cell = "icon_Cell.svg";
+            console.log("icon_Cell.svg")
+            break;
+          default:
+            cell = "icon_WIFI.svg";
+            console.log("icon_WIFI.svg", signal[1])
+            break;
+        }
       }
-
       var battery = "battery/0.svg";
+      console.log("베터리", signal[2])
       switch (signal[2]) {
         case '0':
           battery = "battery/Warn.svg";
