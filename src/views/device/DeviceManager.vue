@@ -4,7 +4,7 @@
     <h4 class="my-4 ps-3">
       <i class="bi bi-calendar2-check"></i> 기기 관리
       <small class="text-muted fs-6">기기 정보를 등록 및 수정 할 수 있습니다.</small>
-      <div class="text-end" v-if="isDev">
+      <div class="text-end" v-if="isDev()">
         <button class="btn btn-primary mt-2 ms-1" @click="gogo()">기기 데이터 분석</button>
       </div>
     </h4>
@@ -60,9 +60,7 @@
                               DataTables</a> library. Just add <code>.datatable</code> class name to any table you wish to conver to a datatable</p> -->
 
               <!-- Table with stripped rows -->
-              <table class="table table-borderless datatable " ref="datatable">
-
-              </table>
+              <table class="table table-borderless datatable " ref="datatable">ㄱ</table>
               <!-- End Table with stripped rows -->
               <p class="text-end">
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>-->
@@ -145,7 +143,8 @@ export default {
   },
   methods: {
     isDev() {
-      if(process.env.VUE_APP_MODE === "dev") {
+      console.log("process.env.VUE_APP_MODE",process.env.VUE_APP_MODE)
+      if(process.env.VUE_APP_MODE === "dev" || process.env.VUE_APP_MODE === "local") {
         return true;
       }
       return false;
@@ -172,26 +171,22 @@ export default {
       //console.log(signal[2]);
       var reportDate = signal[0];
 
-      //(GPS:4, CELL:5, 4,5가 아니면 WIFI)
+      //(GPS:4, CELL:5, WIFI:6)
       var cell = "icon_none.svg";
       if(signal[1] !== undefined) {
         switch (signal[1]) {
           case '4':
             cell = "icon_GPS.svg";
-            console.log("icon_GPS.svg")
             break;
           case '5':
             cell = "icon_Cell.svg";
-            console.log("icon_Cell.svg")
             break;
-          default:
-            cell = "icon_WIFI.svg";
-            console.log("icon_WIFI.svg", signal[1])
+          case '6':
+            cell = "icon_WiFi.svg";
             break;
         }
       }
       var battery = "battery/0.svg";
-      console.log("베터리", signal[2])
       switch (signal[2]) {
         case '0':
           battery = "battery/Warn.svg";
