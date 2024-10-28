@@ -1,8 +1,7 @@
 <template>
   <div class="m-4">
     <h5 class="pb-2">
-      <i class="bi bi-caret-right-square"></i> <div v-if="popupState=='ins'">기기 등록</div><div v-else>기기 수정</div>
-    </h5>
+      <i class="bi bi-caret-right-square"></i> {{popupTitle}}</h5>
 
     <div class="card">
       <div class="card-body pb-0">
@@ -71,6 +70,12 @@
               <input type="date" v-model="regDate" class="form-control" style="width: 150px;">
             </td>
           </tr>
+          <tr>
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">만료일</th>
+            <td>
+              <input type="date" v-model="expDate" class="form-control" style="width: 150px;">
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
@@ -110,18 +115,30 @@ export default {
       gphone2:'',
       gphone3:'',
       regDate:'',
+      expDate:'',
       deviceIMEI:'',
       popupState:"ins",
       orgGuardPhone:'',
 
-      orgcList:''
+      orgcList:'',
+      popupTitle: '기기 등록'
     }
+  },
+  watch:{
+    regDate() {
+      // console.log(this.selectAddr2)
+      // console.log(this.regDate)
+      // console.log(utils.getYmd10(utils.addYear(this.regDate, 2)));
+      this.expDate = utils.getYmd10(utils.addYear(this.regDate, 2));
+    }
+
   },
   mounted() {
     this.deviceIMEI = this.$route.query.device;
     if(utils.isNotEmpty(this.deviceIMEI )) {
       this.popupState = "upd"
       this.getDeviceInfo(this.deviceIMEI);
+      this.popupTitle = '기기 수정'
     }else{
       // this.geolocate();
     }
@@ -150,6 +167,7 @@ export default {
           }
           if(utils.isNotEmpty(this.device.memberDate)) {
             this.regDate = utils.dateForm(this.device.memberDate);
+            this.expDate = utils.dateForm(this.device.expDate);
           }
         }
     },
@@ -160,9 +178,19 @@ export default {
       }
 
       this.device.memberDate = this.regDate.replace(/-/gi, "");
+      this.device.expDate = this.expDate.replace(/-/gi, "");
     },
+
     async insDevice() {
       this.setDevice();
+      if(!utils.telValidChk(this.device.deviceNumber)) {
+        alert("기기 전화번호를 다시 확인해 주세요.")
+        return;
+      }
+      if(utils.isNotEmpty(this.device.guardPhone) && !utils.telValidChk(this.device.guardPhone)) {
+        alert("사용자 전화번호를 다시 확인해 주세요.")
+        return;
+      }
       const res = await api.insDevice(this.device);
       if(res.data.status === "SUCCESS") {
           alert("추가 되었습니다.")
@@ -170,6 +198,14 @@ export default {
     },
     updDevice() {
       this.setDevice();
+      if(!utils.telValidChk(this.device.deviceNumber)) {
+        alert("기기 전화번호를 다시 확인해 주세요.")
+        return;
+      }
+      if(utils.isNotEmpty(this.device.guardPhone) && !utils.telValidChk(this.device.guardPhone)) {
+        alert("사용자 전화번호를 다시 확인해 주세요.")
+        return;
+      }
       if(this.orgGuardPhone != this.device.guardPhone && this.device.deviceCount > 1) {
         if(!confirm("사용자 전화번호0 은 다른 기기에서도 사용중입니다.\n수정하시면 다른 기기 전화 번호도 변경 됩니다.")){
           return;
@@ -247,6 +283,10 @@ export default {
       const res = await api.selOrgcList(param);
       if(res.data.status === "SUCCESS") {
         this.orgcList = res.data.data;
+
+        for(let i = 0; i < this.orgcList.length; i++ ){
+          this.orgcList[i].ORGC_NAME = this.orgcList[i].ORGC_NAME.split(",")[1];
+        }
       }
 
     },

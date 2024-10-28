@@ -43,7 +43,7 @@
               </table>
               <!-- End Table with stripped rows -->
               <p  class="text-end">
-                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>
+                <button class="btn btn-primary mt-2 ms-1" @click="allList">전체목록</button>
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addUser()">사용자 등록</button>-->
               </p>
             </div>
@@ -101,6 +101,7 @@ export default {
     },
     async selectGuardList() {
       const param = this.search;
+      param.guardPhone = param.guardPhone.replaceAll("-","")
       console.log(param)
       const res = await api.selGuardList(param);
       if(res.data.status === "SUCCESS") {
@@ -108,6 +109,12 @@ export default {
 
         this.datatable = this.$datatable(this.datatable, this.headings, dataList, this.columns)
       }
+    },
+
+    async allList() {
+      this.search.guardPhone = ""
+      this.search.guardName = ""
+      this.selectGuardList()
     }
   },
   created() {

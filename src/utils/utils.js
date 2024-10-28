@@ -36,6 +36,14 @@ export default {
         return !this.isNull(str);
     },
 
+
+
+    telValidChk(tel) {
+        const pattern = /^(01[016789]{1}|02|0[3-9]{1}[0-9]{1})-?[0-9]{3,4}-?[0-9]{4}$/;
+        if(pattern.test(tel) === false) { return false; }
+        else { return true; }
+    },
+
     telForm(str, type) {
         let rs = "";
         if (this.isNotEmpty(str)) {
@@ -45,6 +53,10 @@ export default {
                 } else {
                     rs = str.replace(/(\d{3})(.{4})(\d{4})/, '$1-$2-$3');
                 }
+            }else if(str.length === 10) {
+                rs = str.replace(/(\d{2})(.{4})(\d{4})/, '$1-$2-$3');
+            }else if(str.length === 9) {
+                rs = str.replace(/(\d{2})(.{3})(\d{4})/, '$1-$2-$3');
             }
         }
         return rs;
@@ -76,6 +88,17 @@ export default {
 
         return  d2.getTime() - d1.getTime();
         // return Math.abs(diffDate / (1000 * 60 * 60 * 24));
+    },
+
+    addYear(inputDate, years){
+        let date = new Date(inputDate);
+
+        // Date 객체의 현재 연도에 years만큼 더합니다.
+        date.setFullYear(date.getFullYear() + years);
+
+        // 새로운 날짜를 지역 형식의 문자열로 반환합니다.
+        return date; //.toLocaleDateString();
+
     },
 
     getTimeDiff(date1, date2) {

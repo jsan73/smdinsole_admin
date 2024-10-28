@@ -87,18 +87,29 @@ export default {
       orgcList : [],
       columns:[
         {select:0, render: function(data, cell, row) {
-            let url = "/orgcpopup?orgcNo=" + data;
-            let name = "기관 수정";
-            let style = "width=650,height=480,left=0,top=0";
-            let param = "'" + url + "','" + name + "','" + style + "'";
+            // console.log(cell)
+            // let url = "/orgcpopup?orgcNo=" + data;
+            // let name = "기관 수정";
+            // let style = "width=650,height=480,left=0,top=0";
+            // let param = "'" + url + "','" + name + "','" + style + "'";
             let display = row.dataIndex + 1
-            let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + display + "</a>";
-            return html;
+            // let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + display + "</a>";
+            return display;
 
             //return row.dataIndex + 1
           }
         },
-        {select:1, scope:'row'},
+        {select:1, scope:'row', render: function (data, cell, row) {
+            let orgc_no = data.split(',')[0]
+            let orgc_name = data.split(',')[1]
+
+            let url = "/orgcpopup?orgcNo=" + orgc_no;
+            let name = "기관 수정";
+            let style = "width=650,height=480,left=0,top=0";
+            let param = "'" + url + "','" + name + "','" + style + "'";
+            let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + orgc_name + "</a>";
+            return html;
+          }},
         {select:2, scope:'row'},
         {select:3, scope:'row'},
         {select:4, scope:'row', render: this.telForm},

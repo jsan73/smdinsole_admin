@@ -46,7 +46,7 @@ export default {
       this.$router.go(-1);
     },
     goMenu(url) {
-      this.$router.push(url);
+      this.$router.push(url).catch(() => {});
     },
     goLogout() {
 

@@ -60,7 +60,7 @@
                               DataTables</a> library. Just add <code>.datatable</code> class name to any table you wish to conver to a datatable</p> -->
 
               <!-- Table with stripped rows -->
-              <table class="table table-borderless datatable " ref="datatable">ㄱ</table>
+              <table class="table table-borderless datatable " ref="datatable"></table>
               <!-- End Table with stripped rows -->
               <p class="text-end">
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>-->
@@ -217,6 +217,7 @@ export default {
     },
     async selectDeviceList() {
       const param = this.search;
+      param.guardPhone = param.guardPhone.replaceAll("-","")
       const res = await api.selDeviceList(param);
       if(res.data.status === "SUCCESS") {
         let dataList = res.data.data;

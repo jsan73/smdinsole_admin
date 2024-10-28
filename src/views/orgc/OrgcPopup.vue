@@ -1,7 +1,7 @@
 <template>
   <div class="m-4">
     <h5 class="pb-2">
-      <i class="bi bi-caret-right-square"></i> <div v-if="popupState=='ins'">기관 등록</div><div v-else>기관 수정</div>
+      <i class="bi bi-caret-right-square"></i> {{popupTitle}}
     </h5>
 
     <div class="card">
@@ -17,7 +17,7 @@
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;"scope="col">기관주소</th>
             <td><input type="text" v-model="orgc.orgcAddr" class="form-control d-inline-flex" id="orgcAddr" name="orgcAddr" >
-              <button type="button" class="btn btn-secondary btn-sm">주소검색</button>
+<!--              <button type="button" class="btn btn-secondary btn-sm">주소검색</button>-->
             </td>
           </tr>
           <tr>
@@ -29,7 +29,7 @@
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">전화번호</th>
             <td>
-              <input type="text" v-model="orgc.managerPhone" id="managerPhone" name="managerPhone" class="form-control d-inline-flex" maxlength="11">
+              <input type="text" v-model="orgc.managerPhone" id="managerPhone" name="managerPhone" class="form-control d-inline-flex" maxlength="13">
             </td>
           </tr>
           <tr>
@@ -69,6 +69,7 @@ export default {
       },
       orgcNo:'',
       popupState:"ins",
+      popupTitle:"기관 등록"
     }
   },
   mounted() {
@@ -76,8 +77,7 @@ export default {
     if(utils.isNotEmpty(this.orgcNo )) {
       this.popupState = "upd"
       this.getOrgcInfo(this.orgcNo);
-    }else{
-      // this.geolocate();
+      this.popupTitle = '기기 수정'
     }
   },
   methods: {
@@ -86,16 +86,27 @@ export default {
       let res = await api.getOrgcInfo(orgcNo);
       if(res.data.status === "SUCCESS") {
         this.orgc = res.data.data;
+        this.orgc.managerPhone = utils.telForm(this.orgc.managerPhone, 1)
       }
     },
 
     async insOrgc() {
+      if(utils.isNotEmpty(this.orgc.managerPhone) && !utils.telValidChk(this.orgc.managerPhone)) {
+        alert("사용자 전화번호를 다시 확인해 주세요.")
+        return;
+      }
+      this.orgc.managerPhone = this.orgc.managerPhone.replaceAll("-","")
       const res = await api.insOrgc(this.orgc);
       if(res.data.status === "SUCCESS") {
         alert("추가 되었습니다.")
       }
     },
     updOrgc() {
+      if(utils.isNotEmpty(this.orgc.managerPhone) && !utils.telValidChk(this.orgc.managerPhone)) {
+        alert("사용자 전화번호를 다시 확인해 주세요.")
+        return;
+      }
+      this.orgc.managerPhone = this.orgc.managerPhone.replaceAll("-","")
       api.updOrgc(this.orgc).then(res => {
         if(res.data.status === "SUCCESS") {
           alert("수정 되었습니다.")
