@@ -114,7 +114,7 @@ export default {
         {select:1, render: function(data, cell, row) {
             let url = "/devicepopup?device=" + data;
             let name = "기기 수정";
-            let style = "width=650,height=480,left=0,top=0";
+            let style = "width=650,height=580,left=0,top=0";
             let param = "'" + url + "','" + name + "','" + style + "'";
             let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + data + "</a>";
             return html;
@@ -122,15 +122,16 @@ export default {
         },
         {select:2, scope:'row', render: this.telForm},
         {select:3, scope:'row'},
-        {select:4, scope:'row', render: this.telForm},
-        {select:5, scope:'row'},
-        {select:6, scope:'row', render: this.dateForm},
+        {select:4, scope:'row'},
+        {select:5, scope:'row', render: this.telForm},
+        {select:6, scope:'row'},
         {select:7, scope:'row', render: this.dateForm},
-        {select:8, scope:'row', render: this.lastSignal},
-        {select:9, scope:'row'},
+        {select:8, scope:'row', render: this.dateForm},
+        {select:9, scope:'row', render: this.lastSignal},
+        {select:10, scope:'row'},
       ],
       // dataList:[],
-      headings:["No", "IMEI", "기기 전화번호", "ICCID", "사용자 전화번호0", "소속 기관", "가입일", "만료일", "마지막 신호", "위치전송횟수"],
+      headings:["No", "IMEI", "기기 전화번호", "ICCID", "요금제", "사용자 전화번호0", "소속 기관", "가입일", "만료일", "마지막 신호", "위치전송횟수"],
 
     }
   },
@@ -156,7 +157,7 @@ export default {
       this.$open(
           "/devicepopup",
           "기기 등록",
-          "width=650,height=480,left=0,top=0"
+          "width=650,height=580,left=0,top=0"
       );
     },
     telForm(data) {

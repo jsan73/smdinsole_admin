@@ -39,7 +39,7 @@ export default {
 
 
     telValidChk(tel) {
-        const pattern = /^(01[016789]{1}|02|0[3-9]{1}[0-9]{1})-?[0-9]{3,4}-?[0-9]{4}$/;
+        const pattern = /^(01[0126789]{1}|02|0[3-9]{1}[0-9]{1})-?[0-9]{3,4}-?[0-9]{4}$/;
         if(pattern.test(tel) === false) { return false; }
         else { return true; }
     },

@@ -16,7 +16,13 @@
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">ICCID</th>
             <td>
-              <input type="text"  @input="clear" v-model="device.iccId" id="iccID" name="iccID" class="form-control d-inline-flex" style="width: 250px;" >&nbsp;
+              <input type="text"  v-model="device.iccId" id="iccID" name="iccID" class="form-control d-inline-flex" style="width: 250px;" >&nbsp;
+            </td>
+          </tr>
+          <tr>
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">가입요금제</th>
+            <td>
+              <input type="text" v-model="device.iotPlan" id="iotPlan" name="iotPlan" class="form-control d-inline-flex" style="width: 250px;" maxlength="20">&nbsp;
             </td>
           </tr>
           <tr>
@@ -101,6 +107,7 @@ export default {
         deviceNo:0,
         deviceIMEI:'',
         iccId:'',
+        iotPlan:'',
         deviceNumber:'',
         guardPhone:'',
         memberDate:'',
@@ -182,15 +189,8 @@ export default {
     },
 
     async insDevice() {
-      this.setDevice();
-      if(!utils.telValidChk(this.device.deviceNumber)) {
-        alert("기기 전화번호를 다시 확인해 주세요.")
-        return;
-      }
-      if(utils.isNotEmpty(this.device.guardPhone) && !utils.telValidChk(this.device.guardPhone)) {
-        alert("사용자 전화번호를 다시 확인해 주세요.")
-        return;
-      }
+
+
       const res = await api.insDevice(this.device);
       if(res.data.status === "SUCCESS") {
           alert("추가 되었습니다.")
@@ -198,6 +198,7 @@ export default {
     },
     updDevice() {
       this.setDevice();
+      console.log(this.device.deviceNumber)
       if(!utils.telValidChk(this.device.deviceNumber)) {
         alert("기기 전화번호를 다시 확인해 주세요.")
         return;
@@ -237,6 +238,7 @@ export default {
       }
     },
     regDevice() {
+      this.setDevice();
       if(this.device.chkdevice === "") {
         alert("IMEI 체크를 먼저 진행해 주세요.");
         return;
@@ -245,7 +247,15 @@ export default {
         alert("소속 기관은 필수 입니다.");
         return;
       }
-
+      console.log(this.device.deviceNumber)
+      if(!utils.telValidChk(this.device.deviceNumber)) {
+        alert("기기 전화번호를 다시 확인해 주세요.")
+        return;
+      }
+      if(utils.isNotEmpty(this.device.guardPhone) && !utils.telValidChk(this.device.guardPhone)) {
+        alert("사용자 전화번호를 다시 확인해 주세요.")
+        return;
+      }
       if(this.device.chkdevice) {
         this.insDevice().then(() => {
           //opener.location.reload();
