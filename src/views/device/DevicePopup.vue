@@ -179,9 +179,18 @@ export default {
         }
     },
     setDevice() {
-      this.device.deviceNumber = this.dphone1 + this.dphone2 + this.dphone3;
+      // this.device.deviceNumber = this.dphone1 + this.dphone2 + this.dphone3;
+      if(utils.isNotEmpty(this.dphone2) && utils.isNotEmpty(this.dphone3)) {
+        this.device.deviceNumber = this.dphone1 + this.dphone2 + this.dphone3;
+      }else{
+        this.device.deviceNumber = "";
+      }
+
+
       if(utils.isNotEmpty(this.gphone2) && utils.isNotEmpty(this.gphone3)) {
         this.device.guardPhone = this.gphone1 + this.gphone2 + this.gphone3;
+      }else{
+        this.device.guardPhone = "";
       }
 
       this.device.memberDate = this.regDate.replace(/-/gi, "");
@@ -198,8 +207,7 @@ export default {
     },
     updDevice() {
       this.setDevice();
-      console.log(this.device.deviceNumber)
-      if(!utils.telValidChk(this.device.deviceNumber)) {
+      if(utils.isEmpty(this.device.iccId) && (utils.isEmpty(this.device.deviceNumber) || !utils.telValidChk(this.device.deviceNumber))) {
         alert("기기 전화번호를 다시 확인해 주세요.")
         return;
       }
@@ -207,11 +215,11 @@ export default {
         alert("사용자 전화번호를 다시 확인해 주세요.")
         return;
       }
-      if(this.orgGuardPhone != this.device.guardPhone && this.device.deviceCount > 1) {
-        if(!confirm("사용자 전화번호0 은 다른 기기에서도 사용중입니다.\n수정하시면 다른 기기 전화 번호도 변경 됩니다.")){
-          return;
-        }
-      }
+      // if(this.orgGuardPhone != this.device.guardPhone && this.device.deviceCount > 1) {
+      //   if(!confirm("사용자 전화번호0 은 다른 기기에서도 사용중입니다.\n수정하시면 다른 기기 전화 번호도 변경 됩니다.")){
+      //     return;
+      //   }
+      // }
       if(this.device.orgcNo === ""){
         alert("소속 기관은 필수 입니다.");
         return;
@@ -247,8 +255,7 @@ export default {
         alert("소속 기관은 필수 입니다.");
         return;
       }
-      console.log(this.device.deviceNumber)
-      if(!utils.telValidChk(this.device.deviceNumber)) {
+      if(utils.isEmpty(this.device.iccId) && (utils.isEmpty(this.device.deviceNumber) || !utils.telValidChk(this.device.deviceNumber))) {
         alert("기기 전화번호를 다시 확인해 주세요.")
         return;
       }
