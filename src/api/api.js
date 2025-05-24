@@ -30,6 +30,18 @@ export default {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/get/' + deviceIMEI);
 	},
 
+	// 이벤트
+	// 이벤트 기기 리스트
+	selEventDeviceList(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/evntlist', param)
+	},
+	selEventLogList(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/location/list', param)
+	},
+	delEventLog(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/location/del', param)
+	},
+
 	// 사용자관리
 	selGuardList(param) {
 		console.log(param)

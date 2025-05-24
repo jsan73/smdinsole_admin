@@ -40,17 +40,21 @@ export default {
 				_style,
 			);
 		},
-		Vue.prototype.$datatable = function (datatable, headings, dataList, columns) {
+		Vue.prototype.$datatable = function (datatable, headings, dataList, columns, add_option = {}) {
 			const tables = this.$refs.datatable
 
 			const data = dataList.map(item => Object.values(item))
 			dataList ={"headings": headings, "data": data}
 			if(datatable) datatable.destroy();
-			return new window.simpleDatatables.DataTable(tables, {
+			let options = {
 				data: dataList,
 				columns: columns,
-				perPageSelect: [5, 10, 15, 20, 25, 50, 100],
-			});
+				perPageSelect: [5, 10, 15, 20, 25, 50, 100]
+			}
+			options = {...options, ...add_option}
+			// options.searchable = searchable
+			// options.paging = false
+			return new window.simpleDatatables.DataTable(tables, options);
 		}
 
     }
