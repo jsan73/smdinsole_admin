@@ -30,6 +30,8 @@ var menu = [
 	{ menuId: "EventPopup", parentId: 0, menuName: "기기 이벤트 리스트", icon: "description",pagePath: "views/event",  componentName: "EventDevicePopup", url: "/eventpopup", meta: { layout: 'Popup' }, popup:true},
 	{ menuId: "GuardPopup", parentId: 0, menuName: "사용자 등록", icon: "description",pagePath: "views/guard",  componentName: "GuardPopup", url: "/guardpopup", meta: { layout: 'Popup' }, popup:true},
 	{ menuId: "OrgcPopup", parentId: 0, menuName: "기관 등록", icon: "description",pagePath: "views/orgc",  componentName: "OrgcPopup", url: "/orgcpopup", meta: { layout: 'Popup' }, popup:true},
+	{ menuId: "fotaPopup", parentId: 0, menuName: "Fota view", icon: "description",pagePath: "views/device",  componentName: "DeviceFotaPopup", url: "/fotapopup", meta: { layout: 'Popup' }, popup:true},
+
 
 	// // { menuId: "MN70", parentId: 0, menuName: "콜팝업", icon: "description", pagePath: "views/ui/temp", componentName: "CallPopup", url: "/ui/callpopup", popup: true, meta: { layout: 'Popup' }, tempmenu: "temp" },
 	// // { menuId: "MN70", parentId: 0, menuName: "콜팝업", icon: "description", pagePath: "views/ui/temp", componentName: "CallPopup", url: "/ui/callpopup", popup: true, meta: { layout: 'Popup' }, tempmenu: "temp" },

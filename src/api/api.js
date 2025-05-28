@@ -42,6 +42,17 @@ export default {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/location/del', param)
 	},
 
+	// Fota
+	getDeviceFotaInfo() {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/fota/get`)
+	},
+	regDeviceFota(param) {
+		return http.postFile(process.env.VUE_APP_SERVER_URL + `/api/admin/device/fota/reg`, param)
+	},
+	delDeviceFota() {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/fota/del`)
+	},
+
 	// 사용자관리
 	selGuardList(param) {
 		console.log(param)
@@ -126,6 +137,9 @@ export default {
 	getCommCode(params) {
 		return http.post(process.env.VUE_APP_ADMIN_PJT + `/api/get/commcode`, params)
 	},
+
+
+
 	// 로그아웃
 	logout() {
 		let url = process.env.VUE_APP_LOGOUT_URL;

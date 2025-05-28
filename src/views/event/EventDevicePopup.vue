@@ -63,7 +63,7 @@ export default {
         },
         {select:2, scope:'row', render: this.dateForm},
         {select:3, type: "number", render: function (data) {
-            return `<button onclick="handleRowClick(${data})">삭제</button>`;
+            return `<a href="#" onclick="handleRowClick(${data})">삭제</a>`;
         }}
       ],
       headings:["No", "이벤트", "발생 시간", "삭제"]
@@ -102,7 +102,7 @@ export default {
         let res = await api.selEventLogList(this.deviceIMEI);
         if(res.data.status === "SUCCESS") {
           let dataList = res.data.data;
-          let options = {searchable : false, paging : false}
+          let options = {searchable : false, paging : true}
           this.datatable = this.$datatable(this.datatable, this.headings, dataList, this.columns, options )
           // this.datatable.options.searchable  = false;
           console.log(this.datatable.options)
