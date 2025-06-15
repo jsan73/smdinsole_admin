@@ -93,7 +93,7 @@ export default {
         {select:1, render: function(data, cell, row) {
             let url = "/eventpopup?device=" + data;
             let name = "기기 이벤트 리스트";
-            let style = "width=650,height=580,left=0,top=0";
+            let style = "width=1000,height=580,left=0,top=0";
             let param = "'" + url + "','" + name + "','" + style + "'";
             let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + data + "</a>";
             return html;

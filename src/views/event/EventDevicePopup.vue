@@ -61,12 +61,13 @@ export default {
             return eventName
           }
         },
-        {select:2, scope:'row', render: this.dateForm},
-        {select:3, type: "number", render: function (data) {
+        {select:2, scope:'row'},
+        {select:3, scope:'row', render: this.dateForm},
+        {select:4, type: "number", render: function (data) {
             return `<a href="#" onclick="handleRowClick(${data})">삭제</a>`;
         }}
       ],
-      headings:["No", "이벤트", "발생 시간", "삭제"]
+      headings:["No", "이벤트", "lOG", "발생 시간", "삭제"]
     }
   },
 

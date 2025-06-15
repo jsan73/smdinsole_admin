@@ -50,7 +50,7 @@ export default {
   name: "DeviceFotaPopup",
   data() {
     return {
-      file:'',
+      uploadFile:'',
       fota: {
         fotaFile:'',
         buildNo:'',
@@ -66,7 +66,7 @@ export default {
   },
   methods: {
     setFile(event) {
-      this.file = event.target.files[0];
+      this.uploadFile = event.target.files[0];
     },
     async getDeviceFotaInfo() {
 
@@ -79,10 +79,18 @@ export default {
     },
 
     async regDeviceFota() {
-
+      console.log(this.uploadFile)
+      if(utils.isEmpty(this.uploadFile)) {
+        alert("FOTA 파일은 필수 항목 입니다.");
+        return;
+      }
+      // if(utils.isEmpty(this.fota.deviceIMEI)) {
+      //   alert("IMEI는 필수 항목 입니다.");
+      //   return;
+      // }
       const formData = new FormData();
       formData.append("fotaModel", JSON.stringify(this.fota));
-      formData.append("file", this.file)
+      formData.append("file", this.uploadFile)
 
       const res = await api.regDeviceFota(formData);
       if(res.data.status === "SUCCESS") {
