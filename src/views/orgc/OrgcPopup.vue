@@ -77,7 +77,7 @@ export default {
     if(utils.isNotEmpty(this.orgcNo )) {
       this.popupState = "upd"
       this.getOrgcInfo(this.orgcNo);
-      this.popupTitle = '기기 수정'
+      this.popupTitle = '기관 수정'
     }
   },
   methods: {

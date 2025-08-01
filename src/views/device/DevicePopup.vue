@@ -82,6 +82,28 @@
               <input type="date" v-model="expDate" class="form-control" style="width: 150px;">
             </td>
           </tr>
+          <tr>
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">이심 사용기한</th>
+            <td>
+              <input type="date" v-model="esimExpDate" class="form-control" style="width: 150px;">
+            </td>
+          </tr>
+          <tr>
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">기기 사이즈</th>
+            <td>
+              <select id="deviceSize"
+                      v-model="device.deviceSize"
+                      name="deviceSize"
+                      class="form-select d-inline-flex"
+                      style="width: 100px;">
+                <option v-for="size in sizes"
+                        :key="size"
+                        :value="size">
+                  {{ size }}
+                </option>
+              </select> mm
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
@@ -113,7 +135,9 @@ export default {
         memberDate:'',
         orgcNo:'',
         chkdevice:'',
-        deviceCount:1
+        deviceCount:1,
+        esimExpDate:'',
+        deviceSize: 250,
       },
       dphone1:'011',
       dphone2:'',
@@ -126,9 +150,10 @@ export default {
       deviceIMEI:'',
       popupState:"ins",
       orgGuardPhone:'',
-
+      esimExpDate:'',
       orgcList:'',
-      popupTitle: '기기 등록'
+      popupTitle: '기기 등록',
+      sizes: [230, 235, 240, 245, 250, 255, 260, 265, 270]
     }
   },
   watch:{
@@ -175,6 +200,10 @@ export default {
           if(utils.isNotEmpty(this.device.memberDate)) {
             this.regDate = utils.dateForm(this.device.memberDate);
             this.expDate = utils.dateForm(this.device.expDate);
+
+          }
+          if(utils.isNotEmpty(this.device.esimExpDate)) {
+            this.esimExpDate = utils.dateForm(this.device.esimExpDate);
           }
         }
     },
@@ -195,6 +224,7 @@ export default {
 
       this.device.memberDate = this.regDate.replace(/-/gi, "");
       this.device.expDate = this.expDate.replace(/-/gi, "");
+      this.device.esimExpDate = this.esimExpDate.replace(/-/gi, "");
     },
 
     async insDevice() {
@@ -224,14 +254,15 @@ export default {
         alert("소속 기관은 필수 입니다.");
         return;
       }
-      api.updDevice(this.device).then(res => {
-        if(res.data.status === "SUCCESS") {
-          alert("수정 되었습니다.")
-          window.opener.vueComponent.selectDeviceList();
-          window.close();
-        }
-      });
-
+      if(confirm("정보를 수정 하시겠습니까?")) {
+        api.updDevice(this.device).then(res => {
+          if (res.data.status === "SUCCESS") {
+            alert("수정 되었습니다.")
+            window.opener.vueComponent.selectDeviceList();
+            window.close();
+          }
+        });
+      }
     },
     delDevice() {
       if(confirm("삭제 하시겠습니까?")) {

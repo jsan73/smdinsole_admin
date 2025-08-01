@@ -16,6 +16,9 @@ export default {
 	selDeviceList(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/list', param)
 	},
+	downDeviceListExcel(param) {
+		return http.postFileDn(process.env.VUE_APP_SERVER_URL + '/api/admin/device/downExcel', param)
+	},
 	insDevice(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/ins', param)
 	},

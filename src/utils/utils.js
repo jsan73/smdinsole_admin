@@ -54,7 +54,11 @@ export default {
                     rs = str.replace(/(\d{3})(.{4})(\d{4})/, '$1-$2-$3');
                 }
             }else if(str.length === 10) {
-                rs = str.replace(/(\d{2})(.{4})(\d{4})/, '$1-$2-$3');
+                if(str.substr(0.2) === "02") {
+                    rs = str.replace(/(\d{2})(.{4})(\d{4})/, '$1-$2-$3');
+                }else{
+                    rs = str.replace(/(\d{3})(.{3})(\d{4})/, '$1-$2-$3');
+                }
             }else if(str.length === 9) {
                 rs = str.replace(/(\d{2})(.{3})(\d{4})/, '$1-$2-$3');
             }

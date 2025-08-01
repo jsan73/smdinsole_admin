@@ -68,6 +68,7 @@
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>-->
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>-->
                 <button class="btn btn-primary mt-2 ms-1" @click="popupFota">Fota view</button>
+                <button class="btn btn-primary mt-2 ms-1" @click="downloadExcel">엑셀 다운</button>
                 <button class="btn btn-primary mt-2 ms-1" @click="addDevice">기기 등록</button>
               </p>
             </div>
@@ -87,6 +88,7 @@
 <script>
 import api from '@/api/api';
 import utils from "@/utils/utils";
+import router from "@/router/router";
 
 export default {
   name: "DeviceManager",
@@ -117,7 +119,7 @@ export default {
         {select:1, render: function(data, cell, row) {
             let url = "/devicepopup?device=" + data;
             let name = "기기 수정";
-            let style = "width=650,height=580,left=0,top=0";
+            let style = "width=650,height=670,left=0,top=0";
             let param = "'" + url + "','" + name + "','" + style + "'";
             let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + data + "</a>";
             return html;
@@ -160,7 +162,7 @@ export default {
       this.$open(
           "/devicepopup",
           "기기 등록",
-          "width=650,height=580,left=0,top=0"
+          "width=650,height=670,left=0,top=0"
       );
     },
     popupFota() {
@@ -177,7 +179,7 @@ export default {
       return utils.convertFromStrToDate(data);
     },
     lastSignal(data) {
-      console.log(data);
+      // console.log(data);
       const signal = data.split(',')
       //console.log(signal[2]);
       var reportDate = signal[0];
@@ -235,6 +237,20 @@ export default {
 
         this.datatable = this.$datatable(this.datatable, this.headings, dataList, this.columns)
       }
+
+    },
+
+
+    downloadExcel() {
+      const param = this.search;
+      param.guardPhone = param.guardPhone.replaceAll("-","")
+      api.downDeviceListExcel(param).then(res=>{
+        let fileName = "기기리스트.xlsx"
+        console.log(fileName)
+        utils.fileDownload(res.data, fileName)
+        // router.go(0)
+      })
+
 
     },
     async selectOrgcList() {
