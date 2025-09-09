@@ -4,7 +4,6 @@
     <h4 class="my-4 ps-3">
       <i class="bi bi-calendar2-check"></i> 기기 관리
       <small class="text-muted fs-6">기기 정보를 등록 및 수정 할 수 있습니다.</small>
-
       <div class="text-end" v-if="isDev()">
         <button class="btn btn-primary mt-2 ms-1" @click="gogo()">기기 데이터 분석</button>
       </div>
@@ -69,18 +68,28 @@
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>-->
                 <button class="btn btn-primary mt-2 ms-1" @click="popupFota">Fota view</button>
                 <button class="btn btn-primary mt-2 ms-1" @click="downloadExcel">엑셀 다운</button>
+                <button class="btn btn-primary mt-2 ms-1" @click="openExcelUpload">엑셀 업로드</button>
                 <button class="btn btn-primary mt-2 ms-1" @click="addDevice">기기 등록</button>
+
               </p>
             </div>
           </div><!--// 목록 테이블 -->
 
         </div>
       </div>
-
-
     </section>
 
-
+    <!-- 레이어 팝업 -->
+    <div v-if="showPopup" class="popup-overlay" @click.self="closeExcelUpload">
+      <div class="popup-content">
+        <h3>엑셀 파일 업로드</h3>
+        <input type="file" accept=".xls,.xlsx" @change="onFileChange" />
+        <div class="btn-group">
+          <button @click="uploadFile" :disabled="!selectedFile" class="upload-btn">업로드</button>
+          <button @click="closeExcelUpload" class="cancel-btn">취소</button>
+        </div>
+      </div>
+    </div>
 
   </main><!--// 컨텐츠 영역 -->
 </template>
@@ -127,17 +136,19 @@ export default {
         },
         {select:2, scope:'row', render: this.telForm},
         {select:3, scope:'row'},
-        {select:4, scope:'row'},
-        {select:5, scope:'row', render: this.telForm},
-        {select:6, scope:'row'},
+        {select:4, scope:'row', render: this.telForm},
+        {select:5, scope:'row'},
+        {select:6, scope:'row', render: this.dateForm},
         {select:7, scope:'row', render: this.dateForm},
         {select:8, scope:'row', render: this.dateForm},
-        {select:9, scope:'row', render: this.lastSignal},
-        {select:10, scope:'row'},
+        {select:9, scope:'row'},
+        {select:10, scope:'row', render: this.lastSignal},
+        {select:11, scope:'row'},
       ],
       // dataList:[],
-      headings:["No", "IMEI", "기기 전화번호", "ICCID", "요금제", "사용자 전화번호0", "소속 기관", "가입일", "만료일", "마지막 신호", "위치전송횟수"],
-
+      headings:["No", "IMEI", "기기 전화번호", "요금제", "사용자 전화번호0", "소속 기관", "만료일","이심사용기한", "사이즈", "마지막 신호", "위치전송횟수"],
+      showPopup: false,
+      selectedFile: null,
     }
   },
   mounted() {
@@ -253,6 +264,46 @@ export default {
 
 
     },
+
+    openExcelUpload() {
+      this.showPopup = true;
+      this.selectedFile = null;
+    },
+    closeExcelUpload() {
+      this.showPopup = false;
+      this.selectedFile = null;
+    },
+    onFileChange(e) {
+      const file = e.target.files[0];
+      this.selectedFile = file ? file : null;
+    },
+    uploadFile() {
+      if (!this.selectedFile) {
+        alert('엑셀 파일을 선택해주세요.');
+        return;
+      }
+      const formData = new FormData();
+      formData.append("file", this.selectedFile)
+      api.uploadDeviceListExcel(formData).then(res=>{
+          if(res.data.status === "SUCCESS") {
+            // let row_count = res.data.data.rowNum;
+            let resData = res.data.data;
+            if(resData.checkValidation) {
+              alert(`${res.data.data.rowNum}개 업로드 완료`);
+              this.selectDeviceList();
+            }else{
+              alert(`${resData.rowNum} : ${resData.msg}`);
+            }
+          }
+      })
+      // 실제 업로드 로직 구현 부분
+      // alert(`선택된 파일: ${this.selectedFile.name} 업로드 진행중...`);
+
+      // 업로드 처리 후 팝업 닫기
+      this.closeExcelUpload();
+    },
+
+
     async selectOrgcList() {
       const param = {};
       const res = await api.selOrgcList(param);
@@ -271,5 +322,61 @@ export default {
 </script>
 
 <style scoped>
+.upload-btn {
+  background-color: #2979ff;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+.upload-btn:disabled {
+  background-color: #aacbff;
+  cursor: not-allowed;
+}
+.upload-btn:hover:not(:disabled) {
+  background-color: #0d47a1;
+}
+.cancel-btn {
+  background-color: #ccc;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 14px;
+}
+.cancel-btn:hover {
+  background-color: #bbb;
+}
 
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.popup-content {
+  background-color: white;
+  padding: 20px 30px;
+  border-radius: 8px;
+  width: 420px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.btn-group {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
 </style>

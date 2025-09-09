@@ -71,7 +71,7 @@
             </td>
           </tr>
           <tr>
-            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">가입일</th>
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">개통일</th>
             <td>
               <input type="date" v-model="regDate" class="form-control" style="width: 150px;">
             </td>
@@ -153,7 +153,7 @@ export default {
       esimExpDate:'',
       orgcList:'',
       popupTitle: '기기 등록',
-      sizes: [230, 235, 240, 245, 250, 255, 260, 265, 270]
+      sizes: [230, 235, 240, 245, 250, 255, 260, 265, 270, 275]
     }
   },
   watch:{
