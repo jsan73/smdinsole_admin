@@ -1,138 +1,140 @@
 <template>
-  <div class="m-4">
-    <h5 class="pb-2">
-      <i class="bi bi-caret-right-square"></i> 사용자 수정
+  <div class="container-fluid p-3 position-relative">
+    <h5 class="pb-2 fw-bold">
+      <i class="bi bi-caret-right-square"></i> 사용자 {{ isUpdateMode ? '수정' : '추가' }}
     </h5>
 
-    <div class="card">
-      <div class="card-body pb-0">
-        사용자 전화번호0 수정은 기기관리에서 하세요.
-        <table class="table table-sm table-bordered">
+    <div class="card mb-3">
+      <div class="card-body p-0">
+        <table class="table table-sm table-bordered mb-0 align-middle">
+          <colgroup><col style="width: 30%"><col style="width: 70%"></colgroup>
           <tbody>
           <tr>
-            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">IMEI</th>
-            <td><input type="text" v-model="deviceIMEI" class="form-control d-inline-flex" id="deviceID" name="deviceIMEI" readonly>
-            </td>
-          </tr>
-          <tr>
-            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">사용자명</th>
-            <td><input v-model="guard.guardName" type="text" class="form-control d-inline-flex" id="userName" name="userName"></td>
-          </tr>
-          <tr>
-            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">이메일</th>
-            <td><input v-model="guard.email" type="text" class="form-control d-inline-flex" id="userEmail" name="userEmail">
-              <br><span class="description-text">ex) aaa@kokasin.com</span>
-            </td>
-          </tr>
-
-<!--          <tr>-->
-<!--            <th class="text-center align-middle bg-dark small" style="&#45;&#45;bs-bg-opacity: .05;" scope="col">소속 기관</th>-->
-<!--            <td>-->
-<!--              <select v-model="guard.orgCd" id="group" name="group" class="form-select d-inline-flex" readonly>-->
-<!--                <option value=""> - 선택 - </option>-->
-<!--                <option value="G001"> 개인 </option>-->
-<!--                <option value="G002">홀트복지재단</option>-->
-<!--                <option value="G003">성북장애인재단</option>-->
-<!--              </select>-->
-<!--            </td>-->
-<!--          </tr>-->
-
-          <tr v-for="(phone, idx) in guard.phoneList">
-
-            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">사용자 전화번호{{idx}}</th>
+            <th class="text-center bg-light small py-2">전화번호(ID)</th>
             <td>
-              <select v-model="phone.phone[0]" id="protectorPhone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;" >
-                <option value="010">010</option>
-                <option value="011">011</option>
-                <option value="016">016</option>
-                <option value="017">017</option>
-                <option value="018">018</option>
-                <option value="019">019</option>
-              </select>
-              -
-              <input type="text" id="protectorPhone2" name="protectorPhone2" v-model="phone.phone[1]" class="form-control d-inline-flex" style="width: 100px;" maxlength="4" :readonly="idx == 0">
-              -
-              <input type="text" id="protectorPhone3" name="protectorPhone3" v-model="phone.phone[2]" class="form-control d-inline-flex" style="width: 100px;" maxlength="4" :readonly="idx == 0">
+              <input
+                  type="text"
+                  v-model="guard.guardPhone"
+                  @change="guard.guardPhone = utils.telForm(guard.guardPhone.replace(/[^0-9]/g, ''))"
+                  class="form-control form-control-sm"
+                  maxlength="13"
+              >
             </td>
           </tr>
-<!--          <tr>-->
-<!--            <th class="text-center align-middle bg-dark small" style="&#45;&#45;bs-bg-opacity: .05;" scope="col">사용자 전화번호1</th>-->
-<!--            <td>-->
-<!--              <select id="protectorPhone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">-->
-<!--                <option value="true"> 010 </option>-->
-<!--                <option value="false">011</option>-->
-<!--                <option value="false">016</option>-->
-<!--                <option value="false">017</option>-->
-<!--                <option value="false">018</option>-->
-<!--                <option value="false">019</option>-->
-<!--              </select>-->
-<!--              - -->
-<!--              <input type="text" id="protectorPhone2" name="protectorPhone2" class="form-control d-inline-flex"-->
-<!--                     style="width: 100px;" maxlength="4">-->
-<!--              - -->
-<!--              <input type="text" id="protectorPhone3" name="protectorPhone3" class="form-control d-inline-flex"-->
-<!--                     style="width: 100px;" maxlength="4">-->
-<!--            </td>-->
-<!--          </tr>-->
-<!--          <tr>-->
-<!--            <th class="text-center align-middle bg-dark small" style="&#45;&#45;bs-bg-opacity: .05;" scope="col">사용자 전화번호2</th>-->
-<!--            <td>-->
-<!--              <select id="protectorPhone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">-->
-<!--                <option value="true"> 010 </option>-->
-<!--                <option value="false">011</option>-->
-<!--                <option value="false">016</option>-->
-<!--                <option value="false">017</option>-->
-<!--                <option value="false">018</option>-->
-<!--                <option value="false">019</option>-->
-<!--              </select>-->
-<!--              - -->
-<!--              <input type="text" id="protectorPhone2" name="protectorPhone2" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">-->
-<!--              - -->
-<!--              <input type="text" id="protectorPhone3" name="protectorPhone3" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">-->
-<!--            </td>-->
-<!--          </tr>-->
-<!--          <tr>-->
-<!--            <th class="text-center align-middle bg-dark small" style="&#45;&#45;bs-bg-opacity: .05;" scope="col">사용자 전화번호3</th>-->
-<!--            <td>-->
-<!--              <select id="protectorPhone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">-->
-<!--                <option value="true"> 010 </option>-->
-<!--                <option value="false">011</option>-->
-<!--                <option value="false">016</option>-->
-<!--                <option value="false">017</option>-->
-<!--                <option value="false">018</option>-->
-<!--                <option value="false">019</option>-->
-<!--              </select>-->
-<!--              - -->
-<!--              <input type="text" id="protectorPhone2" name="protectorPhone2" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">-->
-<!--              - -->
-<!--              <input type="text" id="protectorPhone3" name="protectorPhone3" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">-->
-<!--            </td>-->
-<!--          </tr>-->
-<!--          <tr>-->
-<!--            <th class="text-center align-middle bg-dark small" style="&#45;&#45;bs-bg-opacity: .05;" scope="col">사용자 전화번호4</th>-->
-<!--            <td>-->
-<!--              <select id="protectorPhone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">-->
-<!--                <option value="true"> 010 </option>-->
-<!--                <option value="false">011</option>-->
-<!--                <option value="false">016</option>-->
-<!--                <option value="false">017</option>-->
-<!--                <option value="false">018</option>-->
-<!--                <option value="false">019</option>-->
-<!--              </select>-->
-<!--              - -->
-<!--              <input type="text" id="protectorPhone2" name="protectorPhone2" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">-->
-<!--              - -->
-<!--              <input type="text" id="protectorPhone3" name="protectorPhone3" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">-->
-<!--            </td>-->
-<!--          </tr>-->
+          <tr>
+            <th class="text-center bg-light small py-2">사용자명</th>
+            <td><input type="text" v-model="guard.guardName" class="form-control form-control-sm w-50"></td>
+          </tr>
+          <tr>
+            <th class="text-center bg-light small py-2">이메일</th>
+            <td><input type="email" v-model="guard.email" class="form-control form-control-sm"></td>
+          </tr>
+          <tr v-if="isUpdateMode">
+            <th class="text-center bg-light small py-2">마지막 접속일</th>
+            <td class="small ps-2">{{ guard.lastLoginDate || '-' }}</td>
+          </tr>
+          <tr>
+            <th class="text-center bg-warning small py-2" style="--bs-bg-opacity: .2;">계정상태</th>
+            <td>
+              <select v-model="guard.accountState" class="form-select form-select-sm">
+                <option value="N">정상</option>
+                <option value="H">휴면</option>
+                <option value="S">정지(제재)</option>
+                <option value="D">탈퇴</option>
+              </select>
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
     </div>
-    <p class="text-end">
-<!--      <button class="btn btn-primary mb-1 ms-1" onclick="javascript:deleteUser()">삭제</button>-->
-      <button class="btn btn-primary mb-1 ms-1" @click="updateGuard">수정</button>
-    </p>
+
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <span class="fw-bold small">연결 기기 목록</span>
+      <button class="btn btn-sm btn-secondary py-0" @click="openAddDevice" :disabled="!isUpdateMode && !isRegistered">+추가</button>
+    </div>
+
+    <div class="table-responsive" style="max-height: 150px;">
+      <table class="table table-sm table-bordered text-center align-middle small">
+        <thead class="bg-light">
+        <tr>
+          <th>NO</th><th>IMEI</th><th>서비스 만료일</th><th>알림 설정</th><th>사용자 유형</th><th>비고</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(item, idx) in deviceList" :key="idx">
+          <td>{{ idx + 1 }}</td>
+          <td>{{ item.deviceIMEI }}</td>
+          <td>{{ utils.dateForm(item.expDate) }}</td>
+          <td>
+            <select v-model="item.notiCd" class="form-select form-select-sm">
+              <option value="">설정</option>
+              <option value="NC03">3시간 알림 해제</option>
+              <option value="NC99">다음 설정시까지 알림 해제</option>
+            </select>
+          </td>
+          <td>
+            <select v-model="item.userType" class="form-select form-select-sm" @change="handleUserTypeChange($event, item)">
+              <option value="1">대표</option>
+              <option value="2">추가</option>
+            </select>
+          </td>
+          <td>
+            <button v-if="item.userType == '2'" class="btn btn-info btn-sm text-white py-0 px-1" style="font-size: 11px;" @click="revokePermission(item)">권한 해제</button>
+          </td>
+        </tr>
+        <tr v-if="deviceList.length === 0">
+          <td colspan="6" class="py-3 text-muted">연결된 기기가 없습니다.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-center mt-3">
+      <template v-if="isUpdateMode">
+        <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="updateGuard">수정</button>
+        <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="deleteGuard">삭제</button>
+      </template>
+      <template v-else>
+        <button class="btn btn-primary btn-sm px-4 mx-1" @click="registerGuard">등록</button>
+        <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="closePopup">취소</button>
+      </template>
+    </div>
+
+    <div v-if="showTransferLayer" class="position-absolute top-50 start-50 translate-middle bg-white border border-dark p-3 shadow" style="width: 450px; z-index: 1050;">
+      <div class="d-flex justify-content-between mb-2">
+        <h6 class="fw-bold">대표 사용자 이전</h6>
+        <button type="button" class="btn-close btn-sm" @click="showTransferLayer = false"></button>
+      </div>
+      <p class="small">이 기기(ID: {{selectedDevice.deviceIMEI}})의 대표 권한을 이전하시겠습니까?</p>
+      <div class="input-group input-group-sm mb-3 border">
+        <span class="input-group-text bg-light border-0">전화번호(ID)</span>
+        <input type="text" class="form-control border-0" v-model="searchKey">
+        <button class="btn btn-info text-white" @click="searchGuardForTransfer">조회</button>
+      </div>
+      <div v-if="searchResult" class="border-top border-bottom py-2 d-flex align-items-center">
+        <input type="checkbox" class="form-check-input ms-2 me-3" style="width:20px; height:20px;" @change="executeTransfer">
+        <span class="small">ID : {{ searchResult.guardPhone }}</span>
+      </div>
+    </div>
+
+    <div v-if="showAddDeviceLayer" class="position-absolute top-50 start-50 translate-middle bg-white border border-dark p-3 shadow" style="width: 450px; z-index: 1050;">
+      <div class="d-flex justify-content-between mb-3">
+        <h6 class="fw-bold">기기 추가</h6>
+        <button type="button" class="btn-close btn-sm" @click="showAddDeviceLayer = false"></button>
+      </div>
+      <div class="input-group input-group-sm mb-3 border">
+        <span class="input-group-text bg-light border-0">IMEI</span>
+        <input type="text" class="form-control border-0" v-model="searchKey">
+        <button class="btn btn-info text-white" @click="searchDeviceForAdd">조회</button>
+      </div>
+      <div v-if="searchResult" class="border-top border-bottom py-2 d-flex align-items-center">
+        <input type="checkbox" class="form-check-input ms-2 me-3" style="width:20px; height:20px;" @change="executeAddDevice">
+        <span class="small">IMEI : {{ searchResult.deviceIMEI }} &nbsp;&nbsp; 사용자 유형 : 대표</span>
+      </div>
+    </div>
+
+    <div v-if="showTransferLayer || showAddDeviceLayer" class="position-absolute top-0 start-0 w-100 h-100 bg-dark opacity-25" style="z-index: 1040;"></div>
   </div>
 </template>
 
@@ -144,133 +146,127 @@ export default {
   name: "GuardPopup",
   data() {
     return {
+      isUpdateMode: false,
+      isRegistered: false, // 등록 직후 추가 버튼 활성화용
+      guardNo: null,
+      utils: utils,
       guard: {
-        email:'',
-        guardName:'',
-        orgcNo:'',
-        phoneList : [],
-        status:'N'    // I, U, D, N
+        guardPhone: '',
+        guardName: '',
+        email: '',
+        lastLoginDate: null,
+        accountState: 'N'
       },
-      orgGuard: {
-        email:'',
-        phoneList : []
-      },
-      deviceIMEI:'',
-      popupState:"ins",
-      phoneCount:0
+      deviceList: [],
+      // 레이어 관련
+      showTransferLayer: false,
+      showAddDeviceLayer: false,
+      searchKey: '',
+      searchResult: null,
+      selectedDevice: {}
     }
   },
-  created: function () {
-
-  },
   mounted() {
-    this.deviceIMEI = this.$route.query.device;
-
-    if(utils.isNotEmpty(this.deviceIMEI )) {
-      this.popupState = "upd"
-      this.getGuardInfo(this.deviceIMEI);
-    }else{
-      // this.geolocate();
-      this.initPhoneList();
+    this.guardNo = this.$route.query.guardNo;
+    if (utils.isNotEmpty(this.guardNo)) {
+      console.log(this.guardNo)
+      this.isUpdateMode = true;
+      this.fetchData();
     }
   },
   methods: {
-    initPhoneList() {
-      for (let i = 0; i < 5; i++) {
-        this.guard.phoneList.push({"guardNo": "0", "status":"N", "phone":new Array(3)});
-        this.orgGuard.phoneList.push({"guardNo": "0", "phone":new Array(3)});
+    async fetchData() {
+      try {
+        // 1. 사용자 정보 조회
+        const resGuard = await api.getGuardianInfo(this.guardNo);
+        if (resGuard.data.status === "SUCCESS") {
+          const data = resGuard.data.data;
+          // 수신된 데이터를 포맷팅하여 저장
+          data.guardPhone = utils.telForm(data.guardPhone);
+          this.guard = data;
+        } else {
+          alert("사용자 정보를 불러오는데 실패했습니다.");
+        }
+
+        // 2. 기기 목록 조회
+        const resDevice = await api.selDeviceListByAdmin(this.guardNo);
+        if (resDevice.data.status === "SUCCESS") {
+          this.deviceList = resDevice.data.data;
+        }
+      } catch (e) {
+        console.error(e);
       }
     },
-    async getGuardInfo(deviceIMEI) {
-
-      let res = await api.selGuardPhoneList(deviceIMEI);
-      let phoneList = res.data.data;
-      this.initPhoneList();
-
-      this.phoneCount = phoneList.length
-
-      for(let index = 0; index < phoneList.length; index++) {
-        // let guardPhone = utils.telForm(phone.guardPhone).split("-");
-        // console.log(this.guard.phoneList)
-        this.guard.phoneList[index] = {"guardNo": phoneList[index].guardNo, "phone": utils.telForm(phoneList[index].guardPhone).split("-")};
-        this.orgGuard.phoneList[index] = {"guardNo": phoneList[index].guardNo, "phone": utils.telForm(phoneList[index].guardPhone).split("-")};
-
-        if(index == 0) {
-          this.guard.guardName = phoneList[index].guardName;
-          this.guard.email = phoneList[index].email;
-          this.orgGuard.email = phoneList[index].email;
-        }
-
+    async registerGuard() {
+      // regGuard API 호출 로직
+      const res = await api.insGuardianByAdmin(this.guard);
+      if(res.data.status === "SUCCESS") {
+        alert("등록되었습니다. 이제 기기를 추가할 수 있습니다.");
+        this.isRegistered = true;
+        // 등록 후 guardNo를 받아와서 수정 모드로 전환하거나 상태 유지
       }
     },
-    updateGuard() {
-      if(this.phoneCount == 0) {
-        alert("사용자가 없을때는 수정 불가합니다. 기기관리에서 진행 바랍니다.");
+
+    async updateGuard() {
+
+    },
+    async deleteGuard(){
+
+    },
+
+    handleUserTypeChange(event, item) {
+      if (event.target.value === '1') { // 대표로 변경 시
+        this.selectedDevice = item;
+        this.searchKey = '';
+        this.searchResult = null;
+        this.showTransferLayer = true;
       }
-      var reqGuard = {
-            deviceIMEI:'',
-            guardName:'',
-            email:'',
-            phoneList : [],
-            masterGuardNo : 0,
-            status:'N'    // I, U, D, N
-          }
-      reqGuard.masterGuardNo = this.guard.phoneList[0].guardNo;
-      reqGuard.deviceIMEI = this.deviceIMEI;
-      for(let idx = 0; idx < this.orgGuard.phoneList.length; idx++) {
-
-        if(this.guard.phoneList[idx].phone.toString() == this.orgGuard.phoneList[idx].phone.toString()) {
-          this.guard.phoneList[idx].status = 'N'
-        }else{
-          let phone1 = this.guard.phoneList[idx].phone[0];
-          let phone2 = this.guard.phoneList[idx].phone[1];
-          let phone3 = this.guard.phoneList[idx].phone[2];
-          if(utils.isNotEmpty(phone1) && utils.isNotEmpty(phone2) && utils.isNotEmpty(phone3)) {
-            let phoneNumber = phone1 + phone2 + phone3;
-            let status = "N";
-
-            if (this.guard.phoneList[idx].guardNo == "0") status = "I"; // this.guard.phoneList[idx].status = "I"
-            else status = "U"; // this.guard.phoneList[idx].status = "U"
-
-            reqGuard.phoneList.push({"guardNo" : this.guard.phoneList[idx].guardNo, "phoneNumber": phoneNumber, "status":status, "idx":idx});
-          }else{
-            if(utils.isEmpty(phone2) && utils.isEmpty(phone3)) {
-              if(this.guard.phoneList[idx].guardNo != "0") {
-                  reqGuard.phoneList.push({
-                    "guardNo": this.guard.phoneList[idx].guardNo,
-                    "phoneNumber": "",
-                    "status": "D"
-                  });
-              }
-            }
-          }
-        }
+    },
+    openAddDevice() {
+      this.searchKey = '';
+      this.searchResult = null;
+      this.showAddDeviceLayer = true;
+    },
+    // 레이어 조회 1: 대표 이전용 사용자 조회
+    async searchGuardForTransfer() {
+      const res = await api.getMasterGuardianSearch(this.searchKey); // 휴대폰 번호로 조회
+      if(res.data.status === "SUCCESS") {
+        this.searchResult = res.data.data;
       }
-      if(this.orgGuard.email != this.guard.email) {
-        reqGuard.status = "U"
-        reqGuard.email = this.guard.email;
+    },
+    // 레이어 조회 2: 기기 추가용 IMEI 조회
+    async searchDeviceForAdd() {
+      const res = await api.getDeviceInsSearch(this.searchKey);
+      if(res.data.status === "SUCCESS") {
+        this.searchResult = res.data.data;
       }
-      if(this.orgGuard.guardName != this.guard.guardName) {
-        reqGuard.status = "U"
-        reqGuard.guardName = this.guard.guardName;
+    },
+    executeTransfer() {
+      if(confirm("대표 권한을 이전하시겠습니까?")) {
+        // 이전 API 호출 로직...
+        this.showTransferLayer = false;
+        this.fetchData();
       }
-
-      //let params = reqGuard;
-      api.updGuard(reqGuard).then(res => {
-        if(res.data.status === "SUCCESS") {
-
-          alert("수정 되었습니다.");
-          window.opener.vueComponent.selectGuardList();
-          window.close();
-        }
-      })
-      console.log(this.guard);
+    },
+    executeAddDevice() {
+      if(confirm("기기를 추가하시겠습니까?")) {
+        // 추가 API 호출 로직...
+        this.showAddDeviceLayer = false;
+        this.fetchData();
+      }
+    },
+    revokePermission(item) {
+      if(confirm("권한을 해제하시겠습니까?")) {
+        // 해제 로직
+      }
+    },
+    closePopup() {
+      window.close();
     }
-
   }
 }
 </script>
 
 <style scoped>
-
+.translate-middle { transform: translate(-50%, -50%) !important; }
 </style>

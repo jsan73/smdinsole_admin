@@ -76,6 +76,48 @@ export default {
 	delGuard(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guard/del/' + param);
 	},
+
+	// 관리자 사용자 리스트
+	selGuardianListByAdmin() {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/list');
+	},
+	// 관리자 사용자 추가
+	insGuardianByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/ins', param);
+	},
+	// 사용자 수정
+	updGuardianByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/upd', param);
+	},
+	// 사용자 연결 기기 목록
+	selDeviceListByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/device/list/' + param);
+	},
+	//사용자 정보 수정을 위한 검색 쿼리
+	getGuardianInfo(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/info/'+ param);
+	},
+	// 대표 사용자 이전을 위한 검색 쿼리
+	getMasterGuardianSearch(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/master/search', param);
+	},
+	//대표 사용자 이전
+	chageMasterGuardByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/master/ins', param);
+	},
+	//기기 추가를 위한 검색 쿼리
+	getDeviceInsSearch(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/device/search', param);
+	},
+	//사용자에 기기 추가
+	insDeviceGuardByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/device/ins', param);
+	},
+	// 사용자에 기기 삭제
+	delDeviceGuardianByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/device/del', param);
+	},
+
 	// 단순 단말 조회
 	geGuardInfo(deviceIMEI) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guard/get/' + deviceIMEI);
