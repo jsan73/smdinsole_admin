@@ -16,39 +16,84 @@
           <!-- 검색조건 -->
           <div class="card">
             <div class="card-body pb-0">
-<!--              <form>-->
-                <div class="row my-1">
-                  <div class="col-2 d-flex">
-                    <label for="deviceID" class="col-form-label pe-4">IMEI</label>
-                    <input v-model="search.deviceIMEI" name="textfield" type="text" id="IMEI" class="form-control d-inline-flex" style="width: 180px;">
+              <div class="row my-3 align-items-center">
+                <div class="col d-flex flex-wrap gap-3">
+
+                  <div class="d-flex align-items-center">
+                    <label for="IMEI" class="fw-bold me-2" style="white-space: nowrap;">IMEI</label>
+                    <input
+                        v-model="search.deviceIMEI"
+                        type="text"
+                        id="IMEI"
+                        class="form-control"
+                        style="width: 180px;"
+                        placeholder="IMEI 입력"
+                        @keyup.enter="selectDeviceList"
+                    >
                   </div>
-                  <div class="col-2 d-flex">
-                    <label for="deviceID" class="col-form-label pe-4">ICCID</label>
-                    <input v-model="search.iccId" name="textfield" type="text" id="ICCID" class="form-control d-inline-flex" style="width: 280px;">
+
+                  <div class="d-flex align-items-center">
+                    <label for="phone" class="fw-bold me-2" style="white-space: nowrap;">사용자 전화번호0</label>
+                    <input
+                        v-model="search.guardPhone"
+                        type="text"
+                        id="phone"
+                        class="form-control"
+                        style="width: 160px;"
+                        placeholder="번호 입력"
+                        @keyup.enter="selectDeviceList"
+                    >
                   </div>
-                  <div class="col-3 d-flex">
-                    <label for="Set" class="col-form-label pe-4">사용자 전화번호0</label>
-                    <input v-model="search.guardPhone" name="textfield" type="text" id="phone" class="form-control d-inline-flex" style="width: 180px;">
-                    <!-- <select id="isAssign" class="form-select d-inline-flex" style="width: 120px;">
-                        <option value=""> - 전체 - </option>
-                        <option value="true">할당</option>
-                        <option value="false">미할당</option>
-                    </select> -->
+                  <div class="d-flex align-items-center">
+                    <label for="expDate" class="fw-bold me-2" style="white-space: nowrap;">만료일</label>
+                    <input
+                        v-model="search.expDate"
+                        type="date"
+                        id="expDate"
+                        class="form-control"
+                        style="width: 150px;"
+                        @change="selectDeviceList"
+                    >
                   </div>
-                  <div class="col-3 d-flex">
-                    <label for="deviceID" class="col-form-label pe-4">소속 기관</label>
-                    <select v-model="search.orgcNo" id="group" name="group" class="form-select d-inline-flex" style="width: 70%;">
+
+                  <div class="d-flex align-items-center">
+                    <label for="esimExpDate" class="fw-bold me-2" style="white-space: nowrap;">이심사용기한</label>
+                    <input
+                        v-model="search.esimExpDate"
+                        type="date"
+                        id="esimExpDate"
+                        class="form-control"
+                        style="width: 150px;"
+                        @change="selectDeviceList"
+                    >
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <label for="group" class="fw-bold me-2" style="white-space: nowrap;">소속 기관</label>
+                    <select
+                        v-model="search.orgcNo"
+                        id="group"
+                        class="form-select"
+                        style="width: 200px;"
+                        @change="selectDeviceList"
+                    >
                       <option value=""> - 선택 - </option>
-                      <option v-for="(orgc, index) in orgcList" :key="index" :value="orgc.ORGC_NO">{{orgc.ORGC_NAME}}</option>
+                      <option v-for="(orgc, index) in orgcList" :key="index" :value="orgc.ORGC_NO">
+                        {{orgc.ORGC_NAME}}
+                      </option>
                     </select>
                   </div>
-                  <div class="col-2 text-end">
-                    <button class="btn btn-secondary" @click="selectDeviceList">조회</button>
-                  </div>
                 </div>
-<!--              </form>-->
+
+                <div class="col-auto ms-auto">
+                  <button class="btn btn-secondary" @click="selectDeviceList">
+                    <i class="bi bi-search"></i> 조회
+                  </button>
+                </div>
+
+              </div>
             </div>
-          </div><!--/ 검색조건 -->
+          </div>
+          <!--/ 검색조건 -->
         </div>
       </div>
 

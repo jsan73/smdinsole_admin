@@ -28,7 +28,9 @@
                 </div>
 
                 <div class="col-auto ms-auto">
-                  <button class="btn btn-secondary" @click="selectGuardList">조회</button>
+                  <button class="btn btn-secondary" @click="selectGuardList">
+                    <i class="bi bi-search"></i> 조회
+                  </button>
                 </div>
 
               </div>
@@ -72,22 +74,60 @@ export default {
         guardPhone:'',
         lastLoginDate:'',
       },
-      columns:[
-        {select:0, render: function(data, cell, row) {
-            return row.dataIndex + 1
+      // ... 기존 코드 (data 리턴 문 안의 columns 부분 수정)
+      columns: [
+        {
+          select: 0,
+          render: function(data, cell, row) {
+            return row.dataIndex + 1;
           }
         },
-        {select:1, scope:'row', render: function (data, cell, row) {
+        {
+          select: 1,
+          scope: 'row',
+          render: function (data, cell, row) {
+            // guardNo 위치가 데이터 구조에 따라 다를 수 있으니 확인 필요 (보통 row.data[0] 등)
             let guardNo = row.cells[0].data;
             return `<a href="#" onclick="handleRowClick(${guardNo})">${utils.telForm(data, 1)}</a>`;
-          }},
-
-        {select:2, scope:'row'},
-        {select:3, scope:'row'},
-        {select:4, scope:'row'},
-        {select:5, scope:'row'},
-        {select:6, scope:'row'},
-        {select:7, scope:'row'}
+          }
+        },
+        { select: 2, scope: 'row' }, // 사용자명
+        { select: 3, scope: 'row' }, // 이메일
+        {
+          // 4: 사용자 유형
+          select: 4,
+          render: function(data, cell, row) {
+            if (!data) return "-";
+            // 데이터가 "1,2" 형태거나 [1, 2] 배열인 경우를 모두 고려
+            const types = String(data).split(',');
+            let result = [];
+            if (types.includes('1')) result.push("대표");
+            if (types.includes('2')) result.push("추가");
+            return result.join(', ');
+          }
+        },
+        { select: 5, scope: 'row' }, // 연결 기기 수
+        {
+          // 6: 마지막 접속일
+          select: 6,
+          render: (data) => {
+            // dateForm이 utils에 정의되어 있다고 가정
+            return utils.dateForm(data);
+          }
+        },
+        {
+          // 7: 계정상태
+          select: 7,
+          render: function(data) {
+            const statusMap = {
+              'N': '<span class="badge bg-success">정상</span>',
+              'H': '<span class="badge bg-secondary">휴면</span>',
+              'S': '<span class="badge bg-danger">정지(제재)</span>',
+              'D': '<span class="badge bg-dark">탈퇴</span>'
+            };
+            return statusMap[data] || data;
+          }
+        }
       ],
       headings:["No", "전화번호(ID)", "사용자명", "이메일", "사용자 유형", "연결 기기 수", "마지막 접속일", "계정상태"],
     }
@@ -103,7 +143,7 @@ export default {
     openGuard(guardNo) {
       const url = `/guardPopup?guardNo=${guardNo}`;
       const name = "사용자 수정";
-      const style = "width=650,height=500,left=0,top=0";
+      const style = "width=700,height=500,left=0,top=0";
       this.$open(url, name, style);
     },
     appendGuard(){

@@ -78,12 +78,16 @@ export default {
 	},
 
 	// 관리자 사용자 리스트
-	selGuardianListByAdmin() {
-		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/list');
+	selGuardianListByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/list', param);
 	},
 	// 관리자 사용자 추가
 	insGuardianByAdmin(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/ins', param);
+	},
+	// 사용자 핸드폰 등록 여부 확인
+	checkGuardPhone(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/phone/check', param);
 	},
 	// 사용자 수정
 	updGuardianByAdmin(param) {
@@ -107,13 +111,13 @@ export default {
 	},
 	//기기 추가를 위한 검색 쿼리
 	getDeviceInsSearch(param) {
-		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/device/search', param);
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/device/search/'+ param);
 	},
 	//사용자에 기기 추가
 	insDeviceGuardByAdmin(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/device/ins', param);
 	},
-	// 사용자에 기기 삭제
+	// 사용자에 기기 삭제 (권한해제)
 	delDeviceGuardianByAdmin(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/guardian/device/del', param);
 	},

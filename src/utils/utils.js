@@ -174,4 +174,12 @@ export default {
         }
         link.click();
     },
+
+    validateEmail(email) {
+        // 이메일 형식이거나 빈값(선택입력)인 경우 통과
+        if (!email) return true;
+        console.log(email)
+        const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return re.test(email);
+    },
 }

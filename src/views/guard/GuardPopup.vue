@@ -69,7 +69,10 @@
           <td>
             <select v-model="item.notiCd" class="form-select form-select-sm">
               <option value="">설정</option>
+              <option value="NC00">내일 아침 9시까지 알림 해제</option>
               <option value="NC03">3시간 알림 해제</option>
+              <option value="NC06">6시간 알림 해제</option>
+              <option value="NC12">12시간 알림 해제</option>
               <option value="NC99">다음 설정시까지 알림 해제</option>
             </select>
           </td>
@@ -106,15 +109,15 @@
         <h6 class="fw-bold">대표 사용자 이전</h6>
         <button type="button" class="btn-close btn-sm" @click="showTransferLayer = false"></button>
       </div>
-      <p class="small">이 기기(ID: {{selectedDevice.deviceIMEI}})의 대표 권한을 이전하시겠습니까?</p>
+      <p class="small">이 기기(IMEI: {{ transferForm.selectedDeviceIMEI }})의 대표 권한을 이전하시겠습니까?</p>
       <div class="input-group input-group-sm mb-3 border">
         <span class="input-group-text bg-light border-0">전화번호(ID)</span>
-        <input type="text" class="form-control border-0" v-model="searchKey">
+        <input type="text" class="form-control border-0" v-model="transferForm.searchPhone" placeholder="이전할 대상 번호 입력">
         <button class="btn btn-info text-white" @click="searchGuardForTransfer">조회</button>
       </div>
-      <div v-if="searchResult" class="border-top border-bottom py-2 d-flex align-items-center">
+      <div v-if="transferForm.searchResult" class="border-top border-bottom py-2 d-flex align-items-center">
         <input type="checkbox" class="form-check-input ms-2 me-3" style="width:20px; height:20px;" @change="executeTransfer">
-        <span class="small">ID : {{ searchResult.guardPhone }}</span>
+        <span class="small">ID : {{ transferForm.searchResult.guardPhone }} ({{ transferForm.searchResult.guardName }})</span>
       </div>
     </div>
 
@@ -125,12 +128,15 @@
       </div>
       <div class="input-group input-group-sm mb-3 border">
         <span class="input-group-text bg-light border-0">IMEI</span>
-        <input type="text" class="form-control border-0" v-model="searchKey">
+        <input type="text" class="form-control border-0" v-model="addDeviceForm.searchIMEI" placeholder="추가할 IMEI 입력">
         <button class="btn btn-info text-white" @click="searchDeviceForAdd">조회</button>
       </div>
-      <div v-if="searchResult" class="border-top border-bottom py-2 d-flex align-items-center">
+      <div v-if="addDeviceForm.searchResult" class="border-top border-bottom py-2 d-flex align-items-center">
         <input type="checkbox" class="form-check-input ms-2 me-3" style="width:20px; height:20px;" @change="executeAddDevice">
-        <span class="small">IMEI : {{ searchResult.deviceIMEI }} &nbsp;&nbsp; 사용자 유형 : 대표</span>
+        <span class="small">
+          IMEI : {{ addDeviceForm.searchResult.deviceIMEI }} &nbsp;&nbsp;
+          사용자 유형 : <b>{{ addDeviceForm.searchResult.userTypeNm }}</b>
+        </span>
       </div>
     </div>
 
@@ -147,122 +153,310 @@ export default {
   data() {
     return {
       isUpdateMode: false,
-      isRegistered: false, // 등록 직후 추가 버튼 활성화용
+      isRegistered: false,
       guardNo: null,
       utils: utils,
-      guard: {
-        guardPhone: '',
-        guardName: '',
-        email: '',
-        lastLoginDate: null,
-        accountState: 'N'
-      },
+      guard: { guardPhone: '', guardName: '', email: '', lastLoginDate: null, accountState: 'N', maketingAgreeYn: 'Y' },
       deviceList: [],
-      // 레이어 관련
+
+      // 레이어 표시 여부
       showTransferLayer: false,
       showAddDeviceLayer: false,
-      searchKey: '',
-      searchResult: null,
-      selectedDevice: {}
+
+      // 대표 이전 레이어 전용 데이터
+      transferForm: {
+        searchPhone: '',
+        searchResult: null,
+        selectedDeviceNo: null,
+        selectedDeviceIMEI: ''
+      },
+
+      // 기기 추가 레이어 전용 데이터
+      addDeviceForm: {
+        searchIMEI: '',
+        searchResult: null
+      },
+
+      originalPhone: '',
+      isEmailValid: true,
     }
   },
   mounted() {
-    this.guardNo = this.$route.query.guardNo;
-    if (utils.isNotEmpty(this.guardNo)) {
-      console.log(this.guardNo)
+    const queryNo = this.$route.query.guardNo;
+    if (queryNo) {
+      this.guardNo = queryNo;
       this.isUpdateMode = true;
       this.fetchData();
     }
   },
   methods: {
+    getRawPhone(phone) {
+      return (phone || '').replace(/[^0-9]/g, "");
+    },
+
+    async checkDuplicate(param) {
+      const checkRes = await api.checkGuardPhone(param.guardPhone);
+      if (checkRes.data.data === 1) {
+        alert("이미 존재하거나 중복된 전화번호입니다.");
+        return true;
+      }
+      return false;
+    },
+
+    async checkEmail() {
+      const email = this.guard.email;
+      if (!email || email.trim() === '') {
+        this.isEmailValid = true;
+        return true;
+      }
+      if (!utils.validateEmail(email)) {
+        alert("올바른 이메일 형식이 아닙니다.");
+        this.isEmailValid = false;
+        return false;
+      }
+      this.isEmailValid = true;
+      return true;
+    },
+
     async fetchData() {
       try {
-        // 1. 사용자 정보 조회
         const resGuard = await api.getGuardianInfo(this.guardNo);
         if (resGuard.data.status === "SUCCESS") {
           const data = resGuard.data.data;
-          // 수신된 데이터를 포맷팅하여 저장
-          data.guardPhone = utils.telForm(data.guardPhone);
+          const formatted = this.utils.telForm(this.getRawPhone(data.guardPhone));
+          data.guardPhone = formatted;
           this.guard = data;
-        } else {
-          alert("사용자 정보를 불러오는데 실패했습니다.");
+          this.originalPhone = formatted;
         }
 
-        // 2. 기기 목록 조회
         const resDevice = await api.selDeviceListByAdmin(this.guardNo);
         if (resDevice.data.status === "SUCCESS") {
-          this.deviceList = resDevice.data.data;
+          this.deviceList = resDevice.data.data.map(item => ({
+            ...item,
+            notiCd: item.notiCd === null ? "" : item.notiCd
+          }));
         }
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) { console.error(e); }
     },
+
     async registerGuard() {
-      // regGuard API 호출 로직
-      const res = await api.insGuardianByAdmin(this.guard);
-      if(res.data.status === "SUCCESS") {
-        alert("등록되었습니다. 이제 기기를 추가할 수 있습니다.");
+      const param = { ...this.guard, guardPhone: this.getRawPhone(this.guard.guardPhone) };
+      if (await this.checkDuplicate(param)) return;
+      if (!await this.checkEmail()) return;
+      const res = await api.insGuardianByAdmin(param);
+      if (res.data.status === "SUCCESS") {
+        alert("등록되었습니다.");
+        window.opener.vueComponent.selectGuardList();
         this.isRegistered = true;
-        // 등록 후 guardNo를 받아와서 수정 모드로 전환하거나 상태 유지
       }
     },
 
     async updateGuard() {
+      const param = { ...this.guard, guardPhone: this.getRawPhone(this.guard.guardPhone) };
+      const isPhoneChanged = this.getRawPhone(this.guard.guardPhone) !== this.getRawPhone(this.originalPhone);
 
-    },
-    async deleteGuard(){
+      if (isPhoneChanged && await this.checkDuplicate(param)) return;
+      if(!await this.checkEmail()) return;
 
-    },
-
-    handleUserTypeChange(event, item) {
-      if (event.target.value === '1') { // 대표로 변경 시
-        this.selectedDevice = item;
-        this.searchKey = '';
-        this.searchResult = null;
-        this.showTransferLayer = true;
+      const res = await api.updGuardianByAdmin(param);
+      if (res.data.status === "SUCCESS") {
+        alert("수정 되었습니다.");
+        window.opener.vueComponent.selectGuardList();
+        this.originalPhone = this.guard.guardPhone;
       }
     },
+
+    // --- 대표 이전 관련 로직 ---
+    handleUserTypeChange(event, item) {
+      const selectedType = event.target.value; // '1': 대표, '2': 추가
+
+      // 레이어 초기화 및 기기 정보 저장
+      this.transferForm.selectedDeviceNo = item.deviceNo;
+      this.transferForm.selectedDeviceIMEI = item.deviceIMEI;
+      this.transferForm.searchResult = null;
+      this.showTransferLayer = true;
+
+      if (selectedType === '1') {
+        // [추가 -> 대표] 현재 사용자의 번호를 자동으로 입력하고 즉시 조회
+        this.transferForm.searchPhone = this.guard.guardPhone;
+        this.searchGuardForTransfer();
+      } else {
+        // [대표 -> 추가] 검색창을 비워서 다른 사람을 대표로 지정할 수 있게 함
+        this.transferForm.searchPhone = '';
+      }
+    },
+
+    async searchGuardForTransfer() {
+      const phone = this.getRawPhone(this.transferForm.searchPhone);
+      if (!phone) return alert("조회할 전화번호를 입력하세요.");
+
+      // 요청 바디 구성 (deviceNo와 guardPhone)
+      const requestBody = {
+        deviceNo: this.transferForm.selectedDeviceNo,
+        guardPhone: phone
+      };
+
+      try {
+        const res = await api.getMasterGuardianSearch(requestBody);
+        if (res.data.status === "SUCCESS") {
+          this.transferForm.searchResult = res.data.data;
+        } else {
+          alert("조회된 사용자가 없거나 대표 권한을 부여할 수 없는 사용자입니다.");
+          this.transferForm.searchResult = null;
+        }
+      } catch (e) {
+        console.error(e);
+        alert("조회 중 오류가 발생했습니다.");
+      }
+    },
+
+    async executeTransfer() {
+      if (!this.transferForm.searchResult) return;
+
+      if (confirm("대표 권한을 이전하시겠습니까?")) {
+        try {
+          const requestBody = {
+            deviceNo: this.transferForm.selectedDeviceNo,
+            masterGuardNo: this.transferForm.searchResult.guardNo // 조회된 대상의 번호
+          };
+
+          // 대표 권한 이전 API (프로젝트 상황에 맞는 API 호출)
+          const res = await api.chageMasterGuardByAdmin(requestBody);
+
+          if (res.data.status === "SUCCESS") {
+            alert("대표 권한 설정이 변경되었습니다.");
+            this.showTransferLayer = false;
+            this.fetchData(); // 기기 목록 새로고침
+          } else {
+            alert(res.data.message || "설정 변경에 실패했습니다.");
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    },
+
+    // --- 기기 추가 관련 로직 ---
     openAddDevice() {
-      this.searchKey = '';
-      this.searchResult = null;
+      this.addDeviceForm.searchIMEI = '';
+      this.addDeviceForm.searchResult = null;
       this.showAddDeviceLayer = true;
     },
-    // 레이어 조회 1: 대표 이전용 사용자 조회
-    async searchGuardForTransfer() {
-      const res = await api.getMasterGuardianSearch(this.searchKey); // 휴대폰 번호로 조회
-      if(res.data.status === "SUCCESS") {
-        this.searchResult = res.data.data;
-      }
-    },
-    // 레이어 조회 2: 기기 추가용 IMEI 조회
+
     async searchDeviceForAdd() {
-      const res = await api.getDeviceInsSearch(this.searchKey);
-      if(res.data.status === "SUCCESS") {
-        this.searchResult = res.data.data;
+      if (!this.addDeviceForm.searchIMEI) return alert("IMEI를 입력하세요.");
+
+      try {
+        const res = await api.getDeviceInsSearch(this.addDeviceForm.searchIMEI);
+
+        if (res.data.status === "SUCCESS" && res.data.data.length > 0) {
+          const deviceRows = res.data.data;
+
+          // 1. 중복 체크: 현재 사용자(guard.guardNo)가 이미 이 기기에 연결되어 있는지 확인
+          const isAlreadyConnected = deviceRows.some(row => row.guardNo === this.guard.guardNo);
+          if (isAlreadyConnected) {
+            alert("이미 이 사용자에게 연결된 기기입니다.");
+            this.addDeviceForm.searchResult = null;
+            return;
+          }
+
+          // 2. 사용자 유형 판별 로직 수정
+          // 전체 로우 중 masterGuardNo가 0이 아닌 로우가 하나라도 있는지 확인 (기존 대표 존재 여부)
+          const existingMaster = deviceRows.find(row => row.masterGuardNo !== 0);
+
+          let userType, userTypeNm, masterGuardNo;
+
+          if (existingMaster) {
+            // 이미 대표가 있는 경우 -> '추가' 유형
+            userType = '2';
+            userTypeNm = '추가';
+            masterGuardNo = existingMaster.masterGuardNo; // 기존 대표의 번호를 할당
+          } else {
+            // 모든 masterGuardNo가 0인 경우 -> '대표' 유형 가능
+            userType = '1';
+            userTypeNm = '대표';
+            masterGuardNo = 0; // 나중에 executeAddDevice에서 현재 사용자의 guardNo로 덮어씌움
+          }
+
+          // 3. 결과 데이터 저장 (첫 번째 row의 기본 정보 + 판별된 유형 정보)
+          this.addDeviceForm.searchResult = {
+            ...deviceRows[0], // deviceNo, deviceIMEI 등 공통 정보 활용
+            userType: userType,
+            userTypeNm: userTypeNm,
+            masterGuardNo: masterGuardNo
+          };
+
+          console.log('판별된 기기 상태:', this.addDeviceForm.searchResult);
+        } else {
+          alert("조회된 기기가 없거나 추가할 수 없는 상태입니다.");
+          this.addDeviceForm.searchResult = null;
+        }
+      } catch (e) {
+        console.error(e);
+        alert("조회 중 오류가 발생했습니다.");
       }
     },
-    executeTransfer() {
-      if(confirm("대표 권한을 이전하시겠습니까?")) {
-        // 이전 API 호출 로직...
-        this.showTransferLayer = false;
-        this.fetchData();
+
+    async executeAddDevice() {
+      if (!this.addDeviceForm.searchResult) return;
+
+      if (confirm("기기를 추가하시겠습니까?")) {
+        try {
+          const result = this.addDeviceForm.searchResult;
+          const currentGuardNo = this.guard.guardNo;
+
+          const requestBody = {
+            deviceNo: result.deviceNo,
+            guardNo: currentGuardNo,
+            // 유형이 대표('1')이면 자신의 번호를, 추가('2')이면 조회된 기존 대표 번호를 사용
+            masterGuardNo: result.userType === '1' ? currentGuardNo : result.masterGuardNo
+          };
+
+          const res = await api.insDeviceGuardByAdmin(requestBody);
+
+          if (res.data.status === "SUCCESS") {
+            alert("기기가 추가되었습니다.");
+            this.showAddDeviceLayer = false;
+            this.fetchData();
+          } else {
+            alert(res.data.message || "추가 실패");
+          }
+        } catch (e) {
+          console.error(e);
+        }
       }
     },
-    executeAddDevice() {
-      if(confirm("기기를 추가하시겠습니까?")) {
-        // 추가 API 호출 로직...
-        this.showAddDeviceLayer = false;
-        this.fetchData();
+
+    async revokePermission(item) {
+      // item: deviceList의 각 로우 객체 (deviceNo 포함)
+      if (confirm("해당 기기에 대한 권한을 해제하시겠습니까?")) {
+        try {
+          // API 요구사항에 맞춰 파라미터 구성
+          const requestBody = {
+            guardNo: this.guard.guardNo,   // 현재 편집 중인 사용자 번호
+            deviceNo: item.deviceNo       // 선택한 기기의 번호
+          };
+
+          const res = await api.delDeviceGuardianByAdmin(requestBody);
+
+          if (res.data.status === "SUCCESS") {
+            alert("권한이 해제되었습니다.");
+            this.fetchData(); // 삭제 후 목록 새로고침
+          } else {
+            alert(res.data.message || "권한 해제에 실패했습니다.");
+          }
+        } catch (e) {
+          console.error(e);
+          alert("서버 통신 중 오류가 발생했습니다.");
+        }
       }
     },
-    revokePermission(item) {
-      if(confirm("권한을 해제하시겠습니까?")) {
-        // 해제 로직
-      }
+
+    deleteGuard() {
+      if (confirm("삭제하시겠습니까?")) { /* 삭제 API 호출 */ }
     },
-    closePopup() {
-      window.close();
-    }
+
+    closePopup() { window.close(); },
   }
 }
 </script>
