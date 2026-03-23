@@ -11,6 +11,15 @@ export default {
 	login(param) {
 		return http.postParam(process.env.VUE_APP_SERVER_URL + `/api/admin/get/token`, param)
 	},
+	login_step1(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/auth/login/step1`, param)
+	},
+	login_step2(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/auth/login/step2`, param)
+	},
+	login_verify(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/auth/login/verify-mfa`, param)
+	},
 
 	// 기기관리
 	selDeviceList(param) {
@@ -158,8 +167,11 @@ export default {
 	},
 
 	// 패스워드 변경
+	// updChangePwd(param) {
+	// 	return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/upd/pwd', param)
+	// },
 	updChangePwd(param) {
-		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/upd/pwd', param)
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/auth/change-password', param)
 	},
 
 	selLocationLog(param) {
@@ -188,6 +200,15 @@ export default {
 	// 공통코드 가져오기
 	getCommCode(params) {
 		return http.post(process.env.VUE_APP_ADMIN_PJT + `/api/get/commcode`, params)
+	},
+
+	// 관리자 관리
+	// 관리자 사용자 리스트
+	selManagerListByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/list', param);
+	},
+	getManagerByAdmin(mgrNo) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/get/' + mgrNo);
 	},
 
 

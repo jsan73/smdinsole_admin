@@ -1,111 +1,141 @@
 <template>
-  <div>
-  <div class="wrap ">
+  <div class="wrap">
     <div class="img_item row">
       <div class="col-6 text-center" style="padding-top: 120px;">
         <div><img src="static/images/kokasin_admin_logo.png" alt="ktkokasin" /></div>
       </div>
       <div class="col-6">
+        <div id="login-box" class="login_form">
+          <div class="login_area">
 
-          <div id="login-box">
-            <div class="login_form">
-              <div class="login_area">
-                <ul>
-                  <li class="login_te">ID</li>
-                  <li class="login_bar">
-                    <input type="text" class="input_txt" id="id" name="id" v-model="loginId" readonly>
-                  </li>
-                  <li class="login_te">Password</li>
-                  <li class="login_bar">
-                    <input type="password" class="input_txt" id="password" name="password" v-model="password" >
-                  </li>
-                  <li class="login_te">Password 확인</li>
-                  <li class="login_bar">
-                    <input type="password" class="input_txt" id="password_confirm" name="password_confirm" v-model="password_confirm" >
-                  </li>
+            <div v-if="!isSuccess">
+              <h3 style="color: #333; font-weight: bold; text-align: center; margin-bottom: 10px;">
+                {{ isForce === 'Y' ? '관리자 비밀번호 변경' : '관리자 신규 비밀번호 설정' }}
+              </h3>
+              <p v-if="isForce === 'Y'" style="color: #333; text-align: center; margin-bottom: 30px;">
+                개인정보 취급자는 6개월에 한 번씩 비밀번호를 변경해야 합니다.
+              </p>
 
-                  <li class="login_radio">
-<!--                    <label>-->
-<!--                      <input type="radio" name="logintype" value="admin" checked class="form-check-input"> 담당자-->
-<!--                    </label>-->
-                    <!-- <label>
-                                    <input type="radio" name="logintype" value="organization" class="form-check-input ms-5"> 기관 관리자
-                                </label> -->
-                  </li>
-                  <li><button id="submit" class="btn mt-4" @click="change_password">비밀번호 변경</button></li>
-                </ul>
-              </div>
+              <ul v-if="isForce === 'Y'">
+                <li class="login_bar compact_li">
+                  <input type="password" class="input_txt" v-model="cur_password" placeholder="현재 비밀번호 입력">
+                </li>
+
+                <li class="login_bar compact_li">
+                  <input type="password" class="input_txt" v-model="password" placeholder="신규 비밀번호 입력">
+                </li>
+
+                <li class="password_hint">
+                  (영문, 숫자, 특수문자 조합 8~16자 입력)
+                </li>
+
+                <li class="login_bar compact_li">
+                  <input type="password" class="input_txt" v-model="password_confirm" placeholder="신규 비밀번호 확인">
+                </li>
+
+                <li class="compact_li">
+                  <button id="submit" class="btn mt-3" @click="change_password">확인</button>
+                </li>
+              </ul>
             </div>
+
+            <div v-else class="text-center py-5">
+              <p style="color: #333; font-weight: bold; font-size: 16px; margin-bottom: 40px;">
+                비밀번호가 성공적으로 변경되었습니다.
+              </p>
+              <button id="submit" class="btn" @click="goLogin">로그인하기</button>
+            </div>
+
           </div>
-
+        </div>
       </div>
-
     </div>
+    <div class="login_copy">Copyright ⓒ SmartMedicalDevice Co., Ltd. All Rights Reserved.</div>
   </div>
-  <div class="login_copy">
-    Copyright ⓒ SmartMedicalDevice Co., Ltd. All Rights Reserved.
-  </div>
-  </div>
-
 </template>
 
 <script>
-import {mapActions, mapState} from "vuex";
+import { mapActions, mapState } from "vuex";
 import utils from "@/utils/utils";
 import api from "@/api/api";
-import http from "@/api/http";
-import adminStore from "@/store/adminStore";
-
+import store from "@/store";
 
 export default {
   name: "LoginChgPwd",
   data() {
     return {
-      loginId:'',
-      password:'',
-      password_confirm:''
+      loginId: '', cur_password: '', password: '', password_confirm: '',
+      isForce: 'N', isSuccess: false
     }
   },
   computed: {
     ...mapState("adminStore", ['adminInfo'])
   },
   methods: {
-    ...mapActions("adminStore", ["commitAdminInfo"]),
+    ...mapActions("adminStore", ["commitAdminInfo","clearPwdChange", "commitToken"]),
 
-    change_password() {
-      if(utils.isEmpty(this.password)) {
-        alert("비밀번호를 입력해 주세요.");
-        return;
-      }
-      if(utils.isEmpty(this.password_confirm)) {
-        alert("비밀번호 확인을 입력해 주세요.");
-        return;
-      }
-      if(this.password !== this.password_confirm) {
-        alert("비밀번호가 다릅니다.");
-        return;
-      }
-
-      const params = {mgrId: this.loginId, mgrPwd: this.password};
-
-      api.updChangePwd(params).then(res => {
-        if(res.data.status === "SUCCESS") {
-          let payload = {adminId: this.loginId, autoLogin: "N", pwdChange: "N"};
-          this.commitAdminInfo(payload);
-          this.$router.replace("/device");
-        }
-      }).catch(e => {
-        // 변경 실패
-        alert(e.response.data.message);
-      });
+    validatePassword(pw) {
+      // 이미지에 명시된 영문, 숫자, 특수문자 조합 8~16자 규칙 적용
+      const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,16}$/;
+      return regex.test(pw);
     },
+
+    async change_password() {
+      if (utils.isEmpty(this.cur_password)) return alert("현재 비밀번호를 입력해 주세요.");
+      if (utils.isEmpty(this.password)) return alert("비밀번호를 입력해 주세요.");
+      if (!this.validatePassword(this.password)) return alert("비밀번호는 8~16자 이내의 영문, 숫자, 특수문자 조합이어야 합니다.");
+      if (this.password !== this.password_confirm) return alert("비밀번호가 일치하지 않습니다.");
+
+      try {
+        const params = { mgrId: this.loginId, currentPwd: this.cur_password, newPwd: this.password };
+        const res = await api.updChangePwd(params);
+        if (res.data.status === "SUCCESS") {
+          this.isSuccess = true;
+          this.clearPwdChange();
+          this.commitToken('')
+        }
+      } catch (e) { alert(e.response?.data?.message || "변경 실패"); }
+    },
+    goLogin() {
+      window.location.href = "/login"
+      // this.$router.replace("/");
+    }
   },
   mounted() {
-    this.loginId = this.adminInfo.adminId
+    this.loginId = this.adminInfo?.adminId || this.$route.params.mgrId;
+
+    // vuex에서 값을 가져오지 못하기 때문에 파라메터로 값을 바인딩
+    // session에 값을 저장 하는 이유는 새로고침으로 인한 값 상실을 보완하기 위함
+    this.isForce = this.$route.params.forceChange || store.getters['adminStore/getPwdChange'];
+    // this.isForce = store.getters['adminStore/getPwdChange'];
+    console.log("PwdChange mounted : ",this.isForce);
   }
 }
 </script>
 
 <style scoped>
+/* 1. li 간격 줄이기 */
+.compact_li {
+  margin-bottom: 8px !important; /* 기존 간격보다 좁게 조정 */
+}
 
+/* 2. 안내 문구를 윗 라인에 바짝 붙이기 */
+.password_hint {
+  list-style: none;
+  font-size: 13px;
+  color: #333; /* 요청하신 다크 그레이 */
+  margin-top: -6px; /* 윗 라인 입력창에 바짝 붙도록 음수 마진 적용 */
+  margin-bottom: 12px; /* 아래 입력창과의 최소 간격 */
+  padding-left: 5px;
+}
+
+/* 3. 입력창 폰트 컬러 */
+.input_txt {
+  color: #333 !important;
+}
+
+/* 버튼 상단 마진 미세 조정 */
+.btn.mt-4 {
+  margin-top: 1.5rem !important; /* mt-4가 너무 멀면 mt-3 정도로 조정 권장 */
+}
 </style>

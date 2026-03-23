@@ -31,7 +31,18 @@
                         @keyup.enter="selectDeviceList"
                     >
                   </div>
-
+                  <div class="d-flex align-items-center">
+                    <label for="ICCID" class="fw-bold me-2" style="white-space: nowrap;">ICCID</label>
+                    <input
+                        v-model="search.iccId"
+                        type="text"
+                        id="ICCID"
+                        class="form-control"
+                        style="width: 180px;"
+                        placeholder=""
+                        @keyup.enter="selectDeviceList"
+                    >
+                  </div>
                   <div class="d-flex align-items-center">
                     <label for="phone" class="fw-bold me-2" style="white-space: nowrap;">사용자 전화번호0</label>
                     <input
@@ -45,27 +56,21 @@
                     >
                   </div>
                   <div class="d-flex align-items-center">
-                    <label for="expDate" class="fw-bold me-2" style="white-space: nowrap;">만료일</label>
-                    <input
-                        v-model="search.expDate"
-                        type="date"
-                        id="expDate"
-                        class="form-control"
-                        style="width: 150px;"
-                        @change="selectDeviceList"
-                    >
+                    <label class="fw-bold me-2" style="white-space: nowrap;">만료일</label>
+                    <div class="d-flex align-items-center gap-1">
+                      <input v-model="search.expDateStart" type="date" class="form-control" style="width: 140px;" @change="selectDeviceList">
+                      <span>~</span>
+                      <input v-model="search.expDateEnd" type="date" class="form-control" style="width: 140px;" @change="selectDeviceList">
+                    </div>
                   </div>
 
                   <div class="d-flex align-items-center">
-                    <label for="esimExpDate" class="fw-bold me-2" style="white-space: nowrap;">이심사용기한</label>
-                    <input
-                        v-model="search.esimExpDate"
-                        type="date"
-                        id="esimExpDate"
-                        class="form-control"
-                        style="width: 150px;"
-                        @change="selectDeviceList"
-                    >
+                    <label class="fw-bold me-2" style="white-space: nowrap;">이심사용기한</label>
+                    <div class="d-flex align-items-center gap-1">
+                      <input v-model="search.esimExpDateStart" type="date" class="form-control" style="width: 140px;" @change="selectDeviceList">
+                      <span>~</span>
+                      <input v-model="search.esimExpDateEnd" type="date" class="form-control" style="width: 140px;" @change="selectDeviceList">
+                    </div>
                   </div>
                   <div class="d-flex align-items-center">
                     <label for="group" class="fw-bold me-2" style="white-space: nowrap;">소속 기관</label>
@@ -161,8 +166,15 @@ export default {
       // },
       search: {
         deviceIMEI:'',
+        iccId:'',
         guardPhone:'',
-        orgcNo:''
+        orgcNo:'',
+        // 만료일 기간
+        expDateStart: '',
+        expDateEnd: '',
+        // 이심사용기한 기간
+        esimExpDateStart: '',
+        esimExpDateEnd: ''
       },
       orgcList:'',
       columns:[

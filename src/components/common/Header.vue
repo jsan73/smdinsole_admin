@@ -14,8 +14,9 @@
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Device'?'active':'']" @click="goMenu('/device')" id="device">기기 관리</a></li>
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='EventDevice'?'active':'']" @click="goMenu('/event')" id="device">이벤트 기기</a></li>
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Orgc'?'active':'']" @click="goMenu('/orgc')" id="orgc">기관 관리</a></li>
-            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LocationLog'?'active':'']" @click="goMenu('/loclog')" id="orgc">위치정보 확인</a></li>
-            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LoginLog'?'active':'']" @click="goMenu('/loginlog')" id="orgc">접근기록 확인</a></li>
+            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Manager'?'active':'']" @click="goMenu('/manager')" id="manager">관리자 관리</a></li>
+            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LocationLog'?'active':'']" @click="goMenu('/loclog')" id="loclog">위치정보 확인</a></li>
+            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LoginLog'?'active':'']" @click="goMenu('/loginlog')" id="loginlog">접근기록 확인</a></li>
 
           </ul>
           <div class="tLogo_login">
