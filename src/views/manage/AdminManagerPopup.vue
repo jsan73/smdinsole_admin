@@ -13,8 +13,8 @@
             <th class="text-center bg-light small py-2">권한</th>
             <td>
               <select v-model="manager.mgrType" class="form-select form-select-sm">
-                <option value="ROLE_SADMIN">최고 관리자</option>
                 <option value="ROLE_ADMIN">관리자</option>
+                <option value="ROLE_SADMIN">최고 관리자</option>
               </select>
             </td>
           </tr>
@@ -49,26 +49,17 @@
               <input
                   type="text"
                   v-model="manager.mgrPhone"
-                  @change="manager.mgrPhone = utils.telForm(gmanager.mgrPhone.replace(/[^0-9]/g, ''))"
+
                   class="form-control form-control-sm"
                   maxlength="13"
               >
             </td>
           </tr>
-          <tr v-if="isUpdateMode">
+          <tr>
             <th class="text-center bg-light small py-2">관리 도(시) 영역 설정</th>
             <td class="small ps-2"></td>
           </tr>
-          <tr>
-            <th class="text-center bg-warning small py-2" style="--bs-bg-opacity: .2;">계정상태</th>
-            <td>
-              <select v-model="manager.mgrState" class="form-select form-select-sm">
-                <option value="N">잠금</option>
-                <option value="H">해제</option>
-                <option value="H">정지</option>
-              </select>
-            </td>
-          </tr>
+
           </tbody>
         </table>
       </div>
@@ -76,11 +67,11 @@
 
     <div class="text-center mt-3">
       <template v-if="isUpdateMode">
-        <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="updateGuard">수정</button>
-        <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="deleteGuard">삭제</button>
+        <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="updateManager">수정</button>
+        <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="deleteManager">삭제</button>
       </template>
       <template v-else>
-        <button class="btn btn-primary btn-sm px-4 mx-1" @click="registerGuard">등록</button>
+        <button class="btn btn-primary btn-sm px-4 mx-1" @click="registerManager">등록</button>
         <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="closePopup">취소</button>
       </template>
     </div>
@@ -97,34 +88,23 @@ export default {
   data() {
     return {
       manager : {
-        mgrType: 'A',
+        mgrNo: '',
+        mgrType: 'ROLE_ADMIN',
         nation: 'KR',
         mgrName: '',
         mgrPhone: '',
         mgrId: '',
-        mgrState: 'A',
         manageCity: '',
+        islocked: 'N'
       },
       isUpdateMode: false,
       isRegistered: false,
-      guardNo: null,
+      mgrNo: null,
       utils: utils,
       guard: { guardPhone: '', guardName: '', email: '', lastLoginDate: null, accountState: 'N', maketingAgreeYn: 'Y' },
       deviceList: [],
 
-      // 레이어 표시 여부
-      showTransferLayer: false,
-      showAddDeviceLayer: false,
-
-      // 대표 이전 레이어 전용 데이터
-      transferForm: {
-        searchPhone: '',
-        searchResult: null,
-        selectedDeviceNo: null,
-        selectedDeviceIMEI: ''
-      },
-
-      originalPhone: '',
+      originalMgrId: '', // 추가: 수정 전 ID 비교용
       isEmailValid: true,
     }
   },
@@ -137,24 +117,21 @@ export default {
     }
   },
   methods: {
-    getRawPhone(phone) {
-      return (phone || '').replace(/[^0-9]/g, "");
-    },
 
     async checkDuplicate(param) {
-      const checkRes = await api.checkGuardPhone(param.guardPhone);
-      if (checkRes.data.data === 1) {
-        alert("이미 존재하거나 중복된 전화번호입니다.");
+      const checkRes = await api.checkManagerId(param.mgrId);
+      if (checkRes.data.data >= 1) {
+        alert("중복된 이메일(ID)입니다.");
         return true;
       }
       return false;
     },
 
     async checkEmail() {
-      const email = this.guard.email;
+      const email = this.manager.mgrId;
       if (!email || email.trim() === '') {
-        this.isEmailValid = true;
-        return true;
+        alert("ID(이메일)을 입력해 주세요.");
+        return false;
       }
       if (!utils.validateEmail(email)) {
         alert("올바른 이메일 형식이 아닙니다.");
@@ -167,55 +144,82 @@ export default {
 
     async fetchData() {
       try {
-        const resGuard = await api.getManagerByAdmin(this.mgrNo);
-        if (resGuard.data.status === "SUCCESS") {
-          // const data = resGuard.data.data;
-          // const formatted = this.utils.telForm(this.getRawPhone(data.guardPhone));
-          // data.guardPhone = formatted;
-          // this.guard = data;
-          // this.originalPhone = formatted;
+        const manager = await api.getManagerByAdmin(this.mgrNo);
+        if (manager.data.status === "SUCCESS") {
+          const data = manager.data.data;
+          this.manager = data;
+          // 수정 모드일 때 비교를 위해 원본 ID 저장
+          this.originalMgrId = data.MGR_ID || data.mgrId;
         }
 
       } catch (e) { console.error(e); }
     },
 
-    async registerGuard() {
-      // const param = { ...this.guard, guardPhone: this.getRawPhone(this.guard.guardPhone) };
-      // if (await this.checkDuplicate(param)) return;
-      // if (!await this.checkEmail()) return;
-      // const res = await api.insGuardianByAdmin(param);
-      // if (res.data.status === "SUCCESS") {
-      //   alert("등록되었습니다.");
-      //   window.opener.vueComponent.selectGuardList();
-      //   this.isRegistered = true;
-      // }
+    async registerManager() {
+      const param = { ...this.manager};
+      if (await this.checkDuplicate(param)) return;
+      if (!await this.checkEmail()) return;
+      try {
+        const res = await api.registerManagerByAdmin(param);
+        if (res.data.status === "SUCCESS") {
+          alert("등록되었습니다.");
+          window.opener.vueComponent.selectManagerList();
+          this.isRegistered = true;
+          this.closePopup();
+        } else {
+          alert("등록에 실패했습니다.");
+        }
+      } catch (e) {
+        alert("서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+      }
     },
 
-    async updateGuard() {
-      // const param = { ...this.guard, guardPhone: this.getRawPhone(this.guard.guardPhone) };
-      // const isPhoneChanged = this.getRawPhone(this.guard.guardPhone) !== this.getRawPhone(this.originalPhone);
-      //
-      // if (isPhoneChanged && await this.checkDuplicate(param)) return;
-      // if(!await this.checkEmail()) return;
-      //
-      // const res = await api.updGuardianByAdmin(param);
-      // if (res.data.status === "SUCCESS") {
-      //   alert("수정 되었습니다.");
-      //   window.opener.vueComponent.selectGuardList();
-      //   this.originalPhone = this.guard.guardPhone;
-      // }
+    async updateManager() {
+      // 1. 이메일 형식 유효성 검사부터 수행
+      if (!await this.checkEmail()) return;
+
+      const param = { ...this.manager };
+
+      // 2. ID 변경 여부 확인 (수정 모드 전용 로직)
+      // 입력된 ID와 처음에 불러온 원본 ID가 다를 경우에만 중복 체크 실행
+      if (this.manager.mgrId !== this.originalMgrId) {
+        if (await this.checkDuplicate(param)) return;
+      }
+
+      try {
+        const res = await api.updMangerByAdmin(param);
+        if (res.data.status === "SUCCESS") {
+          if(res.data.data == 1) {
+            alert("수정 되었습니다.");
+            // 부모 창 리스트 갱신
+            if (window.opener && window.opener.vueComponent) {
+              window.opener.vueComponent.selectManagerList();
+            }
+            this.originalMgrId = this.manager.mgrId; // 수정 후 현재 ID를 다시 원본으로 갱신
+            this.closePopup();
+          }else{
+            alert("수정 실패");
+          }
+
+        }
+      } catch (e) {
+        alert("수정 중 오류가 발생했습니다.");
+      }
     },
 
-
-
-
-
-
-
-
-    deleteGuard() {
-      if (confirm("삭제하시겠습니까?")) { /* 삭제 API 호출 */ }
+    async deleteManager() {
+      if (confirm("삭제하시겠습니까?")) {
+        const res = await api.delManagerByAdmin(this.mgrNo);
+        if (res.data.status === "SUCCESS") {
+          alert("삭제 되었습니다.");
+          window.opener.vueComponent.selectGuardList();
+          this.closePopup();
+        } else {
+          alert("삭제에 실패했습니다.");
+        }
+      }
     },
+
 
     closePopup() { window.close(); },
   }

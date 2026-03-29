@@ -99,33 +99,55 @@ export default {
           scope: 'row',
           render: function (data, cell, row) {
             // guardNo 위치가 데이터 구조에 따라 다를 수 있으니 확인 필요 (보통 row.data[0] 등)
-            let mgrNo = row.cells[0].data;
+            const mgrNo = row.cells[0].data;
             return `<a href="#" onclick="handleRowClick(${mgrNo})">${data}</a>`;
           }
         },
         { select: 3, scope: 'row' }, // 이름
         { select: 4, scope: 'row' }, // 소속
         {
-          // 6: 마지막 로그인
+          // 5: 마지막 로그인
           select: 5,
           render: (data) => {
-            return utils.convertFromStrToDate(data);
+            return data ? utils.convertFromStrToDate(data) : '-';
           }
         },
         {
-          // 4: 상태
+          // 6: 잠김 상태
           select: 6,
           render: function(data, cell, row) {
-            const statusMap = {
-              'A': '<span class="badge bg-success">활성</span>',
-              'S': '<span class="badge bg-secondary">정지</span>',
-              'L': '<span class="badge bg-danger">잠금</span>',
-            };
-            return statusMap[data] || data;
+            // data 변수가 'Y' 또는 'N' 값을 가지고 있다고 가정 (row.isLocked 등 상황에 맞춰 조정)
+            if (data === 'Y') {
+              // 잠금 상태(Y)일 때: 해제 버튼 노출
+              const mgrNo = row.cells[0].data;
+              return `
+                <button type="button" class="btn btn-sm btn-outline-primary"
+                        onclick="unlockManager(${mgrNo})">
+                    <i class="bi bi-unlock"></i> 잠금해제
+                </button>
+            `;
+            } else {
+              // 정상 상태(N)일 때: 활성 또는 정상 텍스트/배지 노출
+              return '<span class="badge bg-success">정상</span>';
+            }
+          }
+        },
+        {
+          // 7: 비밀번호 초기화
+          select: 7,
+          render: function(data, cell, row) {
+              // 잠금 상태(Y)일 때: 해제 버튼 노출
+              const mgrNo = row.cells[0].data;
+              return `
+                <button type="button" class="btn btn-sm btn-outline-primary"
+                        onclick="initManagerPwd(${mgrNo})">
+                    <i class="bi bi-unlock"></i> 초기화
+                </button>
+            `;
           }
         }
       ],
-      headings:["No", "구분", "이메일(ID)", "이름", "소속", "마지막 로그인", "상태"],
+      headings:["No", "구분", "이메일(ID)", "이름", "소속", "마지막 로그인", "상태", "비밀번호 초기화"],
     }
   },
   mounted() {
@@ -156,9 +178,38 @@ export default {
       param.lastLoginDate = param.lastLoginDate.replace(/-/g, '');
       const res = await api.selManagerListByAdmin(param);
       if(res.data.status === "SUCCESS") {
-        let dataList = res.data.data;
+        // let dataList = res.data.data;
 
+        const dataList = res.data.data.map(item => [
+          item.MGR_NO,               // 0: No
+          item.MGR_TYPE,             // 1: 구분 (JSON의 MGR_TYPE 사용)
+          item.MGR_ID,               // 2: 이메일(ID)
+          item.MGR_NAME,             // 3: 이름
+          item.NATION,               // 4: 소속
+          item.LAST_LOGIN_DATE,      // 5: 마지막 로그인
+          item.IS_LOCKED,            // 6: 상태(Y/N)
+          ""                         // 7: 버튼 자리
+        ]);
+        console.log(dataList);
         this.datatable = this.$datatable(this.datatable, this.headings, dataList, this.columns)
+      }
+    },
+
+    async unlockManager(mgrNo) {
+      if(confirm("잠금 해제 하시겠습니까?")) {
+        const res = await api.unlockManager(mgrNo);
+        if (res.data.status === "SUCCESS") {
+          this.selectManagerList();
+        }
+      }
+    },
+
+    async initManagerPwd(mgrNo) {
+      if(confirm("비밀번호를 초기화 하시겠습니까?")) {
+        const res = await api.initManagerPwd(mgrNo);
+        if (res.data.status === "SUCCESS") {
+          alert("비밀번호가 초기화 되었습니다.")
+        }
       }
     },
 
@@ -172,6 +223,12 @@ export default {
   created() {
     // 팝업창에서 selectDeviceList 를 호출하기 위한 설정
     window.vueComponent = this;
+    window.unlockManager = this.unlockManager;
+    window.initManagerPwd = this.initManagerPwd;
+  },
+  unmounted() {
+    delete window.unlockManager;
+    delete window.initManagerPwd;
   }
 }
 </script>

@@ -210,8 +210,25 @@ export default {
 	getManagerByAdmin(mgrNo) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/get/' + mgrNo);
 	},
+	registerManagerByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/register', param);
+	},
+	unlockManager(mgrNo) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/unlock/' + mgrNo);
+	},
+	initManagerPwd(mgrNo) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/initpwd/' + mgrNo);
+	},
 
-
+	checkManagerId(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/checkId', param);
+	},
+	updMangerByAdmin(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/update', param);
+	},
+	delManagerByAdmin(mgrNo) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/delete/' + mgrNo);
+	},
 
 	// 로그아웃
 	logout() {
