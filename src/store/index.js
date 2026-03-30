@@ -10,17 +10,18 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({
 	modules: {
-		plugins: [createPersistedState()],
+		// plugins: [createPersistedState()],
 		// 키: 값 형태로 저장됩니다.
 		adminStore: adminStore,
 	},
 	plugins: [
 		createPersistedState({
-			//주목! : 여기에 쓴 모듈만 저장됩니다.
+			// adminStore 모듈 전체를 로컬스토리지에 유지 (새로고침 대응)
 			paths: ["adminStore"],
 		}),
 		createMutationsSharer({
-			predicate: []
+			// 브라우저 탭 간의 상태 동기화 (필요한 경우만 추가)
+			predicate: ["adminStore/setToken", "adminStore/setAdminInfo"]
 		})
 	],
 

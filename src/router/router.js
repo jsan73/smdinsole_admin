@@ -30,7 +30,7 @@ router.beforeEach((to, from, next) => {
 	let token = store.getters['adminStore/getToken'];
 	let pwdChange = store.getters['adminStore/getPwdChange']
 
-	if(pwdChange === 'Y' ) {
+	if(pwdChange === "PF" ||  pwdChange === "NF") {
 		console.log("!!!! change password", pwdChange)
 		return next('/pwdchange')
 	}

@@ -196,6 +196,11 @@ export default {
     },
 
     async unlockManager(mgrNo) {
+      if (!window.app.$store.getters['adminStore/isSuperAdmin']) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
+
       if(confirm("잠금 해제 하시겠습니까?")) {
         const res = await api.unlockManager(mgrNo);
         if (res.data.status === "SUCCESS") {
@@ -205,6 +210,11 @@ export default {
     },
 
     async initManagerPwd(mgrNo) {
+      if (!window.app.$store.getters['adminStore/isSuperAdmin']) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
+
       if(confirm("비밀번호를 초기화 하시겠습니까?")) {
         const res = await api.initManagerPwd(mgrNo);
         if (res.data.status === "SUCCESS") {

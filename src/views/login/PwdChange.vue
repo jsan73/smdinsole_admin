@@ -10,11 +10,13 @@
 
             <div v-if="!isSuccess">
               <h3 style="color: #333; font-weight: bold; text-align: center; margin-bottom: 10px;">
-                {{ isForce === 'Y' ? '관리자 비밀번호 변경' : '관리자 신규 비밀번호 설정' }}
+                {{ pwdChangeType === 'PF' ? '관리자 비밀번호 변경' : '관리자 신규 비밀번호 설정' }}
               </h3>
-              <p v-if="isForce === 'Y'" style="color: #333; text-align: center; margin-bottom: 30px;">
+              <p v-if="isForce === 'Y' && pwdChangeType === 'PF'" style="color: #333; text-align: center; margin-bottom: 30px;">
                 개인정보 취급자는 6개월에 한 번씩 비밀번호를 변경해야 합니다.
               </p>
+
+
 
               <ul v-if="isForce === 'Y'">
                 <li class="login_bar compact_li">
@@ -65,7 +67,7 @@ export default {
   data() {
     return {
       loginId: '', cur_password: '', password: '', password_confirm: '',
-      isForce: 'N', isSuccess: false
+      isForce: 'N', isSuccess: false, pwdChangeType: 'N'
     }
   },
   computed: {
@@ -96,6 +98,18 @@ export default {
         }
       } catch (e) { alert(e.response?.data?.message || "변경 실패"); }
     },
+    async fetchData() {
+      try {
+        const manager = await api.getManagerByAdmin(this.mgrNo);
+        if (manager.data.status === "SUCCESS") {
+          const data = manager.data.data;
+          this.manager = data;
+          // 수정 모드일 때 비교를 위해 원본 ID 저장
+          this.originalMgrId = data.MGR_ID || data.mgrId;
+        }
+
+      } catch (e) { console.error(e); }
+    },
     goLogin() {
       window.location.href = "/login"
       // this.$router.replace("/");
@@ -106,9 +120,10 @@ export default {
 
     // vuex에서 값을 가져오지 못하기 때문에 파라메터로 값을 바인딩
     // session에 값을 저장 하는 이유는 새로고침으로 인한 값 상실을 보완하기 위함
-    this.isForce = this.$route.params.forceChange || store.getters['adminStore/getPwdChange'];
+    this.pwdChangeType = this.$route.params.pwdChangeType || store.getters['adminStore/getPwdChange'];
+    if(this.pwdChangeType === 'PF' || this.pwdChangeType === 'NF') this.isForce = 'Y';
     // this.isForce = store.getters['adminStore/getPwdChange'];
-    console.log("PwdChange mounted : ",this.isForce);
+    console.log("PwdChange mounted : ",this.pwdChangeType);
   }
 }
 </script>

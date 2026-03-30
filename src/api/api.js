@@ -20,6 +20,9 @@ export default {
 	login_verify(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/auth/login/verify-mfa`, param)
 	},
+	login_verify_pwfind(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/auth/login/verify-mfa-pwfind`, param)
+	},
 
 	// 기기관리
 	selDeviceList(param) {
@@ -229,6 +232,9 @@ export default {
 	delManagerByAdmin(mgrNo) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/delete/' + mgrNo);
 	},
+	findAdminAccount(findInfo) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/auth/login/find', findInfo);
+	},
 
 	// 로그아웃
 	logout() {
@@ -246,4 +252,5 @@ export default {
 			});
 		});
 	},
+
 }

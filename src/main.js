@@ -31,7 +31,7 @@ import {
     LegendComponent,
     TitleComponent
 } from 'echarts/components'
-
+import { jwtDecode } from "jwt-decode";
 
 use([
     CanvasRenderer,
@@ -59,6 +59,25 @@ Vue.prototype.store = store;
 
 //Skip token Key for UI - 여기 변경해야 모바일 빌드가능
 // var _skipToken = false;
+
+/**
+ * v-role 커스텀 디렉티브 등록
+ * 사용법: <div v-role="['ROLE_ADMIN', 'ROLE_SADMIN']">...</div>
+ */
+Vue.directive('role', {
+    inserted(el, binding) {
+        const requiredRoles = Array.isArray(binding.value) ? binding.value : [binding.value];
+        // adminStore의 adminInfo.roles에 접근
+        const userRoles = store.getters['adminStore/getRoles'] || [];
+
+        const hasRole = userRoles.some(role => requiredRoles.includes(role));
+
+        if (!hasRole) {
+            // 권한이 없으면 DOM에서 즉시 제거
+            el.parentNode && el.parentNode.removeChild(el);
+        }
+    }
+});
 
 if(location.pathname === "/login" || location.pathname === "/pwdchange") {
         // _skipToken = true;
