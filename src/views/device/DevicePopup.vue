@@ -73,7 +73,7 @@
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">개통일</th>
             <td>
-              <input type="date" v-model="regDate" class="form-control" style="width: 150px;">
+              <input type="date" v-model="memberDate" class="form-control" style="width: 150px;">
             </td>
           </tr>
           <tr>
@@ -145,7 +145,7 @@ export default {
       gphone1:'010',
       gphone2:'',
       gphone3:'',
-      regDate:'',
+      memberDate:'',
       expDate:'',
       deviceIMEI:'',
       popupState:"ins",
@@ -157,11 +157,12 @@ export default {
     }
   },
   watch:{
-    regDate() {
+    memberDate() {
       // console.log(this.selectAddr2)
       // console.log(this.regDate)
       // console.log(utils.getYmd10(utils.addYear(this.regDate, 2)));
-      this.expDate = utils.getYmd10(utils.addYear(this.regDate, 2));
+      // this.expDate = utils.getYmd10(utils.addYear(this.regDate, 2));
+      this.expDate = utils.getYmd10(utils.addDays(utils.addYear(this.memberDate, 2), -1));
     }
 
   },
@@ -198,7 +199,7 @@ export default {
             console.log(this.orgGuardPhone);
           }
           if(utils.isNotEmpty(this.device.memberDate)) {
-            this.regDate = utils.dateForm(this.device.memberDate);
+            this.memberDate = utils.dateForm(this.device.memberDate);
             this.expDate = utils.dateForm(this.device.expDate);
 
           }
@@ -222,7 +223,7 @@ export default {
         this.device.guardPhone = "";
       }
 
-      this.device.memberDate = this.regDate.replace(/-/gi, "");
+      this.device.memberDate = this.memberDate.replace(/-/gi, "");
       this.device.expDate = this.expDate.replace(/-/gi, "");
       this.device.esimExpDate = this.esimExpDate.replace(/-/gi, "");
     },

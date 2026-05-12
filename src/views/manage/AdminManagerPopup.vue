@@ -38,7 +38,8 @@
                   type="text"
                   v-model="manager.mgrId"
                   class="form-control form-control-sm"
-                  maxlength="20"
+                  maxlength="50"
+                  :readonly="isUpdateMode"
               >
             </td>
           </tr>
@@ -104,7 +105,7 @@ export default {
       guard: { guardPhone: '', guardName: '', email: '', lastLoginDate: null, accountState: 'N', maketingAgreeYn: 'Y' },
       deviceList: [],
 
-      originalMgrId: '', // 추가: 수정 전 ID 비교용
+      // originalMgrId: '', // 추가: 수정 전 ID 비교용
       isEmailValid: true,
     }
   },
@@ -149,7 +150,7 @@ export default {
           const data = manager.data.data;
           this.manager = data;
           // 수정 모드일 때 비교를 위해 원본 ID 저장
-          this.originalMgrId = data.MGR_ID || data.mgrId;
+          // this.originalMgrId = data.MGR_ID || data.mgrId;
         }
 
       } catch (e) { console.error(e); }
@@ -182,9 +183,9 @@ export default {
 
       // 2. ID 변경 여부 확인 (수정 모드 전용 로직)
       // 입력된 ID와 처음에 불러온 원본 ID가 다를 경우에만 중복 체크 실행
-      if (this.manager.mgrId !== this.originalMgrId) {
-        if (await this.checkDuplicate(param)) return;
-      }
+      // if (this.manager.mgrId !== this.originalMgrId) {
+      //   if (await this.checkDuplicate(param)) return;
+      // }
 
       try {
         const res = await api.updMangerByAdmin(param);
@@ -195,7 +196,7 @@ export default {
             if (window.opener && window.opener.vueComponent) {
               window.opener.vueComponent.selectManagerList();
             }
-            this.originalMgrId = this.manager.mgrId; // 수정 후 현재 ID를 다시 원본으로 갱신
+            // this.originalMgrId = this.manager.mgrId; // 수정 후 현재 ID를 다시 원본으로 갱신
             this.closePopup();
           }else{
             alert("수정 실패");

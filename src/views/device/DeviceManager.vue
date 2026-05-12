@@ -31,18 +31,18 @@
                         @keyup.enter="selectDeviceList"
                     >
                   </div>
-                  <div class="d-flex align-items-center">
-                    <label for="ICCID" class="fw-bold me-2" style="white-space: nowrap;">ICCID</label>
-                    <input
-                        v-model="search.iccId"
-                        type="text"
-                        id="ICCID"
-                        class="form-control"
-                        style="width: 180px;"
-                        placeholder=""
-                        @keyup.enter="selectDeviceList"
-                    >
-                  </div>
+<!--                  <div class="d-flex align-items-center">-->
+<!--                    <label for="ICCID" class="fw-bold me-2" style="white-space: nowrap;">ICCID</label>-->
+<!--                    <input-->
+<!--                        v-model="search.iccId"-->
+<!--                        type="text"-->
+<!--                        id="ICCID"-->
+<!--                        class="form-control"-->
+<!--                        style="width: 180px;"-->
+<!--                        placeholder=""-->
+<!--                        @keyup.enter="selectDeviceList"-->
+<!--                    >-->
+<!--                  </div>-->
                   <div class="d-flex align-items-center">
                     <label for="phone" class="fw-bold me-2" style="white-space: nowrap;">사용자 전화번호0</label>
                     <input
@@ -200,9 +200,18 @@ export default {
         {select:8, scope:'row'},
         {select:9, scope:'row', render: this.lastSignal},
         {select:10, scope:'row'},
+        {select:11, scope:'row', render: function(data, cell, row) {
+            const statusMap = {
+              'N': '<span class="badge bg-success">미등록</span>',
+              'V': '<span class="badge bg-secondary">인증완료</span>',
+              'A': '<span class="badge bg-secondary">개통완료</span>',
+              'E': '<span class="badge bg-secondary">만료</span>',
+            };
+            return statusMap[data] || data;
+          }},
       ],
       // dataList:[],
-      headings:["No", "IMEI", "기기 전화번호", "요금제", "사용자 전화번호0", "소속 기관", "만료일","이심사용기한", "사이즈", "마지막 신호", "위치전송횟수"],
+      headings:["No", "IMEI", "기기 전화번호", "요금제", "사용자 전화번호0", "소속 기관", "만료일","이심사용기한", "사이즈", "마지막 신호", "위치전송횟수", "상태"],
       showPopup: false,
       selectedFile: null,
     }

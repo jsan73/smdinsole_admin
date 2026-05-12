@@ -105,6 +105,12 @@ export default {
 
     },
 
+    addDays(inputDate, day){
+        let date = new Date(inputDate);
+        date.setDate(date.getDate() + day);
+        return date;
+    },
+
     getTimeDiff(date1, date2) {
         let d1 = new Date(date1);
         let d2 = new Date(date2);

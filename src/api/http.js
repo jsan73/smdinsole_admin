@@ -11,7 +11,7 @@ let _tokenKey = _sotrage.getItem(process.env.VUE_APP_TOKEN_KEY)
 let defaultHeader = {
 	"Content-Type": "application/json;charset=UTF-8",
 	"Accept": "application/json",
-	"Access-Control-Allow-Origin": "*",
+	// "Access-Control-Allow-Origin": "*",
 	"X-AUTH-TOKEN": _tokenKey,
 	// "X-SSCM-CD":process.env.VUE_APP_AUTH_KEY,
 	// "X-MENU-ID": "",
