@@ -1,6 +1,4 @@
 import http from "./http"
-import axios from "axios";
-import jsonp from "jsonp";
 
 export default {
 
@@ -46,6 +44,12 @@ export default {
 	// 단순 단말 조회
 	getDeviceInfo(deviceIMEI) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/get/' + deviceIMEI);
+	},
+	getAdminDeviceNotice(deviceNo) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/notice/get/' + deviceNo);
+	},
+	setAdminDeviceNotice(option, param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/notice/set/' + option, param);
 	},
 
 	// 이벤트
@@ -200,6 +204,20 @@ export default {
 	resetDeviceLog(param) {
 		return http.postParam(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/device/reset', param)
 	},
+	// 관리자 변경 로그
+	selChangeLogList(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/change-log/list', param)
+	},
+	getChangeLog(logSeq) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/change-log/get/' + logSeq)
+	},
+	// API 접근 로그
+	selAccessLogList(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/access-log/list', param)
+	},
+	getAccessLog(accessLogSeq) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/access-log/get/' + accessLogSeq)
+	},
 	// 공통코드 가져오기
 	getCommCode(params) {
 		return http.post(process.env.VUE_APP_ADMIN_PJT + `/api/get/commcode`, params)
@@ -238,19 +256,7 @@ export default {
 
 	// 로그아웃
 	logout() {
-		let url = process.env.VUE_APP_LOGOUT_URL;
-
-		return new Promise(function (resolve, reject) {
-			jsonp(url, null, (err, data) => {
-				if (err) {
-					console.error("logout", err?.message);
-					reject(err?.message)
-				} else {
-					console.log("logout", data?.RESULT);
-					resolve(data?.RESULT)
-				}
-			});
-		});
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/auth/logout');
 	},
 
 }

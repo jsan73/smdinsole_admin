@@ -8,6 +8,8 @@ if(process.env.VUE_APP_MODE === 'prod') {
 var osDir = "d:/workspaces/kokasin/build/"
 if (os.platform() === "darwin") {
   osDir = "/Users/jsan/kokasin/kokasin_build/"
+}else if (os.platform() === "linux") {
+  osDir = "/home/jsan/project/kokasin/build/admin";
 }
 
 module.exports = {

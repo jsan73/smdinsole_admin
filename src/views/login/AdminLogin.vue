@@ -11,13 +11,13 @@
 
             <ul v-if="step === 'LOGIN'">
               <li class="login_te">ID</li>
-              <li class="login_bar"><input type="text" class="input_txt" v-model="loginId"></li>
+              <li class="login_bar"><input type="text" class="input_txt" v-model.trim="loginId" :disabled="isLoginLoading"></li>
               <li class="login_te">Password</li>
-              <li class="login_bar"><input type="password" class="input_txt" v-model="password" @keyup.enter="handleLogin"></li>
+              <li class="login_bar"><input type="password" class="input_txt" v-model="password" :disabled="isLoginLoading" @keyup.enter="handleLogin"></li>
               <li class="login_fail" v-html="failMessage"></li>
-              <li><button id="submit" class="btn mt-4" @click="handleLogin">로그인</button></li>
+              <li><button id="submit" class="btn mt-4" :disabled="isLoginLoading" @click="handleLogin">{{ isLoginLoading ? '로그인 중...' : '로그인' }}</button></li>
               <li class="text-end mt-2">
-                <a href="#" @click.prevent="step = 'FIND_PWD'" style="font-size: 12px; color: #333;">비밀번호를 잊으셨나요?</a>
+                <a href="#" @click.prevent="goFindPwd" style="font-size: 12px; color: #333;">비밀번호를 잊으셨나요?</a>
               </li>
             </ul>
 
@@ -32,20 +32,20 @@
                 <div class="mfa_options mt-3">
                   <div class="d-flex align-items-center mb-2">
                     <label class="d-flex align-items-center mb-0" style="color: #333; cursor: pointer;">
-                      <input type="radio" v-model="mfaType" value="EMAIL" class="me-2"> 이메일
+                      <input type="radio" v-model="mfaType" value="EMAIL" class="me-2" :disabled="isMfaSending || isMfaVerifying"> 이메일
                     </label>
                     <span class="ms-auto" style="color: #333; font-weight: 600;">{{ maskedEmail }}</span>
                   </div>
                   <div class="d-flex align-items-center mb-3">
                     <label class="d-flex align-items-center mb-0" style="color: #333; cursor: pointer;">
-                      <input type="radio" v-model="mfaType" value="PHONE" class="me-2"> 휴대폰
+                      <input type="radio" v-model="mfaType" value="PHONE" class="me-2" :disabled="isMfaSending || isMfaVerifying"> 휴대폰
                     </label>
                     <span class="ms-auto" style="color: #333; font-weight: 600;">{{ maskedPhone }}</span>
                   </div>
                 </div>
                 <div class="text-center mt-3">
-                  <button type="button" class="btn_white_luxury" @click="sendMfaCode">
-                    {{ isMfaSent ? '인증번호 재발송' : '인증번호 발송' }}
+                  <button type="button" class="btn_white_luxury" :disabled="isMfaSending || isMfaVerifying" @click="sendMfaCode">
+                    {{ isMfaSending ? '발송 중...' : (isMfaSent ? '인증번호 재발송' : '인증번호 발송') }}
                   </button>
                 </div>
               </li>
@@ -54,26 +54,26 @@
                 <div class="d-flex align-items-center mb-3">
                   <span class="me-3" style="white-space: nowrap; font-weight: bold; color: #333;">인증번호</span>
                   <div style="position: relative; flex-grow: 1;">
-                    <input type="text" class="input_txt" v-model="mfaCode" style="padding-right: 60px; color: #333;">
+                    <input type="text" class="input_txt" v-model.trim="mfaCode" :disabled="isMfaVerifying" style="padding-right: 60px; color: #333;" @keyup.enter="verifyMfa">
                     <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #ff5252; font-weight: bold;">{{ timerText }}</span>
                   </div>
                 </div>
                 <div class="login_fail" v-html="failMessage"></div>
-                <button id="submit" class="btn mt-2" @click="verifyMfa" style="font-weight: bold;">인증 확인</button>
+                <button id="submit" class="btn mt-2" :disabled="isMfaVerifying" @click="verifyMfa" style="font-weight: bold;">{{ isMfaVerifying ? '확인 중...' : '인증 확인' }}</button>
               </li>
             </ul>
 
             <ul v-else-if="step === 'FIND_PWD'">
               <li class="text-center mb-4"><h3 style="font-weight: bold; color: #333;">비밀번호 재설정</h3></li>
               <li class="login_te">ID (이메일)</li>
-              <li class="login_bar"><input type="text" class="input_txt" v-model="findInfo.mgrId" placeholder="이메일 입력"></li>
+              <li class="login_bar"><input type="text" class="input_txt" v-model.trim="findInfo.mgrId" :disabled="isFindPwdLoading" placeholder="이메일 입력"></li>
               <li class="login_te">이름</li>
-              <li class="login_bar"><input type="text" class="input_txt" v-model="findInfo.mgrName" placeholder="이름 입력"></li>
+              <li class="login_bar"><input type="text" class="input_txt" v-model.trim="findInfo.mgrName" :disabled="isFindPwdLoading" placeholder="이름 입력" @keyup.enter="handleFindPwd"></li>
               <li class="text-center mt-4" v-if="findError">
                 <p style="color: #333; font-weight: bold;">{{ findError }}</p>
               </li>
-              <li><button id="submit" class="btn mt-4" @click="handleFindPwd">확인</button></li>
-              <li class="text-center mt-2"><a href="#" @click.prevent="step = 'LOGIN'" style="font-size: 12px; color: #333;">로그인으로 돌아가기</a></li>
+              <li><button id="submit" class="btn mt-4" :disabled="isFindPwdLoading" @click="handleFindPwd">{{ isFindPwdLoading ? '확인 중...' : '확인' }}</button></li>
+              <li class="text-center mt-2"><a href="#" @click.prevent="goLoginStep" style="font-size: 12px; color: #333;">로그인으로 돌아가기</a></li>
             </ul>
 
           </div>
@@ -91,15 +91,20 @@ import api from "@/api/api";
 import http from "@/api/http";
 
 export default {
-  name: "Login",
+  name: "AdminLogin",
   data() {
     return {
       step: 'LOGIN', loginId: '', password: '', failMessage: '',
       mfaType: 'EMAIL', mfaCode: '', isMfaSent: false,
-      timer: 300, timerInterval: null,
+      timer: 180, timerInterval: null,
+      mfaTimerSeconds: 180,
       rawEmail: '', rawPhone: '',
       findInfo: { mgrId: '', mgrName: '', findYn: false }, findError: '',
       pwdChangeType : "N",
+      isLoginLoading: false,
+      isMfaSending: false,
+      isMfaVerifying: false,
+      isFindPwdLoading: false,
 
     }
   },
@@ -120,25 +125,39 @@ export default {
     }
   },
   methods: {
-    ...mapActions("adminStore", ["commitAdminInfo", "commitToken", "commitPwdChange",]),
+    ...mapActions("adminStore", ["commitAdminInfo", "commitToken"]),
 
     async handleLogin() {
+      if (this.isLoginLoading) return;
       if (utils.isEmpty(this.loginId) || utils.isEmpty(this.password)) {
         alert("아이디와 비밀번호를 입력해주세요.");
         return;
       }
+      this.isLoginLoading = true;
+      this.failMessage = "";
       try {
         const params = { loginId: this.loginId, password: this.password };
         const res = await api.login_step1(params);
         if (res.data.status === "SUCCESS") {
-          this.rawEmail = res.data.data.manager.mgrEmail;
-          this.rawPhone = res.data.data.manager.mgrPhone;
-          if(res.data.data.status === "MFA") this.step = 'MFA';
+          const data = res.data.data || {};
+          this.rawEmail = data.manager?.mgrEmail || "";
+          this.rawPhone = data.manager?.mgrPhone || "";
+          if(data.status === "MFA") {
+            this.resetMfaState();
+            this.step = 'MFA';
+          } else {
+            this.failMessage = "지원하지 않는 로그인 상태입니다.";
+          }
         }
       } catch (e) { this.handleLoginError(e); }
+      finally { this.isLoginLoading = false; }
     },
 
     async sendMfaCode() {
+      if (this.isMfaSending || this.isMfaVerifying) return;
+      this.isMfaSending = true;
+      this.mfaCode = "";
+      this.failMessage = "";
       try {
         const params = { loginId: this.loginId, mfaType: this.mfaType };
         const res = await api.login_step2(params);
@@ -148,18 +167,36 @@ export default {
           this.startTimer();
         }
       } catch (e) { alert("인증번호 발송에 실패했습니다."); }
+      finally { this.isMfaSending = false; }
     },
 
     startTimer() {
-      this.timer = 300;
+      this.timer = this.mfaTimerSeconds;
       if (this.timerInterval) clearInterval(this.timerInterval);
       this.timerInterval = setInterval(() => {
         if (this.timer > 0) this.timer--;
-        else { clearInterval(this.timerInterval); this.isMfaSent = false; }
+        else {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+          this.isMfaSent = false;
+          this.mfaCode = "";
+          this.failMessage = "인증 시간이 만료되었습니다. 인증번호를 다시 발송해주세요.";
+        }
       }, 1000);
     },
 
     async verifyMfa() {
+      if (this.isMfaVerifying) return;
+      if (!this.isMfaSent) {
+        this.failMessage = "인증번호를 먼저 발송해주세요.";
+        return;
+      }
+      if (utils.isEmpty(this.mfaCode)) {
+        this.failMessage = "인증번호를 입력해주세요.";
+        return;
+      }
+      this.isMfaVerifying = true;
+      this.failMessage = "";
       try {
         const params = { loginId: this.loginId, mfaCode: this.mfaCode };
         if(this.findInfo.findYn) {
@@ -173,6 +210,7 @@ export default {
           const res = await api.login_verify(params);
           if (res.data.status === "SUCCESS") {
             clearInterval(this.timerInterval);
+            this.timerInterval = null;
             this.pwdChange = res.data.data.pwdChange;
             this.reqNewPwd = res.data.data.reqNewPwd;
 
@@ -193,9 +231,17 @@ export default {
           }
         }
       } catch (e) { this.handleLoginError(e); }
+      finally { this.isMfaVerifying = false; }
     },
 
     async handleFindPwd() {
+      if (this.isFindPwdLoading) return;
+      if (utils.isEmpty(this.findInfo.mgrId) || utils.isEmpty(this.findInfo.mgrName)) {
+        this.findError = "이메일과 이름을 입력해주세요.";
+        return;
+      }
+      this.isFindPwdLoading = true;
+      this.findError = "";
       try {
         const res = await api.findAdminAccount(this.findInfo);
         if(res.data.status === "SUCCESS") {
@@ -203,9 +249,11 @@ export default {
           this.rawEmail = res.data.data.mgrId;
           this.rawPhone = res.data.data.mgrPhone;
           this.findInfo.findYn = true;
+          this.resetMfaState();
           this.step = 'MFA';
         }
       } catch (e) { this.findError = "해당하는 관리자 정보가 없습니다."; }
+      finally { this.isFindPwdLoading = false; }
     },
 
     completeLogin(tokenData) {
@@ -217,14 +265,60 @@ export default {
     },
 
     handleLoginError(e) {
-      this.failMessage = e.response?.data?.message || "로그인 실패";
-      const failcnt = e.response?.data?.data;
+      this.failMessage = this.getLoginErrorMessage(e);
+      const failcnt = this.getFailCount(e.response?.data?.data);
       if (failcnt >= 1) {
-        this.failMessage += `<br> 5회 이상 실패 시 로그인 불가 (${failcnt}/5)`;
-        if (failcnt === 5) alert("계정이 잠겼습니다.");
+        this.failMessage += `<br>로그인 실패 횟수 (${failcnt}/5)`;
+        if (failcnt >= 5) {
+          const lockMessage = "계정이 30분간 잠겼습니다. 30분 후 다시 시도하거나 수퍼관리자에게 잠금 해제를 요청하세요.";
+          this.failMessage += `<br>${lockMessage}`;
+          alert(lockMessage);
+        }
       }
       this.password = "";
-    }
+    },
+    getFailCount(data) {
+      if (typeof data === "number") return data;
+      if (!data || typeof data !== "object") return 0;
+      return data.failcnt || data.failCnt || data.pwdFailCnt || data.PWD_FAIL_CNT || 0;
+    },
+    getLoginErrorMessage(e) {
+      const message = e.response?.data?.message || "";
+      const data = e.response?.data?.data || {};
+      const lockType = data.lockType || data.LOCK_TYPE || "";
+      const lockReason = data.lockReason || data.LOCK_REASON || "";
+      const sourceText = `${message} ${lockType} ${lockReason}`;
+
+      if (this.step === "MFA") return message || "인증번호가 일치하지 않거나 만료되었습니다.";
+      if (/90|미접속|INACTIVE|DORMANT/.test(sourceText)) return message || "90일 이상 미접속으로 잠긴 계정입니다. 수퍼관리자에게 문의하세요.";
+      if (/LOGIN_FAIL|FAIL|잠금|LOCK/.test(sourceText)) return message || "로그인 실패 횟수 초과로 잠긴 계정입니다.";
+
+      return message || "로그인 실패";
+    },
+    resetMfaState() {
+      this.mfaCode = "";
+      this.isMfaSent = false;
+      this.failMessage = "";
+      this.timer = this.mfaTimerSeconds;
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+      }
+    },
+    goFindPwd() {
+      this.failMessage = "";
+      this.findError = "";
+      this.resetMfaState();
+      this.findInfo = { mgrId: '', mgrName: '', findYn: false };
+      this.step = 'FIND_PWD';
+    },
+    goLoginStep() {
+      this.failMessage = "";
+      this.findError = "";
+      this.resetMfaState();
+      this.findInfo = { mgrId: '', mgrName: '', findYn: false };
+      this.step = 'LOGIN';
+    },
   },
   beforeDestroy() { if (this.timerInterval) clearInterval(this.timerInterval); }
 }

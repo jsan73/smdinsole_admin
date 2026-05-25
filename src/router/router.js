@@ -39,7 +39,6 @@ router.beforeEach((to, from, next) => {
 		return next('/login')
 		// return next('/chgpw')
 	} else {
-		console.log("router token : " + token)
 		if(utils.isNotEmpty(token)) {
 			const {exp} = jwt.decode(token);
 			if (exp < (new Date().getTime() + 1) / 1000) {

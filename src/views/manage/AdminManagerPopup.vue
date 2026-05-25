@@ -213,7 +213,7 @@ export default {
         const res = await api.delManagerByAdmin(this.mgrNo);
         if (res.data.status === "SUCCESS") {
           alert("삭제 되었습니다.");
-          window.opener.vueComponent.selectGuardList();
+          window.opener.vueComponent.selectManagerList();
           this.closePopup();
         } else {
           alert("삭제에 실패했습니다.");

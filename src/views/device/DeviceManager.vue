@@ -110,9 +110,84 @@
               <!-- <p>Add lightweight datatables to your project with using the <a href="https://github.com/fiduswriter/Simple-DataTables" target="_blank">Simple
                               DataTables</a> library. Just add <code>.datatable</code> class name to any table you wish to conver to a datatable</p> -->
 
-              <!-- Table with stripped rows -->
-              <table class="table table-borderless datatable " ref="datatable"></table>
-              <!-- End Table with stripped rows -->
+              <div class="grid-toolbar">
+                <div class="grid-total-count">총 {{ totalRows }}건</div>
+                <div class="grid-page-size">
+                  <label for="devicePageSize" class="form-label mb-0">페이지당</label>
+                  <select
+                      id="devicePageSize"
+                      v-model.number="paginationPageSize"
+                      class="form-select form-select-sm"
+                      @change="onPageSizeChange"
+                  >
+                    <option v-for="size in pageSizeOptions" :key="size" :value="size">
+                      {{ size }}개
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <ag-grid-vue
+                  class="ag-theme-alpine device-grid"
+                  :modules="gridModules"
+                  :columnDefs="columnDefs"
+                  :rowData="deviceList"
+                  :defaultColDef="defaultColDef"
+                  :pagination="false"
+                  :paginationPageSize="paginationPageSize"
+                  :suppressPaginationPanel="true"
+                  :rowHeight="42"
+                  :headerHeight="42"
+                  :overlayNoRowsTemplate="overlayNoRowsTemplate"
+                  :overlayLoadingTemplate="overlayLoadingTemplate"
+                  @grid-ready="onGridReady"
+                  @pagination-changed="onPaginationChanged"
+              />
+              <div class="grid-pagination-wrap">
+                <div v-if="totalPages > 1" class="grid-pagination">
+                  <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary"
+                      :disabled="currentPage === 1"
+                      @click="goToPage(1)"
+                  >
+                    처음
+                  </button>
+                  <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary"
+                      :disabled="currentPage === 1"
+                      @click="goToPage(currentPage - 1)"
+                  >
+                    이전
+                  </button>
+                  <button
+                      v-for="page in paginationPages"
+                      :key="page"
+                      type="button"
+                      class="btn btn-sm"
+                      :class="page === currentPage ? 'btn-primary' : 'btn-outline-secondary'"
+                      @click="goToPage(page)"
+                  >
+                    {{ page }}
+                  </button>
+                  <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary"
+                      :disabled="currentPage === totalPages"
+                      @click="goToPage(currentPage + 1)"
+                  >
+                    다음
+                  </button>
+                  <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary"
+                      :disabled="currentPage === totalPages"
+                      @click="goToPage(totalPages)"
+                  >
+                    마지막
+                  </button>
+                </div>
+              </div>
               <p class="text-end">
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>-->
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>-->
@@ -147,13 +222,33 @@
 <script>
 import api from '@/api/api';
 import utils from "@/utils/utils";
-import router from "@/router/router";
+import { AgGridVue } from "@ag-grid-community/vue";
+import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model";
+import "@ag-grid-community/styles/ag-grid.css";
+import "@ag-grid-community/styles/ag-theme-alpine.css";
 
 export default {
   name: "DeviceManager",
+  components: {
+    AgGridVue,
+  },
   data() {
     return {
-      datatable:'',
+      gridApi: null,
+      gridModules: [ClientSideRowModelModule],
+      deviceList: [],
+      paginationPageSize: 20,
+      pageSizeOptions: [10, 20, 50, 100],
+      currentPage: 1,
+      totalPages: 0,
+      totalRows: 0,
+      defaultColDef: {
+        sortable: true,
+        resizable: true,
+        suppressMovable: true,
+      },
+      overlayNoRowsTemplate: '<span class="text-muted">조회된 데이터가 없습니다.</span>',
+      overlayLoadingTemplate: '<div class="ag-overlay-loading-center" style="width: 220px;"><div class="mb-2 text-muted">조회 중...</div><div class="progress" style="height: 6px;"><div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%;"></div></div></div>',
       // data: {
       //   deviceIMEI:'',
       //   deviceNumber:'',
@@ -177,44 +272,77 @@ export default {
         esimExpDateEnd: ''
       },
       orgcList:'',
-      columns:[
-        {select:0, render: function(data, cell, row) {
-            return row.dataIndex + 1
-          }
+      columnDefs: [
+        {
+          headerName: "No",
+          valueGetter: this.noValueGetter,
+          width: 80,
+          sortable: false,
         },
-        {select:1, render: function(data, cell, row) {
-            let url = "/devicepopup?device=" + data;
-            let name = "기기 수정";
-            let style = "width=650,height=670,left=0,top=0";
-            let param = "'" + url + "','" + name + "','" + style + "'";
-            let html = "<a class='text-primary' href=\"javascript:openPopup(" + param + ")\">" + data + "</a>";
-            return html;
-          }
+        {
+          headerName: "IMEI",
+          field: "DEVICE_IMEI",
+          minWidth: 160,
+          cellRenderer: this.deviceLinkRenderer,
         },
-        {select:2, scope:'row', render: this.telForm},
-        {select:3, scope:'row'},
-        {select:4, scope:'row', render: this.telForm},
-        {select:5, scope:'row'},
-        {select:6, scope:'row', render: this.dateForm},
-        {select:7, scope:'row', render: this.dateForm},
-        {select:8, scope:'row'},
-        {select:9, scope:'row', render: this.lastSignal},
-        {select:10, scope:'row'},
-        {select:11, scope:'row', render: function(data, cell, row) {
-            const statusMap = {
-              'N': '<span class="badge bg-success">미등록</span>',
-              'V': '<span class="badge bg-secondary">인증완료</span>',
-              'A': '<span class="badge bg-secondary">개통완료</span>',
-              'E': '<span class="badge bg-secondary">만료</span>',
-            };
-            return statusMap[data] || data;
-          }},
+        {
+          headerName: "기기 전화번호",
+          field: "DEVICE_NUMBER",
+          width: 150,
+          valueFormatter: this.telValueFormatter,
+        },
+        { headerName: "요금제", field: "IOT_PLAN", width: 120 },
+        {
+          headerName: "사용자 전화번호0",
+          field: "GUARD_PHONE",
+          width: 160,
+          valueFormatter: this.telValueFormatter,
+        },
+        { headerName: "소속 기관", field: "ORG_NAME", minWidth: 160, flex: 1 },
+        {
+          headerName: "만료일",
+          field: "EXP_DATE",
+          width: 130,
+          valueFormatter: this.dateValueFormatter,
+        },
+        {
+          headerName: "이심사용기한",
+          field: "ESIM_EXP_DATE",
+          width: 140,
+          valueFormatter: this.dateValueFormatter,
+        },
+        { headerName: "사이즈", field: "DEVICE_SIZE", width: 100 },
+        {
+          headerName: "마지막 신호",
+          field: "STATUS",
+          width: 220,
+          cellRenderer: this.lastSignalRenderer,
+        },
+        { headerName: "위치전송횟수", field: "LOC_CNT", width: 130 },
+        {
+          headerName: "상태",
+          field: "ACTIVE_STATE",
+          width: 110,
+          cellRenderer: this.activeStateRenderer,
+        },
       ],
-      // dataList:[],
-      headings:["No", "IMEI", "기기 전화번호", "요금제", "사용자 전화번호0", "소속 기관", "만료일","이심사용기한", "사이즈", "마지막 신호", "위치전송횟수", "상태"],
       showPopup: false,
       selectedFile: null,
     }
+  },
+  computed: {
+    paginationPages() {
+      const pageCount = 10;
+      const start = Math.floor((this.currentPage - 1) / pageCount) * pageCount + 1;
+      const end = Math.min(start + pageCount - 1, this.totalPages);
+      const pages = [];
+
+      for(let page = start; page <= end; page += 1) {
+        pages.push(page);
+      }
+
+      return pages;
+    },
   },
   mounted() {
 
@@ -304,14 +432,87 @@ export default {
 
       return utils.convertFromStrToDate(reportDate) + ' <img src="/static/images/' + cell + '" alt="none" width="42" height="20">' +  ' <img src="/static/images/' + battery + '" alt="battery_charge" width="30">';
     },
-    async selectDeviceList() {
-      const param = this.search;
-      param.guardPhone = param.guardPhone.replaceAll("-","")
+    onGridReady(params) {
+      this.gridApi = params.api;
+      this.updatePaginationState();
+      if(this.deviceList.length === 0) {
+        this.gridApi.showNoRowsOverlay();
+      }
+    },
+    onPaginationChanged() {
+      this.updatePaginationState();
+    },
+    updatePaginationState() {
+      this.totalPages = this.totalRows === 0 ? 0 : Math.ceil(this.totalRows / this.paginationPageSize);
+      if(this.totalPages > 0 && this.currentPage > this.totalPages) {
+        this.currentPage = this.totalPages;
+      }
+    },
+    onPageSizeChange() {
+      this.currentPage = 1;
+      this.selectDeviceList(false);
+    },
+    goToPage(page) {
+      if(page < 1 || page > this.totalPages || page === this.currentPage) return;
+      this.currentPage = page;
+      this.selectDeviceList(false);
+    },
+    noValueGetter(params) {
+      return ((this.currentPage - 1) * this.paginationPageSize) + params.node.rowIndex + 1;
+    },
+    telValueFormatter(params) {
+      return this.telForm(params.value);
+    },
+    dateValueFormatter(params) {
+      return utils.isEmpty(params.value) ? "" : this.dateForm(params.value);
+    },
+    deviceLinkRenderer(params) {
+      if(utils.isEmpty(params.value)) return "";
+      return '<a class="text-primary" href="javascript:openPopup(\'/devicepopup?device=' + params.value + '\',\'기기 수정\',\'width=650,height=670,left=0,top=0\')">' + params.value + '</a>';
+    },
+    lastSignalRenderer(params) {
+      return utils.isEmpty(params.value) ? "" : this.lastSignal(params.value);
+    },
+    activeStateRenderer(params) {
+      const statusMap = {
+        'N': '<span class="badge bg-success">미등록</span>',
+        'V': '<span class="badge bg-secondary">인증완료</span>',
+        'A': '<span class="badge bg-secondary">개통완료</span>',
+        'E': '<span class="badge bg-secondary">만료</span>',
+      };
+      return statusMap[params.value] || params.value || "";
+    },
+    toDeviceRows(data) {
+      if(Array.isArray(data)) return data;
+      if(!data || typeof data !== "object") return [];
+
+      const rowKeys = ["list", "rows", "items", "content", "deviceList"];
+      const rows = rowKeys.map(key => data[key]).find(Array.isArray);
+      return rows || [];
+    },
+    async selectDeviceList(resetPage = true) {
+      if(resetPage) this.currentPage = 1;
+      if(this.gridApi) this.gridApi.showLoadingOverlay();
+      const param = {
+        ...this.search,
+        guardPhone: (this.search.guardPhone || "").replace(/-/g, ""),
+        pageNum: this.currentPage,
+        pageSize: this.paginationPageSize,
+        pageStart: (this.currentPage - 1) * this.paginationPageSize,
+      };
       const res = await api.selDeviceList(param);
       if(res.data.status === "SUCCESS") {
-        let dataList = res.data.data;
-
-        this.datatable = this.$datatable(this.datatable, this.headings, dataList, this.columns)
+        const data = res.data.data || {};
+        this.deviceList = this.toDeviceRows(data);
+        this.totalRows = data.totalCount || this.deviceList.length;
+        this.$nextTick(() => {
+          this.updatePaginationState();
+          if(this.gridApi && this.deviceList.length === 0) {
+            this.gridApi.showNoRowsOverlay();
+          } else if(this.gridApi) {
+            this.gridApi.hideOverlay();
+          }
+        });
       }
 
     },
@@ -443,5 +644,57 @@ export default {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+}
+
+.device-grid {
+  width: 100%;
+  height: 560px;
+}
+
+.grid-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.grid-pagination-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.grid-total-count {
+  min-width: 90px;
+  color: #495057;
+  font-size: 14px;
+}
+
+.grid-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.grid-pagination .btn {
+  min-width: 36px;
+}
+
+.grid-page-size {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #495057;
+  font-size: 14px;
+}
+
+.grid-page-size .form-select {
+  width: 96px;
 }
 </style>

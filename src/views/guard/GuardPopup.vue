@@ -1,5 +1,14 @@
 <template>
   <div class="container-fluid p-3 position-relative">
+    <div
+        v-if="noticeToast.visible"
+        class="notice-toast"
+        :class="'notice-toast-' + noticeToast.type"
+        role="status"
+    >
+      {{ noticeToast.message }}
+    </div>
+
     <h5 class="pb-2 fw-bold">
       <i class="bi bi-caret-right-square"></i> 사용자 {{ isUpdateMode ? '수정' : '추가' }}
     </h5>
@@ -67,7 +76,12 @@
           <td>{{ item.deviceIMEI }}</td>
           <td>{{ utils.dateForm(item.expDate) }}</td>
           <td>
-            <select v-model="item.notiCd" class="form-select form-select-sm">
+            <select
+                v-model="item.notiCd"
+                class="form-select form-select-sm"
+                :disabled="item.noticeSaving"
+                @change="handleNoticeChange(item)"
+            >
               <option value="">설정</option>
               <option value="NC00">내일 아침 9시까지 알림 해제</option>
               <option value="NC03">3시간 알림 해제</option>
@@ -107,7 +121,7 @@
     <div v-if="showTransferLayer" class="position-absolute top-50 start-50 translate-middle bg-white border border-dark p-3 shadow" style="width: 450px; z-index: 1050;">
       <div class="d-flex justify-content-between mb-2">
         <h6 class="fw-bold">대표 사용자 이전</h6>
-        <button type="button" class="btn-close btn-sm" @click="showTransferLayer = false"></button>
+        <button type="button" class="btn-close btn-sm" @click="cancelTransfer"></button>
       </div>
       <p class="small">이 기기(IMEI: {{ transferForm.selectedDeviceIMEI }})의 대표 권한을 이전하시겠습니까?</p>
       <div class="input-group input-group-sm mb-3 border">
@@ -168,7 +182,9 @@ export default {
         searchPhone: '',
         searchResult: null,
         selectedDeviceNo: null,
-        selectedDeviceIMEI: ''
+        selectedDeviceIMEI: '',
+        selectedItem: null,
+        previousUserType: ''
       },
 
       // 기기 추가 레이어 전용 데이터
@@ -179,6 +195,12 @@ export default {
 
       originalPhone: '',
       isEmailValid: true,
+      noticeToast: {
+        visible: false,
+        message: '',
+        type: 'success',
+        timer: null
+      },
     }
   },
   mounted() {
@@ -233,10 +255,68 @@ export default {
         if (resDevice.data.status === "SUCCESS") {
           this.deviceList = resDevice.data.data.map(item => ({
             ...item,
-            notiCd: item.notiCd === null ? "" : item.notiCd
+            notiCd: item.notiCd === null ? "" : item.notiCd,
+            prevNotiCd: item.notiCd === null ? "" : item.notiCd,
+            noticeSaving: false
           }));
         }
       } catch (e) { console.error(e); }
+    },
+
+    getNoticeOption(notiCd) {
+      const optionMap = {
+        NC00: 0,
+        NC03: 3,
+        NC06: 6,
+        NC12: 12,
+        NC99: 99,
+      };
+      return optionMap[notiCd] !== undefined ? optionMap[notiCd] : 100;
+    },
+
+    showNoticeToast(message, type = 'success') {
+      if (this.noticeToast.timer) {
+        clearTimeout(this.noticeToast.timer);
+      }
+      this.noticeToast.message = message;
+      this.noticeToast.type = type;
+      this.noticeToast.visible = true;
+      this.noticeToast.timer = setTimeout(() => {
+        this.noticeToast.visible = false;
+        this.noticeToast.timer = null;
+      }, 2000);
+    },
+
+    async handleNoticeChange(item) {
+      const prevNotiCd = item.prevNotiCd || "";
+      const currentNotiCd = item.notiCd || "";
+      const option = this.getNoticeOption(currentNotiCd);
+
+      item.noticeSaving = true;
+      try {
+        const res = await api.setAdminDeviceNotice(option, {
+          deviceNo: item.deviceNo,
+          guardNo: this.guardNo || this.guard.guardNo || 0,
+          notiCd: currentNotiCd,
+          rsvSms: null
+        });
+
+        if (res.data.status === "SUCCESS") {
+          item.prevNotiCd = currentNotiCd;
+          this.showNoticeToast("알림 설정이 변경되었습니다.");
+        } else {
+          item.notiCd = prevNotiCd;
+          alert(res.data.message || "알림 설정 변경에 실패했습니다.");
+        }
+      } catch (e) {
+        item.notiCd = prevNotiCd;
+        const message = e.response && e.response.data && e.response.data.message
+            ? e.response.data.message
+            : "알림 설정 변경에 실패했습니다.";
+        alert(message);
+      } finally {
+        item.noticeSaving = false;
+      }
     },
 
     async registerGuard() {
@@ -273,6 +353,8 @@ export default {
       // 레이어 초기화 및 기기 정보 저장
       this.transferForm.selectedDeviceNo = item.deviceNo;
       this.transferForm.selectedDeviceIMEI = item.deviceIMEI;
+      this.transferForm.selectedItem = item;
+      this.transferForm.previousUserType = selectedType === '1' ? '2' : '1';
       this.transferForm.searchResult = null;
       this.showTransferLayer = true;
 
@@ -284,6 +366,23 @@ export default {
         // [대표 -> 추가] 검색창을 비워서 다른 사람을 대표로 지정할 수 있게 함
         this.transferForm.searchPhone = '';
       }
+    },
+
+    cancelTransfer() {
+      if (this.transferForm.selectedItem && this.transferForm.previousUserType) {
+        this.transferForm.selectedItem.userType = this.transferForm.previousUserType;
+      }
+      this.resetTransferForm();
+    },
+
+    resetTransferForm() {
+      this.showTransferLayer = false;
+      this.transferForm.searchPhone = '';
+      this.transferForm.searchResult = null;
+      this.transferForm.selectedDeviceNo = null;
+      this.transferForm.selectedDeviceIMEI = '';
+      this.transferForm.selectedItem = null;
+      this.transferForm.previousUserType = '';
     },
 
     async searchGuardForTransfer() {
@@ -313,26 +412,31 @@ export default {
     async executeTransfer() {
       if (!this.transferForm.searchResult) return;
 
-      if (confirm("대표 권한을 이전하시겠습니까?")) {
-        try {
-          const requestBody = {
-            deviceNo: this.transferForm.selectedDeviceNo,
-            masterGuardNo: this.transferForm.searchResult.guardNo // 조회된 대상의 번호
-          };
+      if (!confirm("대표 권한을 이전하시겠습니까?")) {
+        this.cancelTransfer();
+        return;
+      }
 
-          // 대표 권한 이전 API (프로젝트 상황에 맞는 API 호출)
-          const res = await api.chageMasterGuardByAdmin(requestBody);
+      try {
+        const requestBody = {
+          deviceNo: this.transferForm.selectedDeviceNo,
+          masterGuardNo: this.transferForm.searchResult.guardNo // 조회된 대상의 번호
+        };
 
-          if (res.data.status === "SUCCESS") {
-            alert("대표 권한 설정이 변경되었습니다.");
-            this.showTransferLayer = false;
-            this.fetchData(); // 기기 목록 새로고침
-          } else {
-            alert(res.data.message || "설정 변경에 실패했습니다.");
-          }
-        } catch (e) {
-          console.error(e);
+        // 대표 권한 이전 API (프로젝트 상황에 맞는 API 호출)
+        const res = await api.chageMasterGuardByAdmin(requestBody);
+
+        if (res.data.status === "SUCCESS") {
+          alert("대표 권한 설정이 변경되었습니다.");
+          this.resetTransferForm();
+          this.fetchData(); // 기기 목록 새로고침
+        } else {
+          alert(res.data.message || "설정 변경에 실패했습니다.");
+          this.cancelTransfer();
         }
+      } catch (e) {
+        console.error(e);
+        this.cancelTransfer();
       }
     },
 
@@ -463,4 +567,26 @@ export default {
 
 <style scoped>
 .translate-middle { transform: translate(-50%, -50%) !important; }
+
+.notice-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1060;
+  min-width: 220px;
+  max-width: 320px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.notice-toast-success {
+  color: #0f5132;
+  background: #d1e7dd;
+  border: 1px solid #badbcc;
+}
 </style>

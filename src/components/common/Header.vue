@@ -16,7 +16,8 @@
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Orgc'?'active':'']" @click="goMenu('/orgc')" id="orgc">기관 관리</a></li>
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='Manager'?'active':'']" @click="goMenu('/manager')" id="manager">관리자 관리</a></li>
             <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LocationLog'?'active':'']" @click="goMenu('/loclog')" id="loclog">위치정보 확인</a></li>
-            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LoginLog'?'active':'']" @click="goMenu('/loginlog')" id="loginlog">접근기록 확인</a></li>
+            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='LoginLog'?'active':'']" @click="goMenu('/loginlog')" id="loginlog">접근 기록</a></li>
+            <li class="nav-item"><a class="nav-link" style="cursor:pointer" :class="[menuId=='ChangeLog'?'active':'']" @click="goMenu('/changelog')" id="changelog">변경이력</a></li>
 
           </ul>
           <div class="tLogo_login">
@@ -32,16 +33,20 @@
 
 <script>
 import {mapActions} from "vuex";
+import api from "@/api/api";
 
 export default {
-  name: "Header",
+  name: "CommonHeader",
   props:{
     title:String,
-    logout:false,
+    logout:Boolean,
     menuId:String
   },
   methods: {
-    ...mapActions("adminStore", ["commitAdminInfo", "commitToken"]),
+    ...mapActions("adminStore", {
+      commitToken: "commitToken",
+      logoutStore: "logout",
+    }),
 
     //뒤로가기
     backHandler(){
@@ -50,8 +55,13 @@ export default {
     goMenu(url) {
       this.$router.push(url).catch(() => {});
     },
-    goLogout() {
-
+    async goLogout() {
+      try {
+        await api.logout();
+      } catch (e) {
+        console.warn("logout failed", e?.response?.data?.message || e?.message || e);
+      }
+      this.logoutStore();
       this.commitToken('');
       window.location.href = "/login"
     }

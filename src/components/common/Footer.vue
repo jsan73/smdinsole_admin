@@ -99,7 +99,7 @@ export default {
   },
   computed:{
 
-    ...mapState("guardStore", ['choiceDevice'] ),
+    // ...mapState("guardStore", ['choiceDevice'] ),
 
   },
 }
