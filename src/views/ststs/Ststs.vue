@@ -13,52 +13,103 @@
       <div class="row">
         <div class="col-lg-12">
 
-          <div class="card">
-            <div class="card-body pb-0">
-
-                <div class="row my-1">
-                  <div class="col-4">
-                    <div class="d-flex ">
-                      <legend class="col-form-label pe-3">기간</legend>
-                      <div class="form-check col-form-label">
-                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios1" v-model="period" value="1">
-                        <label class="form-check-label" for="gridRadios1">
-                          일간
-                        </label>
-                      </div>
-                      <div class="form-check col-form-label">
-                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios2" v-model="period" value="7">
-                        <label class="form-check-label" for="gridRadios2">
-                          주간
-                        </label>
-                      </div>
-                      <div class="form-check col-form-label">
-                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios" v-model="period" value="30" >
-                        <label class="form-check-label" for="gridRadios3">
-                          월간
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-6 ">
-                    <div class="d-flex">
-                      <label for="inputDate" class="col-form-label pe-3">날짜선택</label>
-                      <input type="date" class="form-control" style="width: 150px;" v-model="search.sdate">
-                      <span class="col-form-label px-2"> ~ </span>
-                      <input type="date" class="form-control" style="width: 150px;" v-model="search.edate">
-                    </div>
-                  </div>
-                  <div class="col-2 text-end">
-                    <button class="btn btn-secondary" @click="selSearch">조회</button>
-                  </div>
+          <div class="card search-card">
+            <div class="card-body py-2">
+              <div class="dashboard-search-bar">
+                <div class="period-control" role="group" aria-label="기간">
+                  <label class="period-option" :class="{ active: period == 1 }" for="gridRadios1">
+                    <input type="radio" name="gridRadios" id="gridRadios1" v-model="period" value="1">
+                    일간
+                  </label>
+                  <label class="period-option" :class="{ active: period == 7 }" for="gridRadios2">
+                    <input type="radio" name="gridRadios" id="gridRadios2" v-model="period" value="7">
+                    주간
+                  </label>
+                  <label class="period-option" :class="{ active: period == 30 }" for="gridRadios3">
+                    <input type="radio" name="gridRadios" id="gridRadios3" v-model="period" value="30">
+                    월간
+                  </label>
                 </div>
-
+                <div class="date-range-control">
+                  <span class="search-label">날짜</span>
+                  <input type="date" class="form-control form-control-sm date-input" v-model="search.sdate">
+                  <span class="date-separator">~</span>
+                  <input type="date" class="form-control form-control-sm date-input" v-model="search.edate">
+                </div>
+                <button class="btn btn-secondary btn-sm search-button" @click="selSearch">조회</button>
+              </div>
             </div>
           </div>
 
         </div>
       </div><!--// 검색조건 -->
 
+      <div class="row dashboard-summary-row">
+        <div class="col-lg-4 col-md-6 mb-3">
+          <div class="summary-box">
+            <div class="summary-title">사용중인 기기수 <span>(On device)</span></div>
+            <div class="device-status-counts">
+              <div class="status-count">
+                <strong>{{ deviceSummary.statusSummary.onCount }}</strong>
+                <span>On</span>
+              </div>
+              <div class="status-divider">/</div>
+              <div class="status-count">
+                <strong>{{ deviceSummary.statusSummary.chargingCount }}</strong>
+                <span>Charging</span>
+              </div>
+              <div class="status-divider">/</div>
+              <div class="status-count">
+                <strong>{{ deviceSummary.statusSummary.offCount }}</strong>
+                <span>Off</span>
+              </div>
+            </div>
+            <div v-if="isSummaryLoading" class="summary-muted">요약 조회 중...</div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+          <div class="summary-box">
+            <div class="summary-title">이심 만료 기한 <span>(30일이내 목록)</span></div>
+            <div class="summary-list">
+              <button
+                  v-for="item in deviceSummary.esimExpiring.list"
+                  :key="'esim-' + item.date"
+                  type="button"
+                  class="summary-list-row"
+                  @click="goDeviceExpireDate('esim', item.date)"
+              >
+                <span>{{ item.displayDate }}</span>
+                <strong>{{ item.count }}</strong>
+              </button>
+              <div v-if="!isSummaryLoading && deviceSummary.esimExpiring.list.length === 0" class="summary-empty">
+                30일 이내 만료 예정 없음
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-12 mb-3">
+          <div class="summary-box">
+            <div class="summary-title">사용 만료 기한 <span>(30일이내 목록)</span></div>
+            <div class="summary-list">
+              <button
+                  v-for="item in deviceSummary.deviceExpiring.list"
+                  :key="'device-' + item.date"
+                  type="button"
+                  class="summary-list-row"
+                  @click="goDeviceExpireDate('device', item.date)"
+              >
+                <span>{{ item.displayDate }}</span>
+                <strong>{{ item.count }}</strong>
+              </button>
+              <div v-if="!isSummaryLoading && deviceSummary.deviceExpiring.list.length === 0" class="summary-empty">
+                30일 이내 만료 예정 없음
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="row">
         <div class="col-xxl-4 col-xl-12">
@@ -128,7 +179,15 @@
         <div class="col-xxl-4 col-xl-12">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">발생시간대별 건수 <span>({{ alram_count3 }}건)</span></h5>
+              <div class="chart-title-row">
+                <h5 class="card-title">발생시간대별 건수 <span>({{ alram_count3 }}건)</span></h5>
+                <select class="form-select form-select-sm alert-type-select" v-model="search.alertType" @change="selStatAcidTime">
+                  <option value="ALL">전체</option>
+                  <option value="ACTIVE_OUT">안심존이탈</option>
+                  <option value="BATTERY">베터리방전</option>
+                  <option value="REQ_LOC">현재위치찾기</option>
+                </select>
+              </div>
               <!-- Bar Chart -->
 <!--              <div id="barChart2" style="min-height: 400px;" class="echart"></div>-->
               <v-chart :option="acidTime" style="min-height: 400px; min-width:200px; height: 400px;" class="echart" />
@@ -211,7 +270,7 @@ import api from '@/api/api';
 import utils from "@/utils/utils";
 
 export default {
-  name: "Ststs",
+  name: "StstsView",
   components: {
     SideMenu,
   },
@@ -222,7 +281,12 @@ export default {
         sdate:'',
         edate:'',
         addr1:'',
-        addr2:''
+        addr2:'',
+        countryCode:'KR',
+        stateAddrCode:'',
+        countyAddrCode:'',
+        cityAddrCode:'',
+        alertType:'ALL'
       },
       acid : {
         xAxis: {
@@ -279,7 +343,21 @@ export default {
       alram_count3:0,
       totalCount:0,
       addrName1:'',
-      addrName2:''
+      addrName2:'',
+      isSummaryLoading: false,
+      deviceSummary: {
+        statusSummary: {
+          onCount: 0,
+          chargingCount: 0,
+          offCount: 0
+        },
+        esimExpiring: {
+          list: []
+        },
+        deviceExpiring: {
+          list: []
+        }
+      }
     }
   },
   watch: {
@@ -291,11 +369,13 @@ export default {
     this.calcPeriod();
     this.selStatAcid();
     this.selStatAcidTime();
+    this.selDashboardDeviceSummary();
   },
   methods: {
     selSearch() {
       this.selStatAcid();
       this.selStatAcidTime();
+      this.selDashboardDeviceSummary();
     },
     calcPeriod() {
 
@@ -313,64 +393,218 @@ export default {
       this.search.edate = utils.getYmd10(new Date());
     },
     selStat(addr1, addr2, addrName1, addrName2) {
-      this.search.addr1 = addr1;
-      this.search.addr2 = addr2;
-      this.addrName1 = addrName1;
-      this.addrName2 = addrName2;
+      if(addr1 && typeof addr1 === "object") {
+        const area = addr1;
+        this.search.countryCode = area.countryCode || "KR";
+        this.search.stateAddrCode = area.stateAddrCode || "";
+        this.search.countyAddrCode = area.countyAddrCode || "";
+        this.search.cityAddrCode = area.cityAddrCode || "";
+        this.search.addr1 = area.addr1 || area.stateAddrCode || "";
+        this.search.addr2 = area.addr2 || area.cityAddrCode || area.countyAddrCode || "";
+        this.addrName1 = area.stateName || area.countyName || area.displayName || "";
+        this.addrName2 = area.cityName || (!area.cityName && area.countyName && area.stateName ? area.countyName : "");
+      } else {
+        this.search.addr1 = addr1;
+        this.search.addr2 = addr2;
+        this.addrName1 = addrName1;
+        this.addrName2 = addrName2;
+        this.search.countryCode = "KR";
+        this.search.stateAddrCode = addr1 || "";
+        this.search.countyAddrCode = "";
+        this.search.cityAddrCode = addr2 || "";
+      }
       this.selSearch();
     },
-    selStatAcid() {
-      let param = {"addr1":this.search.addr1, "addr2": this.search.addr2,
-        "sdate": this.search.sdate.replaceAll('-','') + "000000"
-      ,"edate": this.search.edate.replaceAll('-','') + "999999"}
-      this.totalCount = 0
-      api.selStatAcid(param).then(res => {
+    getStatParam() {
+      const param = {
+        countryCode: this.search.countryCode || "KR",
+        sdate: (this.search.sdate || "").split("-").join("") + "000000",
+        edate: (this.search.edate || "").split("-").join("") + "235959",
+        alertType: this.search.alertType || "ALL"
+      };
+      if(param.countryCode === "KR") {
+        param.addr1 = this.search.addr1 || "";
+        param.addr2 = this.search.addr2 || "";
+      }
+      if(this.search.cityAddrCode) {
+        param.cityAddrCode = this.search.cityAddrCode;
+      } else if(this.search.countyAddrCode) {
+        param.countyAddrCode = this.search.countyAddrCode;
+      } else if(this.search.stateAddrCode) {
+        param.stateAddrCode = this.search.stateAddrCode;
+      }
+      return param;
+    },
+    getDeviceSummaryParam() {
+      const param = {
+        countryCode: this.search.countryCode || "KR"
+      };
+      if(param.countryCode === "KR") {
+        param.addr1 = this.search.addr1 || "";
+        param.addr2 = this.search.addr2 || "";
+      }
+      if(this.search.cityAddrCode) {
+        param.cityAddrCode = this.search.cityAddrCode;
+      } else if(this.search.countyAddrCode) {
+        param.countyAddrCode = this.search.countyAddrCode;
+      } else if(this.search.stateAddrCode) {
+        param.stateAddrCode = this.search.stateAddrCode;
+      }
+      return param;
+    },
+    async selDashboardDeviceSummary() {
+      this.isSummaryLoading = true;
+      try {
+        const res = await api.selDashboardDeviceSummary(this.getDeviceSummaryParam());
         if(res.data.status === "SUCCESS") {
-          let dataList = res.data.data;
-          console.log(dataList)
-          dataList.forEach(function (val){
-            this.totalCount += parseInt(val.DEVICE_COUNT);
-          }.bind(this))
-          const data = dataList.map(item => Object.values(item))
-
-          // console.log(data)
-
-          let safe=0, bettery=0, cloc = 0
-          this.acid.xAxis.data = new Array();
-          this.acid.series[0].data = new Array();
-          data.forEach(function (val) {
-            this.acid.xAxis.data.push(val[1])
-            this.acid.series[0].data.push(val[3])
-            this.alram_count1 += val[3];
-            safe += val[4]
-            bettery += val[5]
-            cloc += val[6]
-          }.bind(this))
+          this.deviceSummary = this.normalizeDeviceSummary(res.data.data || {});
+        }
+      } catch (e) {
+        this.deviceSummary = this.normalizeDeviceSummary({});
+      } finally {
+        this.isSummaryLoading = false;
+      }
+    },
+    normalizeDeviceSummary(data) {
+      const statusSummary = data.statusSummary || data.STATUS_SUMMARY || {};
+      const esimExpiring = data.esimExpiring || data.ESIM_EXPIRING || {};
+      const deviceExpiring = data.deviceExpiring || data.DEVICE_EXPIRING || {};
+      return {
+        statusSummary: {
+          onCount: this.toNumber(this.getValue(statusSummary, ["onCount", "ON_COUNT"])),
+          chargingCount: this.toNumber(this.getValue(statusSummary, ["chargingCount", "CHARGING_COUNT"])),
+          offCount: this.toNumber(this.getValue(statusSummary, ["offCount", "OFF_COUNT"]))
+        },
+        esimExpiring: {
+          list: this.toExpireRows(esimExpiring.list || esimExpiring.LIST)
+        },
+        deviceExpiring: {
+          list: this.toExpireRows(deviceExpiring.list || deviceExpiring.LIST)
+        }
+      };
+    },
+    toExpireRows(data) {
+      return this.toArray(data).map(row => {
+        const rawDate = this.getValue(row, ["date", "DATE", "expDate", "EXP_DATE", "esimExpDate", "ESIM_EXP_DATE"]);
+        const date = this.normalizeDate(rawDate);
+        return {
+          date,
+          displayDate: this.getValue(row, ["displayDate", "DISPLAY_DATE"]) || this.toDisplayDate(date),
+          count: this.toNumber(this.getValue(row, ["count", "COUNT", "deviceCount", "DEVICE_COUNT"]))
+        };
+      }).filter(row => row.date);
+    },
+    normalizeDate(value) {
+      const digits = String(value || "").replace(/[^0-9]/g, "");
+      if(digits.length < 8) return "";
+      return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+    },
+    toDisplayDate(date) {
+      return date ? date.replace(/-/g, ".") : "";
+    },
+    goDeviceExpireDate(type, date) {
+      if(!date) return;
+      const query = type === "esim"
+          ? { esimExpDateStart: date, esimExpDateEnd: date }
+          : { expDateStart: date, expDateEnd: date };
+      this.$router.push({ path: "/device", query });
+    },
+    selStatAcid() {
+      const param = this.getStatParam();
+      this.totalCount = 0;
+      this.alram_count1 = 0;
+      this.alram_count2 = 0;
+      this.acid.xAxis.data = [];
+      this.acid.series[0].data = [];
+      this.acidType.series[0].data = [];
+      api.selStatAcidRegion(param).then(res => {
+        if(res.data.status === "SUCCESS") {
+          let dataList = this.toStatRows(res.data.data);
+          let safe = 0, bettery = 0, cloc = 0;
+          dataList.forEach(function (val) {
+            this.totalCount += val.deviceCount;
+            this.acid.xAxis.data.push(val.addrName);
+            this.acid.series[0].data.push(val.alramCount);
+            this.alram_count1 += val.alramCount;
+            safe += val.activeOutCount;
+            bettery += val.batteryCount;
+            cloc += val.reqCount;
+          }.bind(this));
 
           this.alram_count2 = safe + bettery + cloc;
           this.acidType.series[0].data = [safe, bettery, cloc];
-          // console.log(this.acidType.series[0].data)
-          this.datatable = this.$datatable(this.datatable, this.gridHeadings, dataList, this.columns)
+          this.datatable = this.$datatable(this.datatable, this.gridHeadings, dataList, this.columns);
+        }
+      }).catch(() => {
+        if((this.search.countryCode || "KR") === "KR") this.selStatAcidLegacy(param);
+      });
+    },
+    selStatAcidLegacy(param) {
+      api.selStatAcid(param).then(res => {
+        if(res.data.status === "SUCCESS") {
+          let dataList = this.toStatRows(res.data.data);
+          let safe = 0, bettery = 0, cloc = 0;
+          dataList.forEach(function (val) {
+            this.totalCount += val.deviceCount;
+            this.acid.xAxis.data.push(val.addrName);
+            this.acid.series[0].data.push(val.alramCount);
+            this.alram_count1 += val.alramCount;
+            safe += val.activeOutCount;
+            bettery += val.batteryCount;
+            cloc += val.reqCount;
+          }.bind(this));
+
+          this.alram_count2 = safe + bettery + cloc;
+          this.acidType.series[0].data = [safe, bettery, cloc];
+          this.datatable = this.$datatable(this.datatable, this.gridHeadings, dataList, this.columns);
+        }
+      });
+    },
+    selStatAcidTime() {
+      const param = this.getStatParam();
+      this.alram_count3 = 0;
+      this.acidTime.series[0].data = [];
+      api.selStatAcidTime(param).then(res => {
+        if(res.data.status === "SUCCESS") {
+          let dataList = Array.isArray(res.data.data) ? res.data.data : [];
+          let data = new Array(24).fill(0);
+          dataList.forEach(function (time) {
+            const hour = this.toNumber(this.getValue(time, ["REPORT_HOUR", "reportHour"]));
+            const count = this.toNumber(this.getValue(time, ["ALERT_COUNT", "alertCount", "ALRAM_COUNT", "alramCount"]));
+            data[hour] = count;
+            this.alram_count3 += count;
+          }.bind(this))
+          this.acidTime.series[0].data = data;
         }
       })
     },
-    selStatAcidTime() {
-      let param = {"addr1":this.search.addr1, "addr2": this.search.addr2,
-        "sdate": this.search.sdate.replaceAll('-','') + "000000"
-        ,"edate": this.search.edate.replaceAll('-','') + "999999"}
-      api.selStatAcidTime(param).then(res => {
-        if(res.data.status === "SUCCESS") {
-          let dataList = res.data.data;
-          let data = new Array(24);
-          dataList.forEach(function (time) {
-            //this.acidTime.series[0].data[time.REPORT_HOUR] = time.ALERT_COUNT;
-            data[time.REPORT_HOUR] = time.ALERT_COUNT;
-            this.alram_count3 += time.ALERT_COUNT;
-          }.bind(this))
-          this.acidTime.series[0].data = data;
-          console.log("data",this.acidTime.series[0].data )
-        }
-      })
+    toStatRows(data) {
+      const rows = this.toArray(data);
+      return rows.map(row => ({
+        code: this.getValue(row, ["ADDR_CODE", "addrCode", "code"]),
+        addrName: this.getValue(row, ["ADDR_NAME", "addrName", "ADDR2", "addr2", "ADDR1", "addr1", "name"]),
+        deviceCount: this.toNumber(this.getValue(row, ["DEVICE_COUNT", "deviceCount", "DEVICE_CNT", "deviceCnt"])),
+        alramCount: this.toNumber(this.getValue(row, ["ALRAM_COUNT", "alramCount", "ALERT_COUNT", "alertCount"])),
+        activeOutCount: this.toNumber(this.getValue(row, ["ACTIVE_OUT_COUNT", "activeOutCount", "SAFE_COUNT", "safeCount"])),
+        batteryCount: this.toNumber(this.getValue(row, ["BATTERY_COUNT", "batteryCount", "BETTERY_COUNT", "betteryCount"])),
+        reqCount: this.toNumber(this.getValue(row, ["REQ_COUNT", "reqCount", "CLOC_COUNT", "clocCount"])),
+      }));
+    },
+    toArray(data) {
+      if(Array.isArray(data)) return data;
+      if(!data || typeof data !== "object") return [];
+      const rowKeys = ["list", "rows", "items", "content", "statList"];
+      const rows = rowKeys.map(key => data[key]).find(Array.isArray);
+      return rows || [];
+    },
+    getValue(row, keys) {
+      if(!row || typeof row !== "object") return "";
+      const key = keys.find(item => row[item] !== undefined && row[item] !== null);
+      return key ? row[key] : "";
+    },
+    toNumber(value) {
+      const number = parseInt(value, 10);
+      return Number.isNaN(number) ? 0 : number;
     }
   }
   // setup() {
@@ -419,5 +653,245 @@ export default {
 </script>
 
 <style scoped>
+.search-card {
+  margin-bottom: 12px;
+}
 
+.dashboard-search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.period-control {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid #cfd7e3;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.period-option {
+  min-width: 62px;
+  margin: 0;
+  padding: 6px 12px;
+  border-right: 1px solid #cfd7e3;
+  color: #52616f;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.period-option:last-child {
+  border-right: 0;
+}
+
+.period-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.period-option.active {
+  background: #2f4a73;
+  color: #fff;
+}
+
+.date-range-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-label {
+  color: #26384f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.date-input {
+  width: 150px;
+}
+
+.date-separator {
+  color: #6c757d;
+}
+
+.search-button {
+  min-width: 68px;
+}
+
+.chart-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chart-title-row .card-title {
+  margin-bottom: 0;
+}
+
+.alert-type-select {
+  width: 138px;
+  flex: 0 0 138px;
+}
+
+.dashboard-summary-row {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.summary-box {
+  min-height: 178px;
+  height: 100%;
+  padding: 18px 20px;
+  border: 1px solid #2f4a73;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.summary-title {
+  margin-bottom: 16px;
+  color: #26384f;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.summary-title span {
+  color: #6c757d;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.device-status-counts {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 10px;
+}
+
+.status-count {
+  min-width: 64px;
+  text-align: center;
+}
+
+.status-count strong {
+  display: block;
+  color: #172b4d;
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.status-count span {
+  display: block;
+  margin-top: 7px;
+  color: #6c757d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-divider {
+  padding-top: 4px;
+  color: #8a96a8;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.summary-list {
+  max-height: 104px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.summary-list-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #26384f;
+  font-size: 14px;
+  text-align: left;
+}
+
+.summary-list-row strong {
+  color: #0d6efd;
+  text-decoration: underline;
+}
+
+.summary-list-row:hover strong,
+.summary-list-row:focus strong {
+  color: #084298;
+}
+
+.summary-empty,
+.summary-muted {
+  color: #6c757d;
+  font-size: 13px;
+}
+
+.summary-empty {
+  padding: 22px 0;
+  text-align: center;
+}
+
+.summary-muted {
+  margin-top: 10px;
+}
+
+@media (max-width: 575.98px) {
+  .dashboard-search-bar {
+    align-items: stretch;
+  }
+
+  .period-control,
+  .date-range-control,
+  .search-button {
+    width: 100%;
+  }
+
+  .period-option {
+    flex: 1;
+  }
+
+  .date-input {
+    flex: 1;
+    width: auto;
+  }
+
+  .chart-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .alert-type-select {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .summary-box {
+    min-height: auto;
+  }
+
+  .device-status-counts {
+    gap: 8px;
+  }
+
+  .status-count {
+    min-width: 54px;
+  }
+
+  .status-count strong {
+    font-size: 24px;
+  }
+}
 </style>

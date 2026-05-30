@@ -23,7 +23,7 @@
             <td>
               <select v-model="manager.nation" class="form-select form-select-sm">
                 <option value="KR">KR</option>
-                <option value="US_CA">US_CA</option>
+                <option value="US">US</option>
               </select>
             </td>
           </tr>
@@ -39,7 +39,6 @@
                   v-model="manager.mgrId"
                   class="form-control form-control-sm"
                   maxlength="50"
-                  :readonly="isUpdateMode"
               >
             </td>
           </tr>
@@ -58,7 +57,33 @@
           </tr>
           <tr>
             <th class="text-center bg-light small py-2">관리 도(시) 영역 설정</th>
-            <td class="small ps-2"></td>
+            <td class="small ps-2">
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                <select
+                    v-model="selectedManageState"
+                    class="form-select form-select-sm manage-select"
+                    :disabled="isAddrLoading"
+                    @change="onManageStateChange"
+                >
+                  <option value="">전체</option>
+                  <option v-for="state in manageStateOptions" :key="state.addrCode" :value="state.addrCode">
+                    {{ state.addrName }}
+                  </option>
+                </select>
+                <select
+                    v-model="selectedManageSub"
+                    class="form-select form-select-sm manage-select"
+                    :disabled="isAddrLoading || !selectedManageState || manageSubOptions.length === 0"
+                    @change="onManageSubChange"
+                >
+                  <option value="">{{ manageCountryCode === 'US' ? 'County 전체' : '시/군/구 전체' }}</option>
+                  <option v-for="sub in manageSubOptions" :key="sub.addrCode" :value="sub.addrCode">
+                    {{ sub.addrName }}
+                  </option>
+                </select>
+                <span class="text-muted">{{ selectedManageName }}</span>
+              </div>
+            </td>
           </tr>
 
           </tbody>
@@ -104,10 +129,52 @@ export default {
       utils: utils,
       guard: { guardPhone: '', guardName: '', email: '', lastLoginDate: null, accountState: 'N', maketingAgreeYn: 'Y' },
       deviceList: [],
+      addrTree: [],
+      selectedManageState: '',
+      selectedManageSub: '',
+      isAddrLoading: false,
+      isApplyingManager: false,
 
-      // originalMgrId: '', // 추가: 수정 전 ID 비교용
+      originalMgrId: '',
       isEmailValid: true,
     }
+  },
+  computed: {
+    manageCountryCode() {
+      const nation = String(this.manager.nation || "").toUpperCase();
+      return nation.indexOf("US") === 0 ? "US" : "KR";
+    },
+    manageStateOptions() {
+      const rows = this.unwrapCountryRoots(this.addrTree);
+      return rows.filter(row => this.normalLevel(row.addrLevel) === "STATE");
+    },
+    selectedManageStateNode() {
+      return this.manageStateOptions.find(state => state.addrCode === this.selectedManageState) || null;
+    },
+    manageSubOptions() {
+      if(!this.selectedManageStateNode) return [];
+      const children = Array.isArray(this.selectedManageStateNode.children) ? this.selectedManageStateNode.children : [];
+      if(this.manageCountryCode === "US") return children.filter(child => this.normalLevel(child.addrLevel) === "COUNTY");
+      return children;
+    },
+    selectedManageName() {
+      if(!this.manager.manageCity) return "전체";
+      const sub = this.manageSubOptions.find(item => item.addrCode === this.selectedManageSub);
+      if(sub) return sub.addrName;
+      const state = this.selectedManageStateNode;
+      return state ? state.addrName : this.manager.manageCity;
+    },
+  },
+  watch: {
+    "manager.nation"(newValue, oldValue) {
+      if(newValue === oldValue) return;
+      if(this.isApplyingManager) return;
+      if(String(newValue).toUpperCase().indexOf("US") === 0) this.manager.nation = "US";
+      this.manager.manageCity = "";
+      this.selectedManageState = "";
+      this.selectedManageSub = "";
+      this.loadManageAddrTree();
+    },
   },
   mounted() {
     const queryNo = this.$route.query.mgrNo;
@@ -115,6 +182,8 @@ export default {
       this.mgrNo = queryNo;
       this.isUpdateMode = true;
       this.fetchData();
+    } else {
+      this.loadManageAddrTree();
     }
   },
   methods: {
@@ -148,9 +217,25 @@ export default {
         const manager = await api.getManagerByAdmin(this.mgrNo);
         if (manager.data.status === "SUCCESS") {
           const data = manager.data.data;
-          this.manager = data;
-          // 수정 모드일 때 비교를 위해 원본 ID 저장
-          // this.originalMgrId = data.MGR_ID || data.mgrId;
+          this.isApplyingManager = true;
+          this.manager = {
+            ...this.manager,
+            mgrNo: data.mgrNo ?? data.MGR_NO ?? '',
+            mgrType: data.mgrType ?? data.MGR_TYPE ?? 'ROLE_ADMIN',
+            nation: this.normalizeNation(data.nation ?? data.NATION ?? 'KR'),
+            mgrName: data.mgrName ?? data.MGR_NAME ?? '',
+            mgrPhone: data.mgrPhone ?? data.MGR_PHONE ?? '',
+            mgrId: data.mgrId ?? data.MGR_ID ?? '',
+            manageCity: data.manageCity ?? data.MANAGE_CITY ?? '',
+            islocked: data.islocked ?? data.isLocked ?? data.IS_LOCKED ?? 'N',
+          };
+          try {
+            await this.loadManageAddrTree();
+            this.applyManageCitySelection();
+          } finally {
+            this.isApplyingManager = false;
+          }
+          this.originalMgrId = this.manager.mgrId;
         }
 
       } catch (e) { console.error(e); }
@@ -181,11 +266,9 @@ export default {
 
       const param = { ...this.manager };
 
-      // 2. ID 변경 여부 확인 (수정 모드 전용 로직)
-      // 입력된 ID와 처음에 불러온 원본 ID가 다를 경우에만 중복 체크 실행
-      // if (this.manager.mgrId !== this.originalMgrId) {
-      //   if (await this.checkDuplicate(param)) return;
-      // }
+      if (this.manager.mgrId !== this.originalMgrId) {
+        if (await this.checkDuplicate(param)) return;
+      }
 
       try {
         const res = await api.updMangerByAdmin(param);
@@ -196,7 +279,7 @@ export default {
             if (window.opener && window.opener.vueComponent) {
               window.opener.vueComponent.selectManagerList();
             }
-            // this.originalMgrId = this.manager.mgrId; // 수정 후 현재 ID를 다시 원본으로 갱신
+            this.originalMgrId = this.manager.mgrId;
             this.closePopup();
           }else{
             alert("수정 실패");
@@ -221,6 +304,144 @@ export default {
       }
     },
 
+    async loadManageAddrTree() {
+      this.isAddrLoading = true;
+      try {
+        const countryCode = this.manageCountryCode;
+        const res = await api.selAddrTree({ countryCode });
+        if(res.data.status === "SUCCESS") {
+          this.addrTree = this.toTreeRows(res.data.data, countryCode);
+          this.applyManageCitySelection();
+          return;
+        }
+      } catch (e) {
+        if(this.manageCountryCode !== "KR") console.error(e);
+      } finally {
+        this.isAddrLoading = false;
+      }
+
+      if(this.manageCountryCode === "KR") {
+        const res = await api.selAddrList();
+        if(res.data.status === "SUCCESS") {
+          this.addrTree = this.toLegacyKrTree(res.data.data);
+          this.applyManageCitySelection();
+        }
+      }
+    },
+    normalizeNation(nation) {
+      return String(nation || "").toUpperCase().indexOf("US") === 0 ? "US" : "KR";
+    },
+    onManageStateChange() {
+      this.selectedManageSub = "";
+      this.manager.manageCity = this.selectedManageState;
+    },
+    onManageSubChange() {
+      this.manager.manageCity = this.selectedManageSub || this.selectedManageState;
+    },
+    applyManageCitySelection() {
+      const manageCity = this.manager.manageCity || "";
+      this.selectedManageState = "";
+      this.selectedManageSub = "";
+      if(!manageCity) return;
+
+      const state = this.manageStateOptions.find(item => item.addrCode === manageCity);
+      if(state) {
+        this.selectedManageState = state.addrCode;
+        return;
+      }
+
+      const parent = this.findParentNode(manageCity, this.manageCountryCode === "US" ? "STATE" : "STATE");
+      if(parent) {
+        this.selectedManageState = parent.addrCode;
+        this.selectedManageSub = manageCity;
+      }
+    },
+    toTreeRows(data, countryCode) {
+      const rows = this.toArray(data);
+      return rows.map(row => this.normalizeNode(row, countryCode, ""));
+    },
+    toLegacyKrTree(data) {
+      const states = this.toArray(data).map(state => {
+        const stateCode = this.getValue(state, ["addrCode", "ADDR_CODE", "paddrCode", "PADDR_CODE"]);
+        return {
+          addrCode: stateCode,
+          addrName: this.getValue(state, ["addrName", "ADDR_NAME", "addr1", "ADDR1"]),
+          addrLevel: "STATE",
+          countryCode: "KR",
+          stateCode: "",
+          children: this.toArray(state.addrList || state.children).map(city => ({
+            addrCode: this.getValue(city, ["addrCode", "ADDR_CODE"]),
+            addrName: this.getValue(city, ["addrName", "ADDR_NAME", "addr2", "ADDR2"]),
+            addrLevel: "CITY",
+            countryCode: "KR",
+            stateCode: "",
+            children: [],
+          })),
+        };
+      });
+      return [{
+        addrCode: "KR",
+        addrName: "대한민국",
+        addrLevel: "COUNTRY",
+        countryCode: "KR",
+        stateCode: "",
+        children: states,
+      }];
+    },
+    normalizeNode(row, countryCode, parentLevel) {
+      const level = this.getValue(row, ["addrLevel", "ADDR_LEVEL"]) || this.inferLevel(parentLevel);
+      const nodeCountry = this.getValue(row, ["countryCode", "COUNTRY_CODE"]) || countryCode;
+      return {
+        addrCode: this.getValue(row, ["addrCode", "ADDR_CODE", "paddrCode", "PADDR_CODE"]),
+        addrName: this.getValue(row, ["addrName", "ADDR_NAME", "addr1", "ADDR1", "addr2", "ADDR2"]),
+        addrLevel: level,
+        countryCode: nodeCountry,
+        stateCode: this.getValue(row, ["stateCode", "STATE_CODE"]),
+        children: this.toArray(row.children || row.addrList).map(child => this.normalizeNode(child, nodeCountry, level)),
+      };
+    },
+    inferLevel(parentLevel) {
+      const level = this.normalLevel(parentLevel);
+      if(level === "COUNTRY") return "STATE";
+      if(level === "STATE") return this.manageCountryCode === "US" ? "COUNTY" : "CITY";
+      if(level === "COUNTY") return "CITY";
+      return "COUNTRY";
+    },
+    unwrapCountryRoots(rows) {
+      if(rows.length === 1 && this.normalLevel(rows[0].addrLevel) === "COUNTRY") return rows[0].children || [];
+      return rows;
+    },
+    normalLevel(level) {
+      return String(level || "").toUpperCase();
+    },
+    findParentNode(addrCode, parentLevel) {
+      let found = null;
+      const walk = (nodes, parent) => {
+        nodes.forEach(node => {
+          if(found) return;
+          if(node.addrCode === addrCode && parent && this.normalLevel(parent.addrLevel) === parentLevel) {
+            found = parent;
+            return;
+          }
+          walk(node.children || [], node);
+        });
+      };
+      walk(this.addrTree, null);
+      return found;
+    },
+    toArray(data) {
+      if(Array.isArray(data)) return data;
+      if(!data || typeof data !== "object") return [];
+      const rowKeys = ["list", "rows", "items", "content", "addrList", "children"];
+      const rows = rowKeys.map(key => data[key]).find(Array.isArray);
+      return rows || [];
+    },
+    getValue(row, keys) {
+      if(!row || typeof row !== "object") return "";
+      const key = keys.find(item => row[item] !== undefined && row[item] !== null);
+      return key ? row[key] : "";
+    },
+
 
     closePopup() { window.close(); },
   }
@@ -229,4 +450,5 @@ export default {
 
 <style scoped>
 .translate-middle { transform: translate(-50%, -50%) !important; }
+.manage-select { width: 180px; }
 </style>

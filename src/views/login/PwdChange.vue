@@ -19,7 +19,7 @@
 
 
               <ul v-if="isForce === 'Y'">
-                <li class="login_bar compact_li">
+                <li v-if="pwdChangeType === 'PF'" class="login_bar compact_li">
                   <input type="password" class="input_txt" v-model="cur_password" placeholder="현재 비밀번호 입력">
                 </li>
 
@@ -83,13 +83,14 @@ export default {
     },
 
     async change_password() {
-      if (utils.isEmpty(this.cur_password)) return alert("현재 비밀번호를 입력해 주세요.");
+      if (this.pwdChangeType === 'PF' && utils.isEmpty(this.cur_password)) return alert("현재 비밀번호를 입력해 주세요.");
       if (utils.isEmpty(this.password)) return alert("비밀번호를 입력해 주세요.");
       if (!this.validatePassword(this.password)) return alert("비밀번호는 8~16자 이내의 영문, 숫자, 특수문자 조합이어야 합니다.");
       if (this.password !== this.password_confirm) return alert("비밀번호가 일치하지 않습니다.");
 
       try {
-        const params = { mgrId: this.loginId, currentPwd: this.cur_password, newPwd: this.password };
+        const params = { mgrId: this.loginId, newPwd: this.password, pwdChangeType: this.pwdChangeType };
+        if (this.pwdChangeType === 'PF') params.currentPwd = this.cur_password;
         const res = await api.updChangePwd(params);
         if (res.data.status === "SUCCESS") {
           this.isSuccess = true;

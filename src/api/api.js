@@ -147,12 +147,24 @@ export default {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/addr/list');
 	},
 
+	selAddrTree(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/addr/tree', param);
+	},
+
 	selStatAcid(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/stat/acid/list', param);
 	},
 
+	selStatAcidRegion(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/stat/acid/list/region', param);
+	},
+
 	selStatAcidTime(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/stat/acid/list/time', param);
+	},
+
+	selDashboardDeviceSummary(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/stat/device-summary', param);
 	},
 
 	// 기관관리
@@ -238,7 +250,7 @@ export default {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/unlock/' + mgrNo);
 	},
 	initManagerPwd(mgrNo) {
-		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/initpwd/' + mgrNo);
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/manager/initPwd/' + mgrNo);
 	},
 
 	checkManagerId(param) {

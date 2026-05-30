@@ -113,6 +113,8 @@ export default {
   },
   computed: {
     maskedEmail() {
+      if(!this.rawEmail) return '';
+      if (this.rawEmail.indexOf('@') === -1) return this.rawEmail;
       const [id, domain] = this.rawEmail.split('@');
       return id.slice(0, -3) + '***@' + domain;
     },
@@ -140,8 +142,10 @@ export default {
         const res = await api.login_step1(params);
 
         if (res.data.status === "SUCCESS") {
-          this.rawEmail = res.data.data.manager.mgrEmail;
-          this.rawPhone = res.data.data.manager.mgrPhone;
+          const data = res.data.data || {};
+          const manager = data.manager || {};
+          this.rawEmail = data.maskedEmail || manager.mgrId || manager.MGR_ID || data.mgrId || data.MGR_ID || this.loginId;
+          this.rawPhone = manager.mgrPhone || manager.MGR_PHONE || data.mgrPhone || data.maskedPhone || "";
 
           if(res.data.data.status === "MFA")
             this.step = 'MFA';

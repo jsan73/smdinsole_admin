@@ -44,6 +44,9 @@
                   </div>
                 </div>
                 <div class="text-center mt-3">
+                  <div v-if="mfaToastMessage" class="mfa_toast" role="status" aria-live="polite">
+                    {{ mfaToastMessage }}
+                  </div>
                   <button type="button" class="btn_white_luxury" :disabled="isMfaSending || isMfaVerifying" @click="sendMfaCode">
                     {{ isMfaSending ? '발송 중...' : (isMfaSent ? '인증번호 재발송' : '인증번호 발송') }}
                   </button>
@@ -98,6 +101,10 @@ export default {
       mfaType: 'EMAIL', mfaCode: '', isMfaSent: false,
       timer: 180, timerInterval: null,
       mfaTimerSeconds: 180,
+      mfaToastMessage: '',
+      mfaToastTimer: null,
+      loginChallengeId: '',
+      resetChallengeId: '',
       rawEmail: '', rawPhone: '',
       findInfo: { mgrId: '', mgrName: '', findYn: false }, findError: '',
       pwdChangeType : "N",
@@ -111,6 +118,7 @@ export default {
   computed: {
     maskedEmail() {
       if(!this.rawEmail) return '';
+      if (this.rawEmail.indexOf('@') === -1) return this.rawEmail;
       const [id, domain] = this.rawEmail.split('@');
       return id.slice(0, -3) + '***@' + domain;
     },
@@ -140,8 +148,10 @@ export default {
         const res = await api.login_step1(params);
         if (res.data.status === "SUCCESS") {
           const data = res.data.data || {};
-          this.rawEmail = data.manager?.mgrEmail || "";
-          this.rawPhone = data.manager?.mgrPhone || "";
+          const manager = data.manager || {};
+          this.loginChallengeId = data.loginChallengeId || data.challengeId || data.loginChallenge || "";
+          this.rawEmail = data.maskedEmail || manager.mgrId || manager.MGR_ID || data.mgrId || data.MGR_ID || this.loginId;
+          this.rawPhone = manager.mgrPhone || manager.MGR_PHONE || data.mgrPhone || data.maskedPhone || "";
           if(data.status === "MFA") {
             this.resetMfaState();
             this.step = 'MFA';
@@ -159,10 +169,19 @@ export default {
       this.mfaCode = "";
       this.failMessage = "";
       try {
-        const params = { loginId: this.loginId, mfaType: this.mfaType };
+        const params = {
+          loginId: this.loginId,
+          mfaType: this.mfaType,
+          purpose: this.findInfo.findYn ? 'PASSWORD_RESET' : 'LOGIN'
+        };
+        if (this.findInfo.findYn) {
+          if (this.resetChallengeId) params.resetChallengeId = this.resetChallengeId;
+        } else if (this.loginChallengeId) {
+          params.loginChallengeId = this.loginChallengeId;
+        }
         const res = await api.login_step2(params);
         if (res.data.status === "SUCCESS") {
-          alert(`${this.mfaType === 'EMAIL' ? '이메일' : '휴대폰'}으로 인증번호가 발송되었습니다.`);
+          this.showMfaToast(this.mfaType === 'EMAIL' ? '이메일로 인증번호가 발송되었습니다.' : '휴대폰으로 인증번호가 발송되었습니다.');
           this.isMfaSent = true;
           this.startTimer();
         }
@@ -198,15 +217,18 @@ export default {
       this.isMfaVerifying = true;
       this.failMessage = "";
       try {
-        const params = { loginId: this.loginId, mfaCode: this.mfaCode };
+        const params = { loginId: this.loginId, mfaCode: this.mfaCode, mfaType: this.mfaType };
         if(this.findInfo.findYn) {
+          if (this.resetChallengeId) params.resetChallengeId = this.resetChallengeId;
           const res = await api.login_verify_pwfind(params);
           if (res.data.status === "SUCCESS") {
-            alert("인증되었습니다. 이메일(ID)로 임시 비밀번호가 발급되었습니다.");
+            const channel = this.mfaType === 'EMAIL' ? '이메일' : '휴대폰';
+            alert(`인증되었습니다. ${channel}으로 임시 비밀번호가 발급되었습니다.`);
             this.commitToken('');
             window.location.href = "/login"
           }
         }else {
+          if (this.loginChallengeId) params.loginChallengeId = this.loginChallengeId;
           const res = await api.login_verify(params);
           if (res.data.status === "SUCCESS") {
             clearInterval(this.timerInterval);
@@ -245,9 +267,12 @@ export default {
       try {
         const res = await api.findAdminAccount(this.findInfo);
         if(res.data.status === "SUCCESS") {
+          const data = res.data.data || {};
+          const manager = data.manager || data;
           this.loginId = this.findInfo.mgrId;
-          this.rawEmail = res.data.data.mgrId;
-          this.rawPhone = res.data.data.mgrPhone;
+          this.resetChallengeId = data.resetChallengeId || data.challengeId || data.resetChallenge || "";
+          this.rawEmail = data.maskedEmail || manager.mgrId || manager.MGR_ID || this.findInfo.mgrId;
+          this.rawPhone = manager.mgrPhone || manager.MGR_PHONE || data.maskedPhone || "";
           this.findInfo.findYn = true;
           this.resetMfaState();
           this.step = 'MFA';
@@ -295,11 +320,27 @@ export default {
 
       return message || "로그인 실패";
     },
+    clearMfaToast() {
+      this.mfaToastMessage = "";
+      if (this.mfaToastTimer) {
+        clearTimeout(this.mfaToastTimer);
+        this.mfaToastTimer = null;
+      }
+    },
+    showMfaToast(message) {
+      this.clearMfaToast();
+      this.mfaToastMessage = message;
+      this.mfaToastTimer = setTimeout(() => {
+        this.mfaToastMessage = "";
+        this.mfaToastTimer = null;
+      }, 3000);
+    },
     resetMfaState() {
       this.mfaCode = "";
       this.isMfaSent = false;
       this.failMessage = "";
       this.timer = this.mfaTimerSeconds;
+      this.clearMfaToast();
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
         this.timerInterval = null;
@@ -310,6 +351,8 @@ export default {
       this.findError = "";
       this.resetMfaState();
       this.findInfo = { mgrId: '', mgrName: '', findYn: false };
+      this.loginChallengeId = "";
+      this.resetChallengeId = "";
       this.step = 'FIND_PWD';
     },
     goLoginStep() {
@@ -317,10 +360,15 @@ export default {
       this.findError = "";
       this.resetMfaState();
       this.findInfo = { mgrId: '', mgrName: '', findYn: false };
+      this.loginChallengeId = "";
+      this.resetChallengeId = "";
       this.step = 'LOGIN';
     },
   },
-  beforeDestroy() { if (this.timerInterval) clearInterval(this.timerInterval); }
+  beforeDestroy() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.clearMfaToast();
+  }
 }
 </script>
 
@@ -330,5 +378,16 @@ export default {
 .btn_white_luxury {
   background-color: #ffffff; color: #333; border: 1px solid #d1d9e6;
   padding: 8px 24px; border-radius: 4px; font-size: 14px; font-weight: 600;
+}
+.mfa_toast {
+  margin-bottom: 10px;
+  padding: 9px 12px;
+  border: 1px solid #cfe3d7;
+  background: #f1fbf5;
+  color: #23613a;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
 }
 </style>

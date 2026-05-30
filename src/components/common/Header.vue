@@ -1,9 +1,9 @@
 <template>
 
-  <header id="header">
+  <header id="header" class="header fixed-top">
     <nav class="navbar navbar-expand-lg navbar-light bg-white">
       <div class="container-fluid">
-        <a class="navbar-brand py-0 text-center" style="width:16% ; cursor:pointer" @click="goMenu('/')"><img src="/static/images/ktkokasin_logo.png" alt="ktkokasin" /></a>
+        <a class="navbar-brand py-0 text-center" style="width:16% ; cursor:pointer" @click="goMenu('/ststs')"><img src="/static/images/ktkokasin_logo.png" alt="ktkokasin" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" ria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>

@@ -200,17 +200,17 @@ export default {
         },
         {
           headerName: "안심존 이탈",
-          valueGetter: params => this.getEventDeviceValue(params.data, 2, ["SAFE_ZONE_EXIT", "safeZoneExit"]),
+          valueGetter: params => this.getEventDeviceValue(params.data, 2, ["DANGER_YN", "dangerYn", "SAFE_ZONE_EXIT", "safeZoneExit"]),
           width: 130,
         },
         {
           headerName: "이상 이동",
-          valueGetter: params => this.getEventDeviceValue(params.data, 3, ["ABNORMAL_MOVE", "abnormalMove"]),
+          valueGetter: params => this.getEventDeviceValue(params.data, 3, ["OUT_DISTANCE_YN", "outDistanceYn", "ABNORMAL_MOVE", "abnormalMove"]),
           width: 120,
         },
         {
           headerName: "이상 전송",
-          valueGetter: params => this.getEventDeviceValue(params.data, 4, ["ABNORMAL_SEND", "abnormalSend"]),
+          valueGetter: params => this.getEventDeviceValue(params.data, 4, ["NEAR_SIGNAL_YN", "nearSignalYn", "ABNORMAL_SEND", "abnormalSend"]),
           width: 120,
         },
         {

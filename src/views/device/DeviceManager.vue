@@ -346,10 +346,17 @@ export default {
   },
   mounted() {
 
+    this.applyRouteQuery();
     this.selectDeviceList();
     this.selectOrgcList();
 
 
+  },
+  watch: {
+    "$route.query"() {
+      this.applyRouteQuery();
+      this.selectDeviceList();
+    },
   },
   methods: {
     isDev() {
@@ -361,6 +368,12 @@ export default {
     },
     gogo() {
       this.$router.push('/devicelog')
+    },
+    applyRouteQuery() {
+      const query = this.$route.query || {};
+      ["expDateStart", "expDateEnd", "esimExpDateStart", "esimExpDateEnd"].forEach(key => {
+        if(query[key] !== undefined) this.search[key] = String(query[key] || "");
+      });
     },
     addDevice() {
       this.$open(
