@@ -159,6 +159,9 @@ export default {
     }
   },
   computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
     paginationPages() {
       const pageCount = 10;
       const start = Math.floor((this.currentPage - 1) / pageCount) * pageCount + 1;
@@ -169,7 +172,11 @@ export default {
     },
   },
   mounted() {
-
+    if(!this.isSuperAdmin) {
+      alert("대표 관리자만 수행할 수 있습니다.");
+      this.$router.replace("/device").catch(() => {});
+      return;
+    }
     this.selectOrgcList();
 
 
@@ -177,6 +184,10 @@ export default {
   },
   methods: {
     addOrgc() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       this.$open(
           "/orgcpopup",
           "기관 등록",
@@ -250,6 +261,7 @@ export default {
     },
 
     async selectOrgcList(resetPage = true) {
+      if(!this.isSuperAdmin) return;
       if(resetPage) this.currentPage = 1;
       if(this.gridApi) this.gridApi.showLoadingOverlay();
       const param = {
@@ -258,18 +270,31 @@ export default {
         pageSize: this.paginationPageSize,
         pageStart: (this.currentPage - 1) * this.paginationPageSize,
       };
-      const res = await api.selOrgcList(param);
-      if(res.data.status === "SUCCESS") {
-        const data = res.data.data || {};
-        this.orgcList = this.toOrgcRows(data);
-        this.totalRows = data.totalCount || this.orgcList.length;
-        this.$nextTick(() => {
-          this.updatePaginationState();
-          if(this.gridApi && this.orgcList.length === 0) this.gridApi.showNoRowsOverlay();
-          else if(this.gridApi) this.gridApi.hideOverlay();
-        });
+      try {
+        const res = await api.selOrgcList(param);
+        if(res.data.status === "SUCCESS") {
+          const data = res.data.data || {};
+          this.orgcList = this.toOrgcRows(data);
+          this.totalRows = data.totalCount || this.orgcList.length;
+          this.$nextTick(() => {
+            this.updatePaginationState();
+            if(this.gridApi && this.orgcList.length === 0) this.gridApi.showNoRowsOverlay();
+            else if(this.gridApi) this.gridApi.hideOverlay();
+          });
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
 
+    },
+    handleScopeError(e) {
+      if(this.gridApi) this.gridApi.showNoRowsOverlay();
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || "조회 중 오류가 발생했습니다.");
     },
   },
   created(){

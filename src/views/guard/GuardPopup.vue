@@ -260,7 +260,7 @@ export default {
             noticeSaving: false
           }));
         }
-      } catch (e) { console.error(e); }
+      } catch (e) { this.handleScopeError(e); }
     },
 
     getNoticeOption(notiCd) {
@@ -313,7 +313,7 @@ export default {
         const message = e.response && e.response.data && e.response.data.message
             ? e.response.data.message
             : "알림 설정 변경에 실패했습니다.";
-        alert(message);
+        this.handleScopeError(e, message);
       } finally {
         item.noticeSaving = false;
       }
@@ -323,11 +323,15 @@ export default {
       const param = { ...this.guard, guardPhone: this.getRawPhone(this.guard.guardPhone) };
       if (await this.checkDuplicate(param)) return;
       if (!await this.checkEmail()) return;
-      const res = await api.insGuardianByAdmin(param);
-      if (res.data.status === "SUCCESS") {
-        alert("등록되었습니다.");
-        window.opener.vueComponent.selectGuardList();
-        this.isRegistered = true;
+      try {
+        const res = await api.insGuardianByAdmin(param);
+        if (res.data.status === "SUCCESS") {
+          alert("등록되었습니다.");
+          window.opener.vueComponent.selectGuardList();
+          this.isRegistered = true;
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
     },
 
@@ -338,11 +342,15 @@ export default {
       if (isPhoneChanged && await this.checkDuplicate(param)) return;
       if(!await this.checkEmail()) return;
 
-      const res = await api.updGuardianByAdmin(param);
-      if (res.data.status === "SUCCESS") {
-        alert("수정 되었습니다.");
-        window.opener.vueComponent.selectGuardList();
-        this.originalPhone = this.guard.guardPhone;
+      try {
+        const res = await api.updGuardianByAdmin(param);
+        if (res.data.status === "SUCCESS") {
+          alert("수정 되었습니다.");
+          window.opener.vueComponent.selectGuardList();
+          this.originalPhone = this.guard.guardPhone;
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
     },
 
@@ -404,8 +412,7 @@ export default {
           this.transferForm.searchResult = null;
         }
       } catch (e) {
-        console.error(e);
-        alert("조회 중 오류가 발생했습니다.");
+        this.handleScopeError(e, "조회 중 오류가 발생했습니다.");
       }
     },
 
@@ -435,7 +442,7 @@ export default {
           this.cancelTransfer();
         }
       } catch (e) {
-        console.error(e);
+        this.handleScopeError(e);
         this.cancelTransfer();
       }
     },
@@ -496,8 +503,7 @@ export default {
           this.addDeviceForm.searchResult = null;
         }
       } catch (e) {
-        console.error(e);
-        alert("조회 중 오류가 발생했습니다.");
+        this.handleScopeError(e, "조회 중 오류가 발생했습니다.");
       }
     },
 
@@ -526,7 +532,7 @@ export default {
             alert(res.data.message || "추가 실패");
           }
         } catch (e) {
-          console.error(e);
+          this.handleScopeError(e);
         }
       }
     },
@@ -550,8 +556,7 @@ export default {
             alert(res.data.message || "권한 해제에 실패했습니다.");
           }
         } catch (e) {
-          console.error(e);
-          alert("서버 통신 중 오류가 발생했습니다.");
+          this.handleScopeError(e, "서버 통신 중 오류가 발생했습니다.");
         }
       }
     },
@@ -561,6 +566,14 @@ export default {
     },
 
     closePopup() { window.close(); },
+    handleScopeError(e, fallbackMessage = "처리 중 오류가 발생했습니다.") {
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("관리 권한 범위 밖의 요청입니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || fallbackMessage);
+    },
   }
 }
 </script>

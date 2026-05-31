@@ -319,15 +319,19 @@ export default {
         "insoleNum":this.insole
       }
 
-      const res = await api.insDevicePtl(param);
-      if(res.data.status === "SUCCESS") {
-         this.devicePtlSeq = res.data.data;
-        console.log(this.devicePtlSeq)
-        this.counter = 60
+      try {
+        const res = await api.insDevicePtl(param);
+        if(res.data.status === "SUCCESS") {
+           this.devicePtlSeq = res.data.data;
+          console.log(this.devicePtlSeq)
+          this.counter = 60
 
-        this.log_status = 1
-        // 문자 전송 후 딜레이 타임
-        setTimeout(() => this.interval = setInterval(this.countdown, 1000), 2000);
+          this.log_status = 1
+          // 문자 전송 후 딜레이 타임
+          setTimeout(() => this.interval = setInterval(this.countdown, 1000), 2000);
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
 
     },
@@ -339,28 +343,41 @@ export default {
         console.log(fileName)
         utils.fileDownload(res.data, fileName)
         router.go(0)
-      })
+      }).catch(this.handleScopeError)
 
 
     },
     async reset(){
       let param = {"devicePtlSeq": this.devicePtlSeq}
-      await api.resetDeviceLog(param)
-      router.go(0)
+      try {
+        await api.resetDeviceLog(param)
+        router.go(0)
+      } catch (e) {
+        this.handleScopeError(e);
+      }
     },
     stop_test(){
       this.log_status = 2
       this.interval_wait = setInterval(this.countdown_wait, 1000);
     },
     async stop() {
+      if(utils.isEmpty(this.deviceCode)) {
+        alert("Code 정보를 입력 하세요")
+        return false;
+      }
       let param = {
+        "deviceCode":this.deviceCode,
         "devicePhoneNumber":this.devicePhoneNumber[this.insole],
       }
 
-      const res = await api.stopDevicePtl(param);
-      if(res.data.status === "SUCCESS") {
-        this.log_status = 2
-        this.interval_wait = setInterval(this.countdown_wait, 1000);
+      try {
+        const res = await api.stopDevicePtl(param);
+        if(res.data.status === "SUCCESS") {
+          this.log_status = 2
+          this.interval_wait = setInterval(this.countdown_wait, 1000);
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
     },
 
@@ -369,8 +386,9 @@ export default {
       const param = {
         "devicePtlSeq":this.devicePtlSeq, "deviceLogSeq":this.next_seq
       }
-      const res = await api.selDeviceLog(param);
-      if(res.data.status === "SUCCESS") {
+      try {
+        const res = await api.selDeviceLog(param);
+        if(res.data.status === "SUCCESS") {
         let dataList = res.data.data;
 
         const data = dataList.map(item => Object.values(item))
@@ -424,7 +442,18 @@ export default {
 
         }.bind(this))
 
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
+    },
+    handleScopeError(e) {
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("관리 권한 범위 밖의 요청입니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || "처리 중 오류가 발생했습니다.");
     }
 
   },

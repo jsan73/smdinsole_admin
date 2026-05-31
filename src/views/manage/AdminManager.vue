@@ -12,17 +12,17 @@
             <div class="card-body pb-0">
               <div class="row my-3 align-items-center">
                 <div class="col d-flex flex-wrap gap-3">
-                  <div class="d-flex align-items-center">
+                  <div v-if="isSuperAdmin" class="d-flex align-items-center">
                     <label for="UserName" class="fw-bold me-2" style="white-space: nowrap;">관리자명</label>
                     <input v-model="search.mgrName" type="text" id="UserName" class="form-control" style="width: 150px;" placeholder="관리자명 입력" @keyup.enter="selectManagerList">
                   </div>
 
                   <div class="d-flex align-items-center">
                     <label for="UserPhone" class="fw-bold me-2" style="white-space: nowrap;">이메일</label>
-                    <input v-model="search.mgrId" type="text" id="UserPhone" class="form-control" style="width: 180px;" placeholder="이메일 입력" @keyup.enter="selectManagerList">
+                    <input v-model="search.mgrId" type="text" id="UserPhone" class="form-control" style="width: 180px;" placeholder="이메일 입력" :readonly="!isSuperAdmin" @keyup.enter="selectManagerList">
                   </div>
 
-                  <div class="d-flex align-items-center">
+                  <div v-if="isSuperAdmin" class="d-flex align-items-center">
                     <label for="inputDate" class="fw-bold me-2" style="white-space: nowrap;">날짜선택</label>
                     <input v-model="search.lastLoginDate" type="date" id="inputDate" class="form-control" style="width: 150px;" @change="selectManagerList">
                   </div>
@@ -80,8 +80,8 @@
                 </div>
               </div>
               <p class="text-end">
-                <button class="btn btn-primary mt-2 ms-1" @click="appendGuard">관리자 등록</button>
-                <button class="btn btn-primary mt-2 ms-1" @click="allList">전체목록</button>
+                <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="appendGuard">관리자 등록</button>
+                <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="allList">전체목록</button>
               </p>
             </div>
           </div><!--// 목록 테이블 -->
@@ -206,6 +206,12 @@ export default {
     }
   },
   computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
+    loginId() {
+      return this.$store.getters['adminStore/getLoginId'] || "";
+    },
     paginationPages() {
       const pageCount = 10;
       const start = Math.floor((this.currentPage - 1) / pageCount) * pageCount + 1;
@@ -216,9 +222,16 @@ export default {
     },
   },
   mounted() {
+    this.applyRoleScope();
     this.selectManagerList();
   },
   methods: {
+    applyRoleScope() {
+      if(this.isSuperAdmin) return;
+      this.search.mgrName = "";
+      this.search.mgrId = this.loginId;
+      this.search.lastLoginDate = "";
+    },
     openManager(mgrNo) {
       const url = `/managerpopup?mgrNo=${mgrNo}`;
       const name = "관리자 수정";
@@ -269,8 +282,8 @@ export default {
     getManagerNo(row) {
       return this.getManagerValue(row, 0, ["MGR_NO", "mgrNo"]);
     },
-    isSuperAdmin() {
-      return window.app?.$store?.getters['adminStore/isSuperAdmin'] === true;
+    getManagerId(row) {
+      return this.getManagerValue(row, 2, ["MGR_ID", "mgrId"]);
     },
     toManagerRows(data) {
       if(Array.isArray(data)) return data;
@@ -314,7 +327,7 @@ export default {
     },
     unlockRenderer(params) {
       const isLocked = this.getManagerValue(params.data, 6, ["IS_LOCKED", "isLocked"]) === "Y";
-      if(!isLocked || !this.isSuperAdmin()) return "";
+      if(!isLocked || !this.isSuperAdmin) return "";
 
       const button = document.createElement("button");
       button.type = "button";
@@ -324,6 +337,7 @@ export default {
       return button;
     },
     initPwdRenderer(params) {
+      if(!this.isSuperAdmin) return "";
       const button = document.createElement("button");
       button.type = "button";
       button.className = "btn btn-sm btn-outline-primary";
@@ -332,6 +346,7 @@ export default {
       return button;
     },
     async selectManagerList(resetPage = true) {
+      this.applyRoleScope();
       if(resetPage) this.currentPage = 1;
       if(this.gridApi) this.gridApi.showLoadingOverlay();
       const param = {
@@ -341,31 +356,39 @@ export default {
         pageSize: this.paginationPageSize,
         pageStart: (this.currentPage - 1) * this.paginationPageSize,
       };
-      const res = await api.selManagerListByAdmin(param);
-      if(res.data.status === "SUCCESS") {
-        const data = res.data.data || {};
-        const rows = this.toManagerRows(data);
-        this.managerList = rows.map(item => Array.isArray(item) ? item : [
-          item.mgrNo ?? item.MGR_NO,                                 // 0: No
-          item.mgrType ?? item.MGR_TYPE,                             // 1: 구분
-          item.mgrId ?? item.MGR_ID,                                 // 2: 이메일(ID)
-          item.mgrName ?? item.MGR_NAME,                             // 3: 이름
-          item.nation ?? item.NATION,                                // 4: 소속
-          item.lastLoginDate ?? item.LAST_LOGIN_DATE,                // 5: 마지막 로그인
-          item.isLocked ?? item.IS_LOCKED,                           // 6: 상태(Y/N)
-          item.lockType ?? item.LOCK_TYPE,                           // 7: 잠금 유형
-          item.pwdFailCnt ?? item.PWD_FAIL_CNT,                      // 8: 실패 횟수
-          item.lockDate ?? item.LOCK_DATE,                           // 9: 잠금 일시
-          item.lockReleaseDate ?? item.LOCK_RELEASE_DATE,            // 10: 해제 일시
-          item.lockReleaseMgrId ?? item.LOCK_RELEASE_MGR_ID,         // 11: 해제 관리자
-          item.lockReason ?? item.LOCK_REASON,                       // 12: 잠금 사유
-        ]);
-        this.totalRows = data.totalCount || this.managerList.length;
-        this.$nextTick(() => {
-          this.updatePaginationState();
-          if(this.gridApi && this.managerList.length === 0) this.gridApi.showNoRowsOverlay();
-          else if(this.gridApi) this.gridApi.hideOverlay();
-        });
+      try {
+        const res = await api.selManagerListByAdmin(param);
+        if(res.data.status === "SUCCESS") {
+          const data = res.data.data || {};
+          const rows = this.toManagerRows(data);
+          let managerRows = rows.map(item => Array.isArray(item) ? item : [
+            item.mgrNo ?? item.MGR_NO,                                 // 0: No
+            item.mgrType ?? item.MGR_TYPE,                             // 1: 구분
+            item.mgrId ?? item.MGR_ID,                                 // 2: 이메일(ID)
+            item.mgrName ?? item.MGR_NAME,                             // 3: 이름
+            item.nation ?? item.NATION,                                // 4: 소속
+            item.lastLoginDate ?? item.LAST_LOGIN_DATE,                // 5: 마지막 로그인
+            item.isLocked ?? item.IS_LOCKED,                           // 6: 상태(Y/N)
+            item.lockType ?? item.LOCK_TYPE,                           // 7: 잠금 유형
+            item.pwdFailCnt ?? item.PWD_FAIL_CNT,                      // 8: 실패 횟수
+            item.lockDate ?? item.LOCK_DATE,                           // 9: 잠금 일시
+            item.lockReleaseDate ?? item.LOCK_RELEASE_DATE,            // 10: 해제 일시
+            item.lockReleaseMgrId ?? item.LOCK_RELEASE_MGR_ID,         // 11: 해제 관리자
+            item.lockReason ?? item.LOCK_REASON,                       // 12: 잠금 사유
+          ]);
+          if(!this.isSuperAdmin) {
+            managerRows = managerRows.filter(item => this.getManagerId(item) === this.loginId).slice(0, 1);
+          }
+          this.managerList = managerRows;
+          this.totalRows = this.isSuperAdmin ? (data.totalCount || this.managerList.length) : this.managerList.length;
+          this.$nextTick(() => {
+            this.updatePaginationState();
+            if(this.gridApi && this.managerList.length === 0) this.gridApi.showNoRowsOverlay();
+            else if(this.gridApi) this.gridApi.hideOverlay();
+          });
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
     },
 
@@ -399,10 +422,20 @@ export default {
     },
 
     async allList() {
+      if(!this.isSuperAdmin) return;
       this.search.mgrId = ""
       this.search.mgrName = ""
       this.search.lastLoginDate = ""
       this.selectManagerList()
+    },
+    handleScopeError(e) {
+      if(this.gridApi) this.gridApi.showNoRowsOverlay();
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("관리 권한 범위 밖의 요청입니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || "조회 중 오류가 발생했습니다.");
     }
   },
   created() {

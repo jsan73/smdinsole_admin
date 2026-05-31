@@ -26,7 +26,7 @@
             </td>
           </tr>
           <tr>
-            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;"scope="col">기기 전화번호</th>
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">기기 전화번호</th>
             <td>
               <select id="protectorPhone1" v-model="dphone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">
                 <option value="010">010</option>
@@ -156,6 +156,11 @@ export default {
       sizes: [230, 235, 240, 245, 250, 255, 260, 265, 270, 275]
     }
   },
+  computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
+  },
   watch:{
     memberDate() {
       // console.log(this.selectAddr2)
@@ -173,13 +178,18 @@ export default {
       this.getDeviceInfo(this.deviceIMEI);
       this.popupTitle = '기기 수정'
     }else{
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        window.close();
+        return;
+      }
       // this.geolocate();
     }
-    this.selectOrgcList();
+    if(this.isSuperAdmin) this.selectOrgcList();
   },
   methods: {
     async getDeviceInfo(deviceIMEI) {
-
+      try {
         let res = await api.getDeviceInfo(deviceIMEI);
         if(res.data.status === "SUCCESS") {
           this.device = res.data.data;
@@ -207,6 +217,9 @@ export default {
             this.esimExpDate = utils.dateForm(this.device.esimExpDate);
           }
         }
+      } catch (e) {
+        this.handleScopeError(e);
+      }
     },
     setDevice() {
       // this.device.deviceNumber = this.dphone1 + this.dphone2 + this.dphone3;
@@ -229,12 +242,22 @@ export default {
     },
 
     async insDevice() {
-
-
-      const res = await api.insDevice(this.device);
-      if(res.data.status === "SUCCESS") {
-          alert("추가 되었습니다.")
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return false;
       }
+
+
+      try {
+        const res = await api.insDevice(this.device);
+        if(res.data.status === "SUCCESS") {
+            alert("추가 되었습니다.")
+            return true;
+        }
+      } catch (e) {
+        this.handleScopeError(e);
+      }
+      return false;
     },
     updDevice() {
       this.setDevice();
@@ -262,7 +285,7 @@ export default {
             window.opener.vueComponent.selectDeviceList();
             window.close();
           }
-        });
+        }).catch(this.handleScopeError);
       }
     },
     delDevice() {
@@ -273,11 +296,15 @@ export default {
             window.opener.vueComponent.selectDeviceList();
             window.close();
           }
-        });
+        }).catch(this.handleScopeError);
 
       }
     },
     regDevice() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       this.setDevice();
       if(this.device.chkdevice === "") {
         alert("IMEI 체크를 먼저 진행해 주세요.");
@@ -296,7 +323,8 @@ export default {
         return;
       }
       if(this.device.chkdevice) {
-        this.insDevice().then(() => {
+        this.insDevice().then(success => {
+          if(!success) return;
           //opener.location.reload();
           window.opener.vueComponent.selectDeviceList();
           window.close();
@@ -307,6 +335,10 @@ export default {
       }
     },
     chkIMEI() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       if(this.device.deviceIMEI === "") {
         alert("IMEI값을 입력해 주세요");
         return;
@@ -322,22 +354,34 @@ export default {
 
           }
         }
-      })
+      }).catch(this.handleScopeError)
     },
     clear() {
       this.device.chkdevice = "";
     },
     async selectOrgcList() {
       const param = {};
-      const res = await api.selOrgcList(param);
-      if(res.data.status === "SUCCESS") {
-        this.orgcList = res.data.data;
+      try {
+        const res = await api.selOrgcList(param);
+        if(res.data.status === "SUCCESS") {
+          this.orgcList = res.data.data;
 
-        for(let i = 0; i < this.orgcList.length; i++ ){
-          this.orgcList[i].ORGC_NAME = this.orgcList[i].ORGC_NAME.split(",")[1];
+          for(let i = 0; i < this.orgcList.length; i++ ){
+            this.orgcList[i].ORGC_NAME = this.orgcList[i].ORGC_NAME.split(",")[1];
+          }
         }
+      } catch (e) {
+        this.handleScopeError(e);
       }
 
+    },
+    handleScopeError(e) {
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("관리 권한 범위 밖의 요청입니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || "처리 중 오류가 발생했습니다.");
     },
   }
 

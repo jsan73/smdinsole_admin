@@ -224,18 +224,31 @@ export default {
         pageSize: this.paginationPageSize,
         pageStart: (this.currentPage - 1) * this.paginationPageSize,
       };
-      const res = await api.selLocationLog(param);
-      if(res.data.status === "SUCCESS") {
-        const data = res.data.data || {};
-        this.logList = this.toLogRows(data);
-        this.totalRows = data.totalCount || this.logList.length;
-        this.$nextTick(() => {
-          this.updatePaginationState();
-          if(this.gridApi && this.logList.length === 0) this.gridApi.showNoRowsOverlay();
-          else if(this.gridApi) this.gridApi.hideOverlay();
-        });
+      try {
+        const res = await api.selLocationLog(param);
+        if(res.data.status === "SUCCESS") {
+          const data = res.data.data || {};
+          this.logList = this.toLogRows(data);
+          this.totalRows = data.totalCount || this.logList.length;
+          this.$nextTick(() => {
+            this.updatePaginationState();
+            if(this.gridApi && this.logList.length === 0) this.gridApi.showNoRowsOverlay();
+            else if(this.gridApi) this.gridApi.hideOverlay();
+          });
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
 
+    },
+    handleScopeError(e) {
+      if(this.gridApi) this.gridApi.showNoRowsOverlay();
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("관리 권한 범위 밖의 요청입니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || "조회 중 오류가 발생했습니다.");
     },
 
   },

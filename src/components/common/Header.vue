@@ -42,6 +42,11 @@ export default {
     logout:Boolean,
     menuId:String
   },
+  computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
+  },
   methods: {
     ...mapActions("adminStore", {
       commitToken: "commitToken",
@@ -53,6 +58,10 @@ export default {
       this.$router.go(-1);
     },
     goMenu(url) {
+      if(url === "/orgc" && !this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       this.$router.push(url).catch(() => {});
     },
     async goLogout() {

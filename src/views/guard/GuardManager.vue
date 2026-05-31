@@ -347,19 +347,23 @@ export default {
         pageSize: this.paginationPageSize,
         pageStart: (this.currentPage - 1) * this.paginationPageSize,
       };
-      const res = await api.selGuardianListByAdmin(param);
-      if(res.data.status === "SUCCESS") {
-        const data = res.data.data || {};
-        this.guardList = this.toGuardRows(data);
-        this.totalRows = data.totalCount || this.guardList.length;
-        this.$nextTick(() => {
-          this.updatePaginationState();
-          if(this.gridApi && this.guardList.length === 0) {
-            this.gridApi.showNoRowsOverlay();
-          } else if(this.gridApi) {
-            this.gridApi.hideOverlay();
-          }
-        });
+      try {
+        const res = await api.selGuardianListByAdmin(param);
+        if(res.data.status === "SUCCESS") {
+          const data = res.data.data || {};
+          this.guardList = this.toGuardRows(data);
+          this.totalRows = data.totalCount || this.guardList.length;
+          this.$nextTick(() => {
+            this.updatePaginationState();
+            if(this.gridApi && this.guardList.length === 0) {
+              this.gridApi.showNoRowsOverlay();
+            } else if(this.gridApi) {
+              this.gridApi.hideOverlay();
+            }
+          });
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
     },
 
@@ -368,6 +372,15 @@ export default {
       this.search.guardName = ""
       this.search.lastLoginDate = ""
       this.selectGuardList()
+    },
+    handleScopeError(e) {
+      if(this.gridApi) this.gridApi.showNoRowsOverlay();
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("관리 권한 범위 밖의 요청입니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || "조회 중 오류가 발생했습니다.");
     }
   },
   created() {

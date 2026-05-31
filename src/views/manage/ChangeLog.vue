@@ -18,7 +18,7 @@
                   <input v-model="endDate" type="date" class="form-control" style="width: 150px;">
                 </div>
 
-                <div class="col-auto d-flex align-items-center">
+                <div v-if="isSuperAdmin" class="col-auto d-flex align-items-center">
                   <label class="fw-bold me-2 text-nowrap">사용자 유형</label>
                   <select v-model="search.userType" class="form-select" style="width: 140px;">
                     <option value="">전체</option>
@@ -30,7 +30,7 @@
 
                 <div class="col-auto d-flex align-items-center">
                   <label class="fw-bold me-2 text-nowrap">사용자 ID</label>
-                  <input v-model="search.userId" type="text" class="form-control" style="width: 180px;" @keyup.enter="searchList">
+                  <input v-model="search.userId" type="text" class="form-control" style="width: 180px;" :readonly="!isSuperAdmin" @keyup.enter="searchList">
                 </div>
 
                 <div class="col-auto d-flex align-items-center">
@@ -260,6 +260,12 @@ export default {
     }
   },
   computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
+    loginId() {
+      return this.$store.getters['adminStore/getLoginId'] || "";
+    },
     totalPages() {
       if(this.totalCount === 0) return 1;
       return Math.ceil(this.totalCount / this.paging.pageSize);
@@ -277,6 +283,7 @@ export default {
   },
   mounted() {
     this.initDates();
+    this.applyRoleScope();
     this.selectChangeLogList();
     if(this.$route.query.logSeq) {
       this.openDetail(this.$route.query.logSeq);
@@ -288,7 +295,14 @@ export default {
       this.startDate = utils.getYmd10(today);
       this.endDate = utils.getYmd10(today);
     },
+    applyRoleScope() {
+      if(this.isSuperAdmin) return;
+      this.search.userType = "ADMIN";
+      this.search.userId = this.loginId;
+      this.search.userNo = "";
+    },
     buildParam() {
+      this.applyRoleScope();
       return {
         ...this.search,
         userNo: this.search.userNo || null,
@@ -302,23 +316,31 @@ export default {
       };
     },
     async selectChangeLogList(resetPage = false) {
+      this.applyRoleScope();
       if(resetPage) {
         this.paging.pageNum = 1;
       }
 
       if(this.gridApi) this.gridApi.showLoadingOverlay();
-      const res = await api.selChangeLogList(this.buildParam());
-      if(res.data.status === "SUCCESS") {
-        const data = res.data.data || {};
-        this.logList = data.list || [];
-        this.totalCount = data.totalCount || 0;
-        this.$nextTick(() => {
-          if(this.gridApi && this.logList.length === 0) {
-            this.gridApi.showNoRowsOverlay();
-          } else if(this.gridApi) {
-            this.gridApi.hideOverlay();
-          }
-        });
+      try {
+        const res = await api.selChangeLogList(this.buildParam());
+        if(res.data.status === "SUCCESS") {
+          const data = res.data.data || {};
+          this.logList = data.list || [];
+          this.totalCount = data.totalCount || 0;
+          this.$nextTick(() => {
+            if(this.gridApi && this.logList.length === 0) {
+              this.gridApi.showNoRowsOverlay();
+            } else if(this.gridApi) {
+              this.gridApi.hideOverlay();
+            }
+          });
+        }
+      } catch (e) {
+        if(this.gridApi) this.gridApi.showNoRowsOverlay();
+        const status = e?.response?.status;
+        if(status === 403 || status === 401) alert("관리 권한 범위 밖의 요청입니다.");
+        else alert(e?.response?.data?.message || "조회 중 오류가 발생했습니다.");
       }
     },
     searchList() {
@@ -355,10 +377,16 @@ export default {
       this.selectChangeLogList(true);
     },
     async openDetail(logSeq) {
-      const res = await api.getChangeLog(logSeq);
-      if(res.data.status === "SUCCESS") {
-        this.detail = res.data.data;
-        this.detailVisible = true;
+      try {
+        const res = await api.getChangeLog(logSeq);
+        if(res.data.status === "SUCCESS") {
+          this.detail = res.data.data;
+          this.detailVisible = true;
+        }
+      } catch (e) {
+        const status = e?.response?.status;
+        if(status === 403 || status === 401) alert("관리 권한 범위 밖의 요청입니다.");
+        else alert(e?.response?.data?.message || "상세 조회 중 오류가 발생했습니다.");
       }
     },
     closeDetail() {

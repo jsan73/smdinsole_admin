@@ -20,7 +20,7 @@
                   </div>
                   <div v-if="activeTab === 'LOGIN'" class="d-flex align-items-center">
                     <label for="mgrId" class="fw-bold me-2" style="white-space: nowrap;">대상 계정</label>
-                    <input v-model="loginSearch.mgrId" type="text" id="mgrId" class="form-control" style="width: 180px;" placeholder="계정 입력" @keyup.enter="searchLog">
+                    <input v-model="loginSearch.mgrId" type="text" id="mgrId" class="form-control" style="width: 180px;" placeholder="계정 입력" :readonly="!isSuperAdmin" @keyup.enter="searchLog">
                   </div>
                   <div v-if="activeTab === 'LOGIN'" class="d-flex align-items-center">
                     <label for="eventType" class="fw-bold me-2" style="white-space: nowrap;">구분</label>
@@ -30,7 +30,7 @@
                       <option value="LOGOUT">로그아웃</option>
                     </select>
                   </div>
-                  <div v-if="activeTab === 'ACCESS'" class="d-flex align-items-center">
+                  <div v-if="activeTab === 'ACCESS' && isSuperAdmin" class="d-flex align-items-center">
                     <label for="userType" class="fw-bold me-2" style="white-space: nowrap;">사용자 유형</label>
                     <select id="userType" v-model="accessSearch.userType" class="form-select" style="width: 130px;" @change="searchLog">
                       <option value="">전체</option>
@@ -41,7 +41,7 @@
                   </div>
                   <div v-if="activeTab === 'ACCESS'" class="d-flex align-items-center">
                     <label for="userId" class="fw-bold me-2" style="white-space: nowrap;">사용자 ID</label>
-                    <input v-model="accessSearch.userId" type="text" id="userId" class="form-control" style="width: 180px;" placeholder="사용자 ID" @keyup.enter="searchLog">
+                    <input v-model="accessSearch.userId" type="text" id="userId" class="form-control" style="width: 180px;" placeholder="사용자 ID" :readonly="!isSuperAdmin" @keyup.enter="searchLog">
                   </div>
                   <div v-if="activeTab === 'ACCESS'" class="d-flex align-items-center">
                     <label for="httpMethod" class="fw-bold me-2" style="white-space: nowrap;">Method</label>
@@ -237,6 +237,12 @@ export default {
     }
   },
   computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
+    loginId() {
+      return this.$store.getters['adminStore/getLoginId'] || "";
+    },
     activeColumnDefs() {
       return this.activeTab === 'LOGIN' ? this.loginColumnDefs : this.accessColumnDefs;
     },
@@ -251,6 +257,7 @@ export default {
   },
   mounted() {
     this.calcPeriod();
+    this.applyRoleScope();
     this.searchLog();
 
   },
@@ -265,7 +272,14 @@ export default {
       this.activeTab = tab;
       this.logList = [];
       this.currentPage = 1;
+      this.applyRoleScope();
       this.searchLog();
+    },
+    applyRoleScope() {
+      if(this.isSuperAdmin) return;
+      this.loginSearch.mgrId = this.loginId;
+      this.accessSearch.userType = "ADMIN";
+      this.accessSearch.userId = this.loginId;
     },
     onGridReady(params) {
       this.gridApi = params.api;
@@ -337,6 +351,7 @@ export default {
       return link;
     },
     buildParam() {
+      this.applyRoleScope();
       const base = {
         sdate: this.startDate.replaceAll('-','') + "000000",
         edate: this.endDate.replaceAll('-','') + "999999",
@@ -352,10 +367,16 @@ export default {
     },
     async onRowClicked(params) {
       if(this.activeTab !== 'ACCESS' || !params.data?.accessLogSeq) return;
-      const res = await api.getAccessLog(params.data.accessLogSeq);
-      if(res.data.status === "SUCCESS") {
-        this.accessDetail = res.data.data;
-        this.accessDetailVisible = true;
+      try {
+        const res = await api.getAccessLog(params.data.accessLogSeq);
+        if(res.data.status === "SUCCESS") {
+          this.accessDetail = res.data.data;
+          this.accessDetailVisible = true;
+        }
+      } catch (e) {
+        const status = e?.response?.status;
+        if(status === 403 || status === 401) alert("관리 권한 범위 밖의 요청입니다.");
+        else alert(e?.response?.data?.message || "상세 조회 중 오류가 발생했습니다.");
       }
     },
     closeAccessDetail() {
@@ -371,19 +392,27 @@ export default {
       }
     },
     async searchLog() {
+      this.applyRoleScope();
       if(this.gridApi) this.gridApi.showLoadingOverlay();
-      const res = this.activeTab === 'LOGIN'
-          ? await api.selLoginLog(this.buildParam())
-          : await api.selAccessLogList(this.buildParam());
-      if(res.data.status === "SUCCESS") {
-        const data = res.data.data || {};
-        this.logList = this.toLogRows(data);
-        this.totalRows = data.totalCount || this.logList.length;
-        this.$nextTick(() => {
-          this.updatePaginationState();
-          if(this.gridApi && this.logList.length === 0) this.gridApi.showNoRowsOverlay();
-          else if(this.gridApi) this.gridApi.hideOverlay();
-        });
+      try {
+        const res = this.activeTab === 'LOGIN'
+            ? await api.selLoginLog(this.buildParam())
+            : await api.selAccessLogList(this.buildParam());
+        if(res.data.status === "SUCCESS") {
+          const data = res.data.data || {};
+          this.logList = this.toLogRows(data);
+          this.totalRows = data.totalCount || this.logList.length;
+          this.$nextTick(() => {
+            this.updatePaginationState();
+            if(this.gridApi && this.logList.length === 0) this.gridApi.showNoRowsOverlay();
+            else if(this.gridApi) this.gridApi.hideOverlay();
+          });
+        }
+      } catch (e) {
+        if(this.gridApi) this.gridApi.showNoRowsOverlay();
+        const status = e?.response?.status;
+        if(status === 403 || status === 401) alert("관리 권한 범위 밖의 요청입니다.");
+        else alert(e?.response?.data?.message || "조회 중 오류가 발생했습니다.");
       }
 
     },

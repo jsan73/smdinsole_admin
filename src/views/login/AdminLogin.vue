@@ -151,7 +151,7 @@ export default {
           const manager = data.manager || {};
           this.loginChallengeId = data.loginChallengeId || data.challengeId || data.loginChallenge || "";
           this.rawEmail = data.maskedEmail || manager.mgrId || manager.MGR_ID || data.mgrId || data.MGR_ID || this.loginId;
-          this.rawPhone = manager.mgrPhone || manager.MGR_PHONE || data.mgrPhone || data.maskedPhone || "";
+          this.rawPhone = manager.maskedPhone || data.maskedPhone || manager.mgrPhone || manager.MGR_PHONE || data.mgrPhone || "";
           if(data.status === "MFA") {
             this.resetMfaState();
             this.step = 'MFA';
@@ -272,7 +272,7 @@ export default {
           this.loginId = this.findInfo.mgrId;
           this.resetChallengeId = data.resetChallengeId || data.challengeId || data.resetChallenge || "";
           this.rawEmail = data.maskedEmail || manager.mgrId || manager.MGR_ID || this.findInfo.mgrId;
-          this.rawPhone = manager.mgrPhone || manager.MGR_PHONE || data.maskedPhone || "";
+          this.rawPhone = manager.maskedPhone || data.maskedPhone || manager.mgrPhone || manager.MGR_PHONE || "";
           this.findInfo.findYn = true;
           this.resetMfaState();
           this.step = 'MFA';

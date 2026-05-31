@@ -72,7 +72,7 @@
                       <input v-model="search.esimExpDateEnd" type="date" class="form-control" style="width: 140px;" @change="selectDeviceList">
                     </div>
                   </div>
-                  <div class="d-flex align-items-center">
+                  <div v-if="isSuperAdmin" class="d-flex align-items-center">
                     <label for="group" class="fw-bold me-2" style="white-space: nowrap;">소속 기관</label>
                     <select
                         v-model="search.orgcNo"
@@ -191,10 +191,10 @@
               <p class="text-end">
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>-->
 <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>-->
-                <button class="btn btn-primary mt-2 ms-1" @click="popupFota">Fota view</button>
+                <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="popupFota">Fota view</button>
                 <button class="btn btn-primary mt-2 ms-1" @click="downloadExcel">엑셀 다운</button>
-                <button class="btn btn-primary mt-2 ms-1" @click="openExcelUpload">엑셀 업로드</button>
-                <button class="btn btn-primary mt-2 ms-1" @click="addDevice">기기 등록</button>
+                <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="openExcelUpload">엑셀 업로드</button>
+                <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="addDevice">기기 등록</button>
 
               </p>
             </div>
@@ -331,6 +331,9 @@ export default {
     }
   },
   computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
     paginationPages() {
       const pageCount = 10;
       const start = Math.floor((this.currentPage - 1) / pageCount) * pageCount + 1;
@@ -348,7 +351,7 @@ export default {
 
     this.applyRouteQuery();
     this.selectDeviceList();
-    this.selectOrgcList();
+    if(this.isSuperAdmin) this.selectOrgcList();
 
 
   },
@@ -376,6 +379,10 @@ export default {
       });
     },
     addDevice() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       this.$open(
           "/devicepopup",
           "기기 등록",
@@ -383,6 +390,10 @@ export default {
       );
     },
     popupFota() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       this.$open(
           "/fotapopup",
           "Fota view",
@@ -513,19 +524,23 @@ export default {
         pageSize: this.paginationPageSize,
         pageStart: (this.currentPage - 1) * this.paginationPageSize,
       };
-      const res = await api.selDeviceList(param);
-      if(res.data.status === "SUCCESS") {
-        const data = res.data.data || {};
-        this.deviceList = this.toDeviceRows(data);
-        this.totalRows = data.totalCount || this.deviceList.length;
-        this.$nextTick(() => {
-          this.updatePaginationState();
-          if(this.gridApi && this.deviceList.length === 0) {
-            this.gridApi.showNoRowsOverlay();
-          } else if(this.gridApi) {
-            this.gridApi.hideOverlay();
-          }
-        });
+      try {
+        const res = await api.selDeviceList(param);
+        if(res.data.status === "SUCCESS") {
+          const data = res.data.data || {};
+          this.deviceList = this.toDeviceRows(data);
+          this.totalRows = data.totalCount || this.deviceList.length;
+          this.$nextTick(() => {
+            this.updatePaginationState();
+            if(this.gridApi && this.deviceList.length === 0) {
+              this.gridApi.showNoRowsOverlay();
+            } else if(this.gridApi) {
+              this.gridApi.hideOverlay();
+            }
+          });
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
 
     },
@@ -539,12 +554,16 @@ export default {
         console.log(fileName)
         utils.fileDownload(res.data, fileName)
         // router.go(0)
-      })
+      }).catch(this.handleScopeError)
 
 
     },
 
     openExcelUpload() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       this.showPopup = true;
       this.selectedFile = null;
     },
@@ -557,6 +576,10 @@ export default {
       this.selectedFile = file ? file : null;
     },
     uploadFile() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       if (!this.selectedFile) {
         alert('엑셀 파일을 선택해주세요.');
         return;
@@ -574,7 +597,7 @@ export default {
               alert(`${resData.rowNum} : ${resData.msg}`);
             }
           }
-      })
+      }).catch(this.handleScopeError)
       // 실제 업로드 로직 구현 부분
       // alert(`선택된 파일: ${this.selectedFile.name} 업로드 진행중...`);
 
@@ -584,12 +607,26 @@ export default {
 
 
     async selectOrgcList() {
+      if(!this.isSuperAdmin) return;
       const param = {};
-      const res = await api.selOrgcList(param);
-      if(res.data.status === "SUCCESS") {
-        this.orgcList = res.data.data;
+      try {
+        const res = await api.selOrgcList(param);
+        if(res.data.status === "SUCCESS") {
+          this.orgcList = res.data.data;
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
 
+    },
+    handleScopeError(e) {
+      if(this.gridApi) this.gridApi.showNoRowsOverlay();
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("관리 권한 범위 밖의 요청입니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || "처리 중 오류가 발생했습니다.");
     },
   },
   created(){

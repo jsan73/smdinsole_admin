@@ -12,7 +12,7 @@
           <tr>
             <th class="text-center bg-light small py-2">권한</th>
             <td>
-              <select v-model="manager.mgrType" class="form-select form-select-sm">
+              <select v-model="manager.mgrType" class="form-select form-select-sm" :disabled="!canEditRoleScope">
                 <option value="ROLE_ADMIN">관리자</option>
                 <option value="ROLE_SADMIN">최고 관리자</option>
               </select>
@@ -21,7 +21,7 @@
           <tr>
             <th class="text-center bg-light small py-2">소속 국가</th>
             <td>
-              <select v-model="manager.nation" class="form-select form-select-sm">
+              <select v-model="manager.nation" class="form-select form-select-sm" :disabled="!canEditRoleScope">
                 <option value="KR">KR</option>
                 <option value="US">US</option>
               </select>
@@ -62,10 +62,10 @@
                 <select
                     v-model="selectedManageState"
                     class="form-select form-select-sm manage-select"
-                    :disabled="isAddrLoading"
+                    :disabled="isAddrLoading || !canEditRoleScope"
                     @change="onManageStateChange"
                 >
-                  <option value="">전체</option>
+                  <option :value="manageCountryCode">{{ manageCountryCode }} 전체</option>
                   <option v-for="state in manageStateOptions" :key="state.addrCode" :value="state.addrCode">
                     {{ state.addrName }}
                   </option>
@@ -73,7 +73,7 @@
                 <select
                     v-model="selectedManageSub"
                     class="form-select form-select-sm manage-select"
-                    :disabled="isAddrLoading || !selectedManageState || manageSubOptions.length === 0"
+                    :disabled="isAddrLoading || !canEditRoleScope || !selectedManageState || selectedManageState === manageCountryCode || manageSubOptions.length === 0"
                     @change="onManageSubChange"
                 >
                   <option value="">{{ manageCountryCode === 'US' ? 'County 전체' : '시/군/구 전체' }}</option>
@@ -94,10 +94,10 @@
     <div class="text-center mt-3">
       <template v-if="isUpdateMode">
         <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="updateManager">수정</button>
-        <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="deleteManager">삭제</button>
+        <button v-if="isSuperAdmin" class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="deleteManager">삭제</button>
       </template>
       <template v-else>
-        <button class="btn btn-primary btn-sm px-4 mx-1" @click="registerManager">등록</button>
+        <button v-if="isSuperAdmin" class="btn btn-primary btn-sm px-4 mx-1" @click="registerManager">등록</button>
         <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="closePopup">취소</button>
       </template>
     </div>
@@ -136,10 +136,20 @@ export default {
       isApplyingManager: false,
 
       originalMgrId: '',
+      originalManager: {},
       isEmailValid: true,
     }
   },
   computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
+    loginId() {
+      return this.$store.getters['adminStore/getLoginId'] || "";
+    },
+    canEditRoleScope() {
+      return this.isSuperAdmin;
+    },
     manageCountryCode() {
       const nation = String(this.manager.nation || "").toUpperCase();
       return nation.indexOf("US") === 0 ? "US" : "KR";
@@ -158,7 +168,7 @@ export default {
       return children;
     },
     selectedManageName() {
-      if(!this.manager.manageCity) return "전체";
+      if(!this.manager.manageCity || this.manager.manageCity === this.manageCountryCode) return this.manageCountryCode + " 전체";
       const sub = this.manageSubOptions.find(item => item.addrCode === this.selectedManageSub);
       if(sub) return sub.addrName;
       const state = this.selectedManageStateNode;
@@ -183,6 +193,11 @@ export default {
       this.isUpdateMode = true;
       this.fetchData();
     } else {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        this.closePopup();
+        return;
+      }
       this.loadManageAddrTree();
     }
   },
@@ -229,6 +244,12 @@ export default {
             manageCity: data.manageCity ?? data.MANAGE_CITY ?? '',
             islocked: data.islocked ?? data.isLocked ?? data.IS_LOCKED ?? 'N',
           };
+          this.originalManager = { ...this.manager };
+          if(!this.isSuperAdmin && this.manager.mgrId !== this.loginId) {
+            alert("관리 권한 범위 밖의 요청입니다.");
+            this.closePopup();
+            return;
+          }
           try {
             await this.loadManageAddrTree();
             this.applyManageCitySelection();
@@ -242,7 +263,12 @@ export default {
     },
 
     async registerManager() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       const param = { ...this.manager};
+      if(!this.validateManageCity()) return;
       if (await this.checkDuplicate(param)) return;
       if (!await this.checkEmail()) return;
       try {
@@ -265,6 +291,11 @@ export default {
       if (!await this.checkEmail()) return;
 
       const param = { ...this.manager };
+      if(!this.isSuperAdmin) {
+        param.mgrType = this.originalManager.mgrType;
+        param.nation = this.originalManager.nation;
+        param.manageCity = this.originalManager.manageCity;
+      } else if(!this.validateManageCity()) return;
 
       if (this.manager.mgrId !== this.originalMgrId) {
         if (await this.checkDuplicate(param)) return;
@@ -292,6 +323,10 @@ export default {
     },
 
     async deleteManager() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       if (confirm("삭제하시겠습니까?")) {
         const res = await api.delManagerByAdmin(this.mgrNo);
         if (res.data.status === "SUCCESS") {
@@ -333,6 +368,10 @@ export default {
     },
     onManageStateChange() {
       this.selectedManageSub = "";
+      if(this.selectedManageState === this.manageCountryCode) {
+        this.manager.manageCity = this.manageCountryCode;
+        return;
+      }
       this.manager.manageCity = this.selectedManageState;
     },
     onManageSubChange() {
@@ -343,6 +382,10 @@ export default {
       this.selectedManageState = "";
       this.selectedManageSub = "";
       if(!manageCity) return;
+      if(manageCity === this.manageCountryCode) {
+        this.selectedManageState = this.manageCountryCode;
+        return;
+      }
 
       const state = this.manageStateOptions.find(item => item.addrCode === manageCity);
       if(state) {
@@ -440,6 +483,13 @@ export default {
       if(!row || typeof row !== "object") return "";
       const key = keys.find(item => row[item] !== undefined && row[item] !== null);
       return key ? row[key] : "";
+    },
+    validateManageCity() {
+      if(this.manager.mgrType === "ROLE_ADMIN" && utils.isEmpty(this.manager.manageCity)) {
+        alert("일반관리자는 관리 도(시) 영역을 선택해 주세요.");
+        return false;
+      }
+      return true;
     },
 
 

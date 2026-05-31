@@ -15,7 +15,7 @@
             </td>
           </tr>
           <tr>
-            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;"scope="col">기관주소</th>
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">기관주소</th>
             <td><input type="text" v-model="orgc.orgcAddr" class="form-control d-inline-flex" id="orgcAddr" name="orgcAddr" >
 <!--              <button type="button" class="btn btn-secondary btn-sm">주소검색</button>-->
             </td>
@@ -72,7 +72,17 @@ export default {
       popupTitle:"기관 등록"
     }
   },
+  computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
+  },
   mounted() {
+    if(!this.isSuperAdmin) {
+      alert("대표 관리자만 수행할 수 있습니다.");
+      window.close();
+      return;
+    }
     this.orgcNo = this.$route.query.orgcNo;
     if(utils.isNotEmpty(this.orgcNo )) {
       this.popupState = "upd"
@@ -82,26 +92,43 @@ export default {
   },
   methods: {
     async getOrgcInfo(orgcNo) {
-
-      let res = await api.getOrgcInfo(orgcNo);
-      if(res.data.status === "SUCCESS") {
-        this.orgc = res.data.data;
-        this.orgc.managerPhone = utils.telForm(this.orgc.managerPhone, 1)
+      try {
+        let res = await api.getOrgcInfo(orgcNo);
+        if(res.data.status === "SUCCESS") {
+          this.orgc = res.data.data;
+          this.orgc.managerPhone = utils.telForm(this.orgc.managerPhone, 1)
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
     },
 
     async insOrgc() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       if(utils.isNotEmpty(this.orgc.managerPhone) && !utils.telValidChk(this.orgc.managerPhone)) {
         alert("사용자 전화번호를 다시 확인해 주세요.")
         return;
       }
       this.orgc.managerPhone = this.orgc.managerPhone.replaceAll("-","")
-      const res = await api.insOrgc(this.orgc);
-      if(res.data.status === "SUCCESS") {
-        alert("추가 되었습니다.")
+      try {
+        const res = await api.insOrgc(this.orgc);
+        if(res.data.status === "SUCCESS") {
+          alert("추가 되었습니다.")
+          return true;
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
+      return false;
     },
     updOrgc() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       if(utils.isNotEmpty(this.orgc.managerPhone) && !utils.telValidChk(this.orgc.managerPhone)) {
         alert("사용자 전화번호를 다시 확인해 주세요.")
         return;
@@ -113,10 +140,14 @@ export default {
           window.opener.vueComponent.selectOrgcList();
           window.close();
         }
-      });
+      }).catch(this.handleScopeError);
 
     },
     delOrgc() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       if(confirm("삭제 하시겠습니까?")) {
         api.delOrgc(this.orgcNo).then(res => {
           if(res.data.status === "SUCCESS") {
@@ -124,18 +155,31 @@ export default {
             window.opener.vueComponent.selectOrgcList();
             window.close();
           }
-        });
+        }).catch(this.handleScopeError);
 
       }
     },
     addOrgc() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
 
-      this.insOrgc().then(() => {
+      this.insOrgc().then(success => {
+        if(!success) return;
         //opener.location.reload();
         window.opener.vueComponent.selectOrgcList();
         window.close();
       })
 
+    },
+    handleScopeError(e) {
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || "처리 중 오류가 발생했습니다.");
     },
 
   }

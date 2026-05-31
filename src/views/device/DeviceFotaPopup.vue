@@ -59,8 +59,18 @@ export default {
       },
     }
   },
+  computed: {
+    isSuperAdmin() {
+      return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
+  },
 
   mounted() {
+    if(!this.isSuperAdmin) {
+      alert("대표 관리자만 수행할 수 있습니다.");
+      window.close();
+      return;
+    }
     this.getDeviceFotaInfo()
 
   },
@@ -69,16 +79,24 @@ export default {
       this.uploadFile = event.target.files[0];
     },
     async getDeviceFotaInfo() {
-
+      if(!this.isSuperAdmin) return;
+      try {
         let res = await api.getDeviceFotaInfo();
         if(res.data.status === "SUCCESS") {
           if(res.data.data !== null)
             this.fota = res.data.data;
 
         }
+      } catch (e) {
+        this.handleScopeError(e);
+      }
     },
 
     async regDeviceFota() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       console.log(this.uploadFile)
       if(utils.isEmpty(this.uploadFile)) {
         alert("FOTA 파일은 필수 항목 입니다.");
@@ -92,23 +110,39 @@ export default {
       formData.append("fotaModel", JSON.stringify(this.fota));
       formData.append("file", this.uploadFile)
 
-      const res = await api.regDeviceFota(formData);
-      if(res.data.status === "SUCCESS") {
-          alert("적용 되었습니다.")
-          this.getDeviceFotaInfo();
+      try {
+        const res = await api.regDeviceFota(formData);
+        if(res.data.status === "SUCCESS") {
+            alert("적용 되었습니다.")
+            this.getDeviceFotaInfo();
+        }
+      } catch (e) {
+        this.handleScopeError(e);
       }
     },
 
     delDeviceFota() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
       if(confirm("삭제 하시겠습니까?")) {
         api.delDeviceFota().then(res => {
           if(res.data.status === "SUCCESS") {
             alert("삭제 되었습니다.")
             this.getDeviceFotaInfo();
           }
-        });
+        }).catch(this.handleScopeError);
 
       }
+    },
+    handleScopeError(e) {
+      const status = e?.response?.status;
+      if(status === 403 || status === 401) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
+      alert(e?.response?.data?.message || "처리 중 오류가 발생했습니다.");
     },
 
   }
