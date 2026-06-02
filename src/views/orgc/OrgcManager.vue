@@ -54,6 +54,7 @@
                   :columnDefs="columnDefs"
                   :rowData="orgcList"
                   :defaultColDef="defaultColDef"
+                  :enableCellTextSelection="true"
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"

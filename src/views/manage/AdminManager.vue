@@ -60,6 +60,7 @@
                   :columnDefs="columnDefs"
                   :rowData="managerList"
                   :defaultColDef="defaultColDef"
+                  :enableCellTextSelection="true"
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"

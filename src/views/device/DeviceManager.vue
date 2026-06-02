@@ -132,6 +132,7 @@
                   :columnDefs="columnDefs"
                   :rowData="deviceList"
                   :defaultColDef="defaultColDef"
+                  :enableCellTextSelection="true"
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"

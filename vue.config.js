@@ -5,11 +5,11 @@ let active = true;
 if(process.env.VUE_APP_MODE === 'prod') {
   //active = false;
 }
-var osDir = "d:/workspaces/kokasin/build/"
+var osDir = "d:/workspaces/kokasin/build2/"
 if (os.platform() === "darwin") {
   osDir = "/Users/jsan/kokasin/kokasin_build/"
 }else if (os.platform() === "linux") {
-  osDir = "/home/jsan/project/kokasin/build/admin";
+  osDir = "/mnt/d/workspaces/kokasin/build2/";
 }
 
 module.exports = {

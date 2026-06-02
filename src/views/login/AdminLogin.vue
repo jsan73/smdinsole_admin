@@ -57,7 +57,7 @@
                 <div class="d-flex align-items-center mb-3">
                   <span class="me-3" style="white-space: nowrap; font-weight: bold; color: #333;">인증번호</span>
                   <div style="position: relative; flex-grow: 1;">
-                    <input type="text" class="input_txt" v-model.trim="mfaCode" :disabled="isMfaVerifying" style="padding-right: 60px; color: #333;" @keyup.enter="verifyMfa">
+                    <input type="text" class="input_txt" v-model="mfaCode" inputmode="numeric" maxlength="6" :disabled="isMfaVerifying" style="padding-right: 60px; color: #333;" @input="sanitizeMfaCode" @keyup.enter="verifyMfa">
                     <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #ff5252; font-weight: bold;">{{ timerText }}</span>
                   </div>
                 </div>
@@ -132,6 +132,11 @@ export default {
       return `${min}:${sec < 10 ? '0' : ''}${sec}`;
     }
   },
+  watch: {
+    mfaType() {
+      this.resetMfaState();
+    }
+  },
   methods: {
     ...mapActions("adminStore", ["commitAdminInfo", "commitToken"]),
 
@@ -166,7 +171,6 @@ export default {
     async sendMfaCode() {
       if (this.isMfaSending || this.isMfaVerifying) return;
       this.isMfaSending = true;
-      this.mfaCode = "";
       this.failMessage = "";
       try {
         const params = {
@@ -181,16 +185,21 @@ export default {
         }
         const res = await api.login_step2(params);
         if (res.data.status === "SUCCESS") {
+          const data = res.data.data || {};
           this.showMfaToast(this.mfaType === 'EMAIL' ? '이메일로 인증번호가 발송되었습니다.' : '휴대폰으로 인증번호가 발송되었습니다.');
+          this.mfaCode = "";
           this.isMfaSent = true;
-          this.startTimer();
+          this.startTimer(data.expiresInSeconds || res.data.expiresInSeconds);
         }
       } catch (e) { alert("인증번호 발송에 실패했습니다."); }
       finally { this.isMfaSending = false; }
     },
 
-    startTimer() {
-      this.timer = this.mfaTimerSeconds;
+    startTimer(expiresInSeconds) {
+      const parsedSeconds = Number(expiresInSeconds);
+      this.timer = Number.isFinite(parsedSeconds) && parsedSeconds > 0
+        ? Math.floor(parsedSeconds)
+        : this.mfaTimerSeconds;
       if (this.timerInterval) clearInterval(this.timerInterval);
       this.timerInterval = setInterval(() => {
         if (this.timer > 0) this.timer--;
@@ -210,14 +219,15 @@ export default {
         this.failMessage = "인증번호를 먼저 발송해주세요.";
         return;
       }
-      if (utils.isEmpty(this.mfaCode)) {
-        this.failMessage = "인증번호를 입력해주세요.";
+      const mfaCode = this.mfaCode.trim();
+      if (!/^\d{6}$/.test(mfaCode)) {
+        this.failMessage = "인증번호 6자리를 입력해주세요.";
         return;
       }
       this.isMfaVerifying = true;
       this.failMessage = "";
       try {
-        const params = { loginId: this.loginId, mfaCode: this.mfaCode, mfaType: this.mfaType };
+        const params = { loginId: this.loginId, mfaCode, mfaType: this.mfaType };
         if(this.findInfo.findYn) {
           if (this.resetChallengeId) params.resetChallengeId = this.resetChallengeId;
           const res = await api.login_verify_pwfind(params);
@@ -334,6 +344,9 @@ export default {
         this.mfaToastMessage = "";
         this.mfaToastTimer = null;
       }, 3000);
+    },
+    sanitizeMfaCode() {
+      this.mfaCode = this.mfaCode.replace(/\D/g, "").slice(0, 6);
     },
     resetMfaState() {
       this.mfaCode = "";

@@ -66,6 +66,7 @@
                   :columnDefs="columnDefs"
                   :rowData="logList"
                   :defaultColDef="defaultColDef"
+                  :enableCellTextSelection="true"
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"

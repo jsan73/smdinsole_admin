@@ -101,7 +101,10 @@ export default {
       return roots.filter(node => this.normalLevel(node.addrLevel) === "STATE");
     },
     showStateSelect() {
-      return this.isUsCountry && !this.manageCity && this.stateOptions.length > 0;
+      return this.isUsCountry && !this.hasRegionManageScope && this.stateOptions.length > 0;
+    },
+    hasRegionManageScope() {
+      return Boolean(this.manageCity) && !this.isCountryWideScope(this.manageCity, this.countryCode);
     },
     selectedStateNode() {
       if(!this.selectedStateAddrCode) return this.stateOptions[0] || null;
@@ -142,7 +145,9 @@ export default {
 
       try {
         const param = { countryCode };
-        if(loginContext.manageCity) param.rootAddrCode = loginContext.manageCity;
+        if(loginContext.manageCity && !this.isCountryWideScope(loginContext.manageCity, countryCode)) {
+          param.rootAddrCode = loginContext.manageCity;
+        }
         const res = await api.selAddrTree(param);
         if(res.data.status === "SUCCESS") {
           this.addrTree = this.toTreeRows(res.data.data, countryCode);
@@ -183,6 +188,11 @@ export default {
     getClaimValue(payload, keys) {
       const key = keys.find(item => payload[item] !== undefined && payload[item] !== null);
       return key ? payload[key] : "";
+    },
+    isCountryWideScope(scopeAddrCode, countryCode) {
+      const scope = String(scopeAddrCode || "").trim().toUpperCase();
+      if(countryCode === "US") return scope === "US" || scope === "USA";
+      return scope === "KR" || scope === "KOR" || scope === "KOREA";
     },
     unwrapCountryRoots(rows) {
       if(rows.length === 1 && this.normalLevel(rows[0].addrLevel) === "COUNTRY") return rows[0].children || [];

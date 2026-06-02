@@ -74,6 +74,7 @@
                   :columnDefs="columnDefs"
                   :rowData="eventDeviceList"
                   :defaultColDef="defaultColDef"
+                  :enableCellTextSelection="true"
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"

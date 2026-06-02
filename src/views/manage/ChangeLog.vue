@@ -100,6 +100,7 @@
                   :columnDefs="columnDefs"
                   :rowData="logList"
                   :defaultColDef="defaultColDef"
+                  :enableCellTextSelection="true"
                   :suppressPaginationPanel="true"
                   :rowHeight="42"
                   :headerHeight="42"

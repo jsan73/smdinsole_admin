@@ -32,20 +32,15 @@
                   </div>
                   <div v-if="activeTab === 'ACCESS' && isSuperAdmin" class="d-flex align-items-center">
                     <label for="userType" class="fw-bold me-2" style="white-space: nowrap;">사용자 유형</label>
-                    <select id="userType" v-model="accessSearch.userType" class="form-select" style="width: 130px;" @change="searchLog">
+                    <select id="userType" v-model="accessSearch.adminRoleType" class="form-select" style="width: 130px;" @change="searchLog">
                       <option value="">전체</option>
-                      <option value="ADMIN">ADMIN</option>
-                      <option value="GUARD">GUARD</option>
-                      <option value="ANONYMOUS">ANONYMOUS</option>
+                      <option value="ADMIN">일반관리자</option>
+                      <option value="SADMIN">슈퍼관리자</option>
                     </select>
                   </div>
                   <div v-if="activeTab === 'ACCESS'" class="d-flex align-items-center">
                     <label for="userId" class="fw-bold me-2" style="white-space: nowrap;">사용자 ID</label>
                     <input v-model="accessSearch.userId" type="text" id="userId" class="form-control" style="width: 180px;" placeholder="사용자 ID" :readonly="!isSuperAdmin" @keyup.enter="searchLog">
-                  </div>
-                  <div v-if="activeTab === 'ACCESS'" class="d-flex align-items-center">
-                    <label for="httpMethod" class="fw-bold me-2" style="white-space: nowrap;">Method</label>
-                    <input v-model="accessSearch.httpMethod" type="text" id="httpMethod" class="form-control" style="width: 100px;" placeholder="POST" @keyup.enter="searchLog">
                   </div>
                   <div v-if="activeTab === 'ACCESS'" class="d-flex align-items-center">
                     <label for="requestUri" class="fw-bold me-2" style="white-space: nowrap;">URI</label>
@@ -103,6 +98,7 @@
                   :columnDefs="activeColumnDefs"
                   :rowData="logList"
                   :defaultColDef="defaultColDef"
+                  :enableCellTextSelection="true"
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"
@@ -197,9 +193,8 @@ export default {
         edate:''
       },
       accessSearch: {
-        userType: '',
+        adminRoleType: '',
         userId: '',
-        httpMethod: '',
         requestUri: '',
         successYn: '',
         statusCode: '',
@@ -278,7 +273,6 @@ export default {
     applyRoleScope() {
       if(this.isSuperAdmin) return;
       this.loginSearch.mgrId = this.loginId;
-      this.accessSearch.userType = "ADMIN";
       this.accessSearch.userId = this.loginId;
     },
     onGridReady(params) {
