@@ -499,13 +499,37 @@ export default {
       return utils.isEmpty(params.value) ? "" : this.lastSignal(params.value);
     },
     activeStateRenderer(params) {
+      const value = this.getDeviceValue(params.data, ["activeState", "ACTIVE_STATE"]) || params.value;
+      const apiName = this.getDeviceValue(params.data, ["activeStateName", "ACTIVE_STATE_NAME"]);
       const statusMap = {
-        'N': '<span class="badge bg-success">미등록</span>',
-        'V': '<span class="badge bg-secondary">인증완료</span>',
-        'A': '<span class="badge bg-secondary">개통완료</span>',
-        'E': '<span class="badge bg-secondary">만료</span>',
+        'N': { label: '미등록', className: 'bg-success' },
+        'R': { label: '대기', className: 'bg-info text-dark' },
+        'P': { label: '등록중', className: 'bg-warning text-dark' },
+        'A': { label: '사용중', className: 'bg-primary' },
+        'L': { label: '분실', className: 'bg-danger' },
+        'E': { label: '만료', className: 'bg-secondary' },
+        'D': { label: '폐기', className: 'bg-dark' },
+        'V': { label: '등록중(구 인증완료)', className: 'bg-warning text-dark' },
       };
-      return statusMap[params.value] || params.value || "";
+      const status = statusMap[value];
+      const label = apiName || (status ? status.label : value);
+      if(!label) return "";
+      const className = status ? status.className : 'bg-secondary';
+      return '<span class="badge ' + className + '">' + this.escapeHtml(label) + '</span>';
+    },
+    getDeviceValue(row, keys) {
+      if(!row || typeof row !== "object") return "";
+      const key = keys.find(item => row[item] !== undefined && row[item] !== null);
+      return key ? row[key] : "";
+    },
+    escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[char]));
     },
     toDeviceRows(data) {
       if(Array.isArray(data)) return data;

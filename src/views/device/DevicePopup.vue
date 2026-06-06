@@ -70,6 +70,12 @@
               </select>
             </td>
           </tr>
+          <tr v-if="popupState == 'upd'">
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">상태</th>
+            <td>
+              <span class="badge" :class="deviceActiveStateBadgeClass">{{ deviceActiveStateLabel }}</span>
+            </td>
+          </tr>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">개통일</th>
             <td>
@@ -160,6 +166,18 @@ export default {
     isSuperAdmin() {
       return this.$store.getters['adminStore/isSuperAdmin'] === true;
     },
+    deviceActiveStateValue() {
+      return this.getDeviceValue(this.device, ["activeState", "ACTIVE_STATE"]);
+    },
+    deviceActiveStateLabel() {
+      const apiName = this.getDeviceValue(this.device, ["activeStateName", "ACTIVE_STATE_NAME"]);
+      if(apiName) return apiName;
+      return this.getDeviceActiveStateLabel(this.deviceActiveStateValue);
+    },
+    deviceActiveStateBadgeClass() {
+      const status = this.getDeviceActiveState(this.deviceActiveStateValue);
+      return status ? status.className : "bg-secondary";
+    },
   },
   watch:{
     memberDate() {
@@ -249,7 +267,7 @@ export default {
 
 
       try {
-        const res = await api.insDevice(this.device);
+        const res = await api.insDevice(this.toDeviceSaveParam());
         if(res.data.status === "SUCCESS") {
             alert("추가 되었습니다.")
             return true;
@@ -279,7 +297,7 @@ export default {
         return;
       }
       if(confirm("정보를 수정 하시겠습니까?")) {
-        api.updDevice(this.device).then(res => {
+        api.updDevice(this.toDeviceSaveParam()).then(res => {
           if (res.data.status === "SUCCESS") {
             alert("수정 되었습니다.")
             window.opener.vueComponent.selectDeviceList();
@@ -358,6 +376,42 @@ export default {
     },
     clear() {
       this.device.chkdevice = "";
+    },
+    getDeviceActiveState(value) {
+      const statusMap = {
+        N: { label: "미등록", className: "bg-success" },
+        R: { label: "대기", className: "bg-info text-dark" },
+        P: { label: "등록중", className: "bg-warning text-dark" },
+        A: { label: "사용중", className: "bg-primary" },
+        L: { label: "분실", className: "bg-danger" },
+        E: { label: "만료", className: "bg-secondary" },
+        D: { label: "폐기", className: "bg-dark" },
+        V: { label: "등록중(구 인증완료)", className: "bg-warning text-dark" },
+      };
+      return statusMap[value] || null;
+    },
+    getDeviceActiveStateLabel(value) {
+      const status = this.getDeviceActiveState(value);
+      return status ? status.label : (value || "");
+    },
+    getDeviceValue(row, keys) {
+      if(!row || typeof row !== "object") return "";
+      const key = keys.find(item => row[item] !== undefined && row[item] !== null);
+      return key ? row[key] : "";
+    },
+    toDeviceSaveParam() {
+      const param = { ...this.device };
+      [
+        "activeState",
+        "activeStateName",
+        "ACTIVE_STATE",
+        "ACTIVE_STATE_NAME",
+        "active_state",
+        "active_state_name",
+      ].forEach(key => {
+        delete param[key];
+      });
+      return param;
     },
     async selectOrgcList() {
       const param = {};
