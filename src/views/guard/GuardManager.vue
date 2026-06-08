@@ -26,6 +26,16 @@
                     <label for="inputDate" class="fw-bold me-2" style="white-space: nowrap;">날짜선택</label>
                     <input v-model="search.lastLoginDate" type="date" id="inputDate" class="form-control" style="width: 150px;" @change="selectGuardList">
                   </div>
+
+                  <div class="d-flex align-items-center">
+                    <label for="AccountState" class="fw-bold me-2" style="white-space: nowrap;">계정상태</label>
+                    <select v-model="search.accountState" id="AccountState" class="form-select" style="width: 120px;" @change="selectGuardList">
+                      <option value="">전체</option>
+                      <option v-for="option in accountStateOptions" :key="option.value" :value="option.value">
+                        {{ option.label }}
+                      </option>
+                    </select>
+                  </div>
                 </div>
 
                 <div class="col-auto ms-auto">
@@ -172,7 +182,14 @@ export default {
         guardName:'',
         guardPhone:'',
         lastLoginDate:'',
+        accountState:'',
       },
+      accountStateOptions: [
+        { value: 'N', label: '정상', badgeClass: 'bg-success' },
+        { value: 'H', label: '휴면', badgeClass: 'bg-secondary' },
+        { value: 'S', label: '정지', badgeClass: 'bg-danger' },
+        { value: 'P', label: '탈퇴', badgeClass: 'bg-dark' },
+      ],
       columnDefs: [
         {
           headerName: "No",
@@ -329,13 +346,13 @@ export default {
       return value.length === 8 ? utils.dateForm(value) : utils.convertFromStrToDate(value);
     },
     accountStateRenderer(params) {
-      const statusMap = {
-        'N': '<span class="badge bg-success">정상</span>',
-        'H': '<span class="badge bg-secondary">휴면</span>',
-        'S': '<span class="badge bg-danger">정지(제재)</span>',
-        'D': '<span class="badge bg-dark">탈퇴</span>',
-      };
-      return statusMap[params.value] || params.value || "";
+      const code = params.value;
+      const apiName = this.getGuardValue(params.data, null, ["ACCOUNT_STATE_NAME", "accountStateName"]);
+      const option = this.accountStateOptions.find(item => item.value === code);
+      if(!option) return apiName || code || "";
+
+      const label = apiName || option.label;
+      return `<span class="badge ${option.badgeClass}">${label}</span>`;
     },
     async selectGuardList(resetPage = true) {
       if(resetPage) this.currentPage = 1;
@@ -372,6 +389,7 @@ export default {
       this.search.guardPhone = ""
       this.search.guardName = ""
       this.search.lastLoginDate = ""
+      this.search.accountState = ""
       this.selectGuardList()
     },
     handleScopeError(e) {

@@ -45,12 +45,18 @@
           <tr>
             <th class="text-center bg-warning small py-2" style="--bs-bg-opacity: .2;">계정상태</th>
             <td>
-              <select v-model="guard.accountState" class="form-select form-select-sm">
-                <option value="N">정상</option>
-                <option value="H">휴면</option>
-                <option value="S">정지(제재)</option>
-                <option value="D">탈퇴</option>
+              <select
+                  v-model="guard.accountState"
+                  class="form-select form-select-sm"
+                  :disabled="isAccountStateReadonly"
+              >
+                <option v-for="option in accountStateOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
               </select>
+              <div v-if="isAccountStateReadonly" class="form-text small">
+                {{ accountStateReadonlyMessage }}
+              </div>
             </td>
           </tr>
           </tbody>
@@ -110,7 +116,6 @@
     <div class="text-center mt-3">
       <template v-if="isUpdateMode">
         <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="updateGuard">수정</button>
-        <button class="btn btn-outline-secondary btn-sm px-4 mx-1" @click="deleteGuard">삭제</button>
       </template>
       <template v-else>
         <button class="btn btn-primary btn-sm px-4 mx-1" @click="registerGuard">등록</button>
@@ -194,6 +199,13 @@ export default {
       },
 
       originalPhone: '',
+      originalAccountState: 'N',
+      guardAccountStateOptions: [
+        { value: 'N', label: '정상' },
+        { value: 'H', label: '휴면' },
+        { value: 'S', label: '정지' },
+        { value: 'P', label: '탈퇴' },
+      ],
       isEmailValid: true,
       noticeToast: {
         visible: false,
@@ -202,6 +214,34 @@ export default {
         timer: null
       },
     }
+  },
+  computed: {
+    currentAccountState() {
+      return this.guard.accountState || 'N';
+    },
+    accountStateOptions() {
+      if(!this.isUpdateMode) {
+        return this.guardAccountStateOptions.filter(option => option.value === 'N');
+      }
+
+      if(this.originalAccountState === 'N') {
+        return this.guardAccountStateOptions.filter(option => ['N', 'S'].includes(option.value));
+      }
+
+      if(this.originalAccountState === 'S') {
+        return this.guardAccountStateOptions.filter(option => ['S', 'N'].includes(option.value));
+      }
+
+      return this.guardAccountStateOptions.filter(option => option.value === this.currentAccountState);
+    },
+    isAccountStateReadonly() {
+      return this.isUpdateMode && !['N', 'S'].includes(this.originalAccountState);
+    },
+    accountStateReadonlyMessage() {
+      if(this.originalAccountState === 'P') return '탈퇴 상태는 관리자 화면에서 복구할 수 없습니다.';
+      if(this.originalAccountState === 'H') return '휴면 상태는 관리자 화면에서 상태 전환할 수 없습니다.';
+      return '';
+    },
   },
   mounted() {
     const queryNo = this.$route.query.guardNo;
@@ -247,8 +287,10 @@ export default {
           const data = resGuard.data.data;
           const formatted = this.utils.telForm(this.getRawPhone(data.guardPhone));
           data.guardPhone = formatted;
+          data.accountState = data.accountState || data.ACCOUNT_STATE || 'N';
           this.guard = data;
           this.originalPhone = formatted;
+          this.originalAccountState = data.accountState;
         }
 
         const resDevice = await api.selDeviceListByAdmin(this.guardNo);
@@ -341,6 +383,11 @@ export default {
 
       if (isPhoneChanged && await this.checkDuplicate(param)) return;
       if(!await this.checkEmail()) return;
+      if(!this.isAllowedAccountStateChange(this.originalAccountState, param.accountState)) {
+        alert("계정상태는 정상↔정지 전환만 가능합니다.");
+        this.guard.accountState = this.originalAccountState;
+        return;
+      }
 
       try {
         const res = await api.updGuardianByAdmin(param);
@@ -348,10 +395,16 @@ export default {
           alert("수정 되었습니다.");
           window.opener.vueComponent.selectGuardList();
           this.originalPhone = this.guard.guardPhone;
+          this.originalAccountState = this.guard.accountState || 'N';
         }
       } catch (e) {
         this.handleScopeError(e);
       }
+    },
+
+    isAllowedAccountStateChange(fromState, toState) {
+      if(fromState === toState) return true;
+      return (fromState === 'N' && toState === 'S') || (fromState === 'S' && toState === 'N');
     },
 
     // --- 대표 이전 관련 로직 ---
@@ -559,10 +612,6 @@ export default {
           this.handleScopeError(e, "서버 통신 중 오류가 발생했습니다.");
         }
       }
-    },
-
-    deleteGuard() {
-      if (confirm("삭제하시겠습니까?")) { /* 삭제 API 호출 */ }
     },
 
     closePopup() { window.close(); },
