@@ -9,7 +9,7 @@ var osDir = "d:/project/kokasin/build/"
 if (os.platform() === "darwin") {
   osDir = "/Users/jsan/project/kokasin/build/"
 }else if (os.platform() === "linux") {
-  osDir = "/mnt/d/project/kokasin/build/";
+  osDir = "/home/jsan/project/kokasin/build/";
 }
 
 module.exports = {
