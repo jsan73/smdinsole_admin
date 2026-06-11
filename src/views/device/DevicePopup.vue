@@ -1,15 +1,19 @@
 <template>
-  <div class="m-4">
-    <h5 class="pb-2">
-      <i class="bi bi-caret-right-square"></i> {{popupTitle}}</h5>
+  <div class="device-popup p-4">
+    <div class="popup-header">
+      <h5 class="mb-0">
+        <i class="bi bi-caret-right-square"></i> {{popupTitle}}
+      </h5>
+      <span v-if="popupState == 'upd'" class="badge" :class="deviceActiveStateBadgeClass">{{ deviceActiveStateLabel }}</span>
+    </div>
 
-    <div class="card">
-      <div class="card-body pb-0">
-        <table class="table table-sm table-bordered">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-3">
+        <table class="table table-sm table-bordered align-middle mb-0 device-form-table">
           <tbody>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">IMEI</th>
-            <td><input type="text"  @input="clear" v-model="device.deviceIMEI" id="userName" name="userName" class="form-control d-inline-flex" style="width: 180px;" :readonly="popupState == 'upd'">
+            <td><input type="text"  @input="clear" v-model="device.deviceIMEI" id="userName" name="userName" class="form-control d-inline-flex" style="width: 180px;" :readonly="popupState == 'upd' && !isReplaceMode">
               &nbsp;<button v-if="popupState == 'ins'" type="button" class="btn btn-secondary btn-sm" @click="chkIMEI">일련번호 체크</button>
             </td>
           </tr>
@@ -22,13 +26,13 @@
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">가입요금제</th>
             <td>
-              <input type="text" v-model="device.iotPlan" id="iotPlan" name="iotPlan" class="form-control d-inline-flex" style="width: 250px;" maxlength="20">&nbsp;
+              <input type="text" v-model="device.iotPlan" id="iotPlan" name="iotPlan" class="form-control d-inline-flex" style="width: 250px;" maxlength="20" :readonly="isReplaceMode">&nbsp;
             </td>
           </tr>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">기기 전화번호</th>
             <td>
-              <select id="protectorPhone1" v-model="dphone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">
+              <select id="protectorPhone1" v-model="dphone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;" :disabled="isReplaceMode">
                 <option value="010">010</option>
                 <option value="012">012</option>
                 <option value="011">011</option>
@@ -38,15 +42,15 @@
                 <option value="019">019</option>
               </select>
               -
-              <input type="text" v-model="dphone2" id="protectorPhone2" name="protectorPhone2" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">
+              <input type="text" v-model="dphone2" id="protectorPhone2" name="protectorPhone2" class="form-control d-inline-flex" style="width: 100px;" maxlength="4" :readonly="isReplaceMode">
               -
-              <input type="text" v-model="dphone3" id="protectorPhone3" name="protectorPhone3" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">
+              <input type="text" v-model="dphone3" id="protectorPhone3" name="protectorPhone3" class="form-control d-inline-flex" style="width: 100px;" maxlength="4" :readonly="isReplaceMode">
             </td>
           </tr>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">사용자 전화번호0</th>
             <td>
-              <select id="protectorPhone1" v-model="gphone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;">
+              <select id="protectorPhone1" v-model="gphone1" name="protectorPhone1" class="form-select d-inline-flex" style="width: 100px;" :disabled="isReplaceMode">
                 <option value="010">010</option>
                 <option value="011">011</option>
                 <option value="016">016</option>
@@ -55,43 +59,37 @@
                 <option value="019">019</option>
               </select>
               -
-              <input type="text" v-model="gphone2" id="protectorPhone2" name="protectorPhone2" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">
+              <input type="text" v-model="gphone2" id="protectorPhone2" name="protectorPhone2" class="form-control d-inline-flex" style="width: 100px;" maxlength="4" :readonly="isReplaceMode">
               -
-              <input type="text" v-model="gphone3" id="protectorPhone3" name="protectorPhone3" class="form-control d-inline-flex" style="width: 100px;" maxlength="4">
+              <input type="text" v-model="gphone3" id="protectorPhone3" name="protectorPhone3" class="form-control d-inline-flex" style="width: 100px;" maxlength="4" :readonly="isReplaceMode">
             </td>
           </tr>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">소속 기관</th>
             <td>
-              <select id="protectorPhone1" v-model="device.orgcNo" name="protectorPhone1" class="form-select d-inline-flex">
-                <option value=""> - 선택 - </option>
+              <select id="protectorPhone1" v-model="device.orgcNo" name="protectorPhone1" class="form-select d-inline-flex" :disabled="isReplaceMode">
+                <option :value="0"> - 선택 - </option>
                 <option v-for="(orgc, index) in orgcList" :key="index" :value="orgc.ORGC_NO">{{orgc.ORGC_NAME}}</option>
 
               </select>
             </td>
           </tr>
-          <tr v-if="popupState == 'upd'">
-            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">상태</th>
-            <td>
-              <span class="badge" :class="deviceActiveStateBadgeClass">{{ deviceActiveStateLabel }}</span>
-            </td>
-          </tr>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">개통일</th>
             <td>
-              <input type="date" v-model="memberDate" class="form-control" style="width: 150px;">
+              <input type="date" v-model="memberDate" class="form-control date-input" :readonly="isReplaceMode">
             </td>
           </tr>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">만료일</th>
             <td>
-              <input type="date" v-model="expDate" class="form-control" style="width: 150px;">
+              <input type="date" v-model="expDate" class="form-control date-input" :readonly="isReplaceMode">
             </td>
           </tr>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col">이심 사용기한</th>
             <td>
-              <input type="date" v-model="esimExpDate" class="form-control" style="width: 150px;">
+              <input type="date" v-model="esimExpDate" class="form-control" style="width: 150px;" :readonly="isReplaceMode">
             </td>
           </tr>
           <tr>
@@ -101,11 +99,12 @@
                       v-model="device.deviceSize"
                       name="deviceSize"
                       class="form-select d-inline-flex"
-                      style="width: 100px;">
+                      style="width: 120px;"
+                      :disabled="isReplaceMode">
                 <option v-for="size in sizes"
-                        :key="size"
-                        :value="size">
-                  {{ size }}
+                        :key="size.value"
+                        :value="size.value">
+                  {{ size.label }}
                 </option>
               </select> mm
             </td>
@@ -114,11 +113,28 @@
         </table>
       </div>
     </div>
-    <p class="text-end">
-      <button v-if="popupState == 'ins'" class="btn btn-primary mb-1 ms-1"  @click="regDevice">등록</button>
-      <button v-if="popupState == 'upd'" class="btn btn-primary mb-1 ms-1" @click="delDevice">삭제</button>
-      <button v-if="popupState == 'upd'" class="btn btn-primary mb-1 ms-1" @click="updDevice">수정</button>
-    </p>
+    <div class="popup-actions">
+      <template v-if="isReplaceMode">
+        <div></div>
+        <div class="action-right">
+          <button class="btn btn-outline-secondary btn-sm" @click="cancelReplaceMode">취소</button>
+          <button class="btn btn-primary btn-sm" @click="replaceDevice">등록</button>
+        </div>
+      </template>
+      <template v-else>
+        <div class="action-left">
+          <button v-if="popupState == 'upd'" class="btn btn-info text-white btn-sm" @click="startReplaceMode" :disabled="!canReplaceDevice">기기 교체(이관)</button>
+          <button v-if="popupState == 'upd'" class="btn btn-warning btn-sm" @click="lostDevice" :disabled="deviceActiveStateValue === 'L'">분실</button>
+          <button v-if="popupState == 'upd' && deviceActiveStateValue === 'L'" class="btn btn-warning btn-sm" @click="releaseLostDevice" :disabled="!canReleaseLostDevice">분실 해제</button>
+          <button v-if="popupState == 'upd'" class="btn btn-dark btn-sm" @click="disposeDevice">폐기</button>
+        </div>
+        <div class="action-right">
+          <button v-if="popupState == 'ins'" class="btn btn-primary btn-sm"  @click="regDevice">등록</button>
+          <button v-if="popupState == 'upd'" class="btn btn-outline-danger btn-sm" @click="delDevice" :disabled="!canDeleteDevice">삭제</button>
+          <button v-if="popupState == 'upd'" class="btn btn-primary btn-sm" @click="updDevice">수정</button>
+        </div>
+      </template>
+    </div>
   </div>
 
 </template>
@@ -139,11 +155,11 @@ export default {
         deviceNumber:'',
         guardPhone:'',
         memberDate:'',
-        orgcNo:'',
+        orgcNo:0,
         chkdevice:'',
         deviceCount:1,
         esimExpDate:'',
-        deviceSize: 250,
+        deviceSize: 0,
       },
       dphone1:'011',
       dphone2:'',
@@ -159,7 +175,21 @@ export default {
       esimExpDate:'',
       orgcList:'',
       popupTitle: '기기 등록',
-      sizes: [230, 235, 240, 245, 250, 255, 260, 265, 270, 275]
+      originalDevice: null,
+      isReplaceMode: false,
+      sizes: [
+        { value: 0, label: '선택 안함' },
+        { value: 230, label: '230' },
+        { value: 235, label: '235' },
+        { value: 240, label: '240' },
+        { value: 245, label: '245' },
+        { value: 250, label: '250' },
+        { value: 255, label: '255' },
+        { value: 260, label: '260' },
+        { value: 265, label: '265' },
+        { value: 270, label: '270' },
+        { value: 275, label: '275' },
+      ]
     }
   },
   computed: {
@@ -177,6 +207,29 @@ export default {
     deviceActiveStateBadgeClass() {
       const status = this.getDeviceActiveState(this.deviceActiveStateValue);
       return status ? status.className : "bg-secondary";
+    },
+    linkedGuardCount() {
+      const value = this.getDeviceValue(this.device, ["deviceCount", "guardCount", "DEVICE_COUNT", "GUARD_COUNT"]);
+      const count = Number(value);
+      return Number.isNaN(count) ? 0 : count;
+    },
+    deviceNoValue() {
+      return this.getDeviceValue(this.device, ["deviceNo", "DEVICE_NO"]);
+    },
+    canDeleteDevice() {
+      return this.linkedGuardCount === 0;
+    },
+    canReplaceDevice() {
+      return this.linkedGuardCount > 0 && !['D', 'L'].includes(this.deviceActiveStateValue);
+    },
+    canLostDevice() {
+      return this.deviceActiveStateValue === 'A';
+    },
+    canReleaseLostDevice() {
+      return this.deviceActiveStateValue === 'L';
+    },
+    canDisposeDevice() {
+      return this.linkedGuardCount === 0 && this.deviceActiveStateValue !== 'D';
     },
   },
   watch:{
@@ -210,33 +263,49 @@ export default {
       try {
         let res = await api.getDeviceInfo(deviceIMEI);
         if(res.data.status === "SUCCESS") {
-          this.device = res.data.data;
-          console.log(this.device)
-          if(utils.isNotEmpty(this.device.deviceNumber)) {
-            const phone = utils.telForm(this.device.deviceNumber).split("-");
-            this.dphone1 = phone[0];
-            this.dphone2 = phone[1];
-            this.dphone3 = phone[2];
-          }
-          if(utils.isNotEmpty(this.device.guardPhone)) {
-            const phone = utils.telForm(this.device.guardPhone).split("-");
-            this.gphone1 = phone[0];
-            this.gphone2 = phone[1];
-            this.gphone3 = phone[2];
-            this.orgGuardPhone = this.gphone1 + this.gphone2 + this.gphone3;
-            console.log(this.orgGuardPhone);
-          }
-          if(utils.isNotEmpty(this.device.memberDate)) {
-            this.memberDate = utils.dateForm(this.device.memberDate);
-            this.expDate = utils.dateForm(this.device.expDate);
-
-          }
-          if(utils.isNotEmpty(this.device.esimExpDate)) {
-            this.esimExpDate = utils.dateForm(this.device.esimExpDate);
-          }
+          this.applyDeviceData(res.data.data);
         }
       } catch (e) {
         this.handleScopeError(e);
+      }
+    },
+    applyDeviceData(data) {
+      this.device = {
+        ...data,
+        orgcNo: data.orgcNo || data.ORGC_NO || 0,
+        deviceSize: data.deviceSize || data.DEVICE_SIZE || 0,
+      };
+      console.log(this.device)
+      this.dphone1 = '011';
+      this.dphone2 = '';
+      this.dphone3 = '';
+      this.gphone1 = '010';
+      this.gphone2 = '';
+      this.gphone3 = '';
+      this.memberDate = '';
+      this.expDate = '';
+      this.esimExpDate = '';
+
+      if(utils.isNotEmpty(this.device.deviceNumber)) {
+        const phone = utils.telForm(this.device.deviceNumber).split("-");
+        this.dphone1 = phone[0];
+        this.dphone2 = phone[1];
+        this.dphone3 = phone[2];
+      }
+      if(utils.isNotEmpty(this.device.guardPhone)) {
+        const phone = utils.telForm(this.device.guardPhone).split("-");
+        this.gphone1 = phone[0];
+        this.gphone2 = phone[1];
+        this.gphone3 = phone[2];
+        this.orgGuardPhone = this.gphone1 + this.gphone2 + this.gphone3;
+        console.log(this.orgGuardPhone);
+      }
+      if(utils.isNotEmpty(this.device.memberDate)) {
+        this.memberDate = utils.dateForm(this.device.memberDate);
+        this.expDate = utils.dateForm(this.device.expDate);
+      }
+      if(utils.isNotEmpty(this.device.esimExpDate)) {
+        this.esimExpDate = utils.dateForm(this.device.esimExpDate);
       }
     },
     setDevice() {
@@ -254,9 +323,9 @@ export default {
         this.device.guardPhone = "";
       }
 
-      this.device.memberDate = this.memberDate.replace(/-/gi, "");
-      this.device.expDate = this.expDate.replace(/-/gi, "");
-      this.device.esimExpDate = this.esimExpDate.replace(/-/gi, "");
+      this.device.memberDate = String(this.memberDate || "").replace(/-/gi, "");
+      this.device.expDate = String(this.expDate || "").replace(/-/gi, "");
+      this.device.esimExpDate = String(this.esimExpDate || "").replace(/-/gi, "");
     },
 
     async insDevice() {
@@ -279,7 +348,7 @@ export default {
     },
     updDevice() {
       this.setDevice();
-      if(utils.isEmpty(this.device.iccId) && (utils.isEmpty(this.device.deviceNumber) || !utils.telValidChk(this.device.deviceNumber))) {
+      if(utils.isNotEmpty(this.device.deviceNumber) && !utils.telValidChk(this.device.deviceNumber)) {
         alert("기기 전화번호를 다시 확인해 주세요.")
         return;
       }
@@ -292,10 +361,6 @@ export default {
       //     return;
       //   }
       // }
-      if(this.device.orgcNo === ""){
-        alert("소속 기관은 필수 입니다.");
-        return;
-      }
       if(confirm("정보를 수정 하시겠습니까?")) {
         api.updDevice(this.toDeviceSaveParam()).then(res => {
           if (res.data.status === "SUCCESS") {
@@ -307,7 +372,11 @@ export default {
       }
     },
     delDevice() {
-      if(confirm("삭제 하시겠습니까?")) {
+      if(!this.canDeleteDevice) {
+        alert("연결된 사용자가 있는 기기는 삭제할 수 없습니다.");
+        return;
+      }
+      if(confirm("오등록 기기를 실제 삭제하시겠습니까? 관련 설정 데이터도 함께 삭제됩니다.")) {
         api.delDevice(this.deviceIMEI).then(res => {
           if(res.data.status === "SUCCESS") {
             alert("삭제 되었습니다.")
@@ -328,11 +397,7 @@ export default {
         alert("IMEI 체크를 먼저 진행해 주세요.");
         return;
       }
-      if(this.device.orgcNo === ""){
-        alert("소속 기관은 필수 입니다.");
-        return;
-      }
-      if(utils.isEmpty(this.device.iccId) && (utils.isEmpty(this.device.deviceNumber) || !utils.telValidChk(this.device.deviceNumber))) {
+      if(utils.isNotEmpty(this.device.deviceNumber) && !utils.telValidChk(this.device.deviceNumber)) {
         alert("기기 전화번호를 다시 확인해 주세요.")
         return;
       }
@@ -351,6 +416,116 @@ export default {
         this.device.chkdevice = false;
         alert("IMEI 값이 이미 존재합니다.")
       }
+    },
+    startReplaceMode() {
+      if(!this.canReplaceDevice) return;
+      this.originalDevice = {
+        device: { ...this.device },
+        dphone1: this.dphone1,
+        dphone2: this.dphone2,
+        dphone3: this.dphone3,
+        gphone1: this.gphone1,
+        gphone2: this.gphone2,
+        gphone3: this.gphone3,
+        memberDate: this.memberDate,
+        expDate: this.expDate,
+        esimExpDate: this.esimExpDate,
+        popupTitle: this.popupTitle,
+      };
+      this.isReplaceMode = true;
+      this.popupTitle = '기기 교체(이관)';
+      this.device.deviceIMEI = '';
+      this.device.iccId = '';
+      this.device.chkdevice = '';
+    },
+    cancelReplaceMode() {
+      if(!this.originalDevice) return;
+      this.device = { ...this.originalDevice.device };
+      this.dphone1 = this.originalDevice.dphone1;
+      this.dphone2 = this.originalDevice.dphone2;
+      this.dphone3 = this.originalDevice.dphone3;
+      this.gphone1 = this.originalDevice.gphone1;
+      this.gphone2 = this.originalDevice.gphone2;
+      this.gphone3 = this.originalDevice.gphone3;
+      this.memberDate = this.originalDevice.memberDate;
+      this.expDate = this.originalDevice.expDate;
+      this.esimExpDate = this.originalDevice.esimExpDate;
+      this.popupTitle = this.originalDevice.popupTitle;
+      this.originalDevice = null;
+      this.isReplaceMode = false;
+    },
+    replaceDevice() {
+      if(!this.originalDevice) return;
+      const newDeviceIMEI = this.device.deviceIMEI;
+      const newIccId = this.device.iccId;
+      if(utils.isEmpty(newDeviceIMEI)) {
+        alert("IMEI값을 입력해 주세요");
+        return;
+      }
+      if(utils.isEmpty(newIccId)) {
+        alert("ICCID를 입력해 주세요.");
+        return;
+      }
+      if(confirm("기기 교체를 등록하시겠습니까?")) {
+        api.replaceDevice({
+          deviceNo: this.getDeviceValue(this.originalDevice.device, ["deviceNo", "DEVICE_NO"]),
+          newDeviceIMEI,
+          newIccId,
+          reason: 'A/S 교체',
+        }).then(res => {
+          if(res.data.status === "SUCCESS") {
+            alert("기기 교체가 완료되었습니다.");
+            window.opener.vueComponent.selectDeviceList();
+            window.close();
+          }
+        }).catch(this.handleScopeError);
+      }
+    },
+    lostDevice() {
+      if(this.deviceActiveStateValue === 'L') {
+        alert("이미 분실 상태입니다.");
+        return;
+      }
+      if(this.deviceActiveStateValue === 'D') {
+        alert("폐기된 기기는 분실 처리할 수 없습니다.");
+        return;
+      }
+      if(this.deviceActiveStateValue !== 'A') {
+        alert("사용중 상태의 기기만 분실 처리할 수 있습니다.");
+        return;
+      }
+      if(confirm("분실 처리하시겠습니까? 연결된 모든 사용자에게 알림이 발송됩니다.")) {
+        this.runDeviceAction(api.lostDevice, { deviceNo: this.deviceNoValue }, "분실 처리되었습니다.");
+      }
+    },
+    releaseLostDevice() {
+      if(!this.canReleaseLostDevice) return;
+      if(confirm("분실 해제하시겠습니까?")) {
+        this.runDeviceAction(api.releaseLostDevice, { deviceNo: this.deviceNoValue }, "분실 해제되었습니다.");
+      }
+    },
+    disposeDevice() {
+      if(this.linkedGuardCount > 0) {
+        alert("사용자가 연결된 기기는 폐기할 수 없습니다. 먼저 사용자 연결을 해제해 주세요.");
+        return;
+      }
+      if(this.deviceActiveStateValue === 'D') {
+        alert("이미 폐기된 기기입니다.");
+        return;
+      }
+      if(!confirm("폐기 처리하시겠습니까? 폐기된 기기는 재사용할 수 없습니다.")) return;
+      const reason = window.prompt("폐기 사유를 입력하세요.", "관리자 폐기");
+      if(reason === null) return;
+      this.runDeviceAction(api.disposeDevice, { deviceNo: this.deviceNoValue, reason }, "폐기 처리되었습니다.");
+    },
+    runDeviceAction(action, param, successMessage) {
+      action(param).then(async res => {
+        if(res.data.status === "SUCCESS") {
+          alert(successMessage);
+          await this.getDeviceInfo(this.device.deviceIMEI || this.deviceIMEI);
+          window.opener.vueComponent.selectDeviceList();
+        }
+      }).catch(this.handleScopeError);
     },
     chkIMEI() {
       if(!this.isSuperAdmin) {
@@ -401,6 +576,8 @@ export default {
     },
     toDeviceSaveParam() {
       const param = { ...this.device };
+      param.orgcNo = param.orgcNo === "" || param.orgcNo === null || param.orgcNo === undefined ? 0 : param.orgcNo;
+      param.deviceSize = param.deviceSize === "" || param.deviceSize === null || param.deviceSize === undefined ? 0 : param.deviceSize;
       [
         "activeState",
         "activeStateName",
@@ -443,5 +620,76 @@ export default {
 </script>
 
 <style scoped>
+.device-popup {
+  min-height: 100%;
+  background: #f6f8fb;
+}
 
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dfe5ee;
+}
+
+.popup-header h5 {
+  color: #263238;
+  font-weight: 700;
+}
+
+.device-form-table th {
+  width: 28%;
+  color: #334155;
+  font-weight: 700;
+}
+
+.device-form-table td {
+  background: #fff;
+}
+
+.device-form-table .form-control,
+.device-form-table .form-select {
+  min-height: 32px;
+}
+
+.date-input {
+  width: 150px;
+}
+
+.popup-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.action-left,
+.action-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-right {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+@media (max-width: 560px) {
+  .popup-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .action-left,
+  .action-right {
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+}
 </style>

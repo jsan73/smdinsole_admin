@@ -54,7 +54,7 @@
                   {{ option.label }}
                 </option>
               </select>
-              <div v-if="isAccountStateReadonly" class="form-text small">
+              <div v-if="accountStateReadonlyMessage" class="form-text small">
                 {{ accountStateReadonlyMessage }}
               </div>
             </td>
@@ -232,14 +232,21 @@ export default {
         return this.guardAccountStateOptions.filter(option => ['S', 'N'].includes(option.value));
       }
 
+      if(this.originalAccountState === 'H') {
+        return [
+          { value: 'H', label: '휴면' },
+          { value: 'N', label: '정상' },
+        ];
+      }
+
       return this.guardAccountStateOptions.filter(option => option.value === this.currentAccountState);
     },
     isAccountStateReadonly() {
-      return this.isUpdateMode && !['N', 'S'].includes(this.originalAccountState);
+      return this.isUpdateMode && this.originalAccountState === 'P';
     },
     accountStateReadonlyMessage() {
       if(this.originalAccountState === 'P') return '탈퇴 상태는 관리자 화면에서 복구할 수 없습니다.';
-      if(this.originalAccountState === 'H') return '휴면 상태는 관리자 화면에서 상태 전환할 수 없습니다.';
+      if(this.originalAccountState === 'H') return '휴면 계정은 정상으로 해제할 수 있습니다.';
       return '';
     },
   },
@@ -384,7 +391,7 @@ export default {
       if (isPhoneChanged && await this.checkDuplicate(param)) return;
       if(!await this.checkEmail()) return;
       if(!this.isAllowedAccountStateChange(this.originalAccountState, param.accountState)) {
-        alert("계정상태는 정상↔정지 전환만 가능합니다.");
+        alert("계정상태는 정상↔정지 또는 휴면→정상 전환만 가능합니다.");
         this.guard.accountState = this.originalAccountState;
         return;
       }
@@ -404,7 +411,7 @@ export default {
 
     isAllowedAccountStateChange(fromState, toState) {
       if(fromState === toState) return true;
-      return (fromState === 'N' && toState === 'S') || (fromState === 'S' && toState === 'N');
+      return (fromState === 'N' && toState === 'S') || (fromState === 'S' && toState === 'N') || (fromState === 'H' && toState === 'N');
     },
 
     // --- 대표 이전 관련 로직 ---

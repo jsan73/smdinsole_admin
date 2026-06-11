@@ -87,6 +87,21 @@
                       </option>
                     </select>
                   </div>
+                  <div class="d-flex align-items-center">
+                    <label for="activeState" class="fw-bold me-2" style="white-space: nowrap;">상태</label>
+                    <select
+                        v-model="search.activeState"
+                        id="activeState"
+                        class="form-select"
+                        style="width: 120px;"
+                        @change="selectDeviceList"
+                    >
+                      <option value="">전체</option>
+                      <option v-for="option in activeStateOptions" :key="option.value" :value="option.value">
+                        {{ option.label }}
+                      </option>
+                    </select>
+                  </div>
                 </div>
 
                 <div class="col-auto ms-auto">
@@ -270,9 +285,19 @@ export default {
         expDateEnd: '',
         // 이심사용기한 기간
         esimExpDateStart: '',
-        esimExpDateEnd: ''
+        esimExpDateEnd: '',
+        activeState: '',
       },
       orgcList:'',
+      activeStateOptions: [
+        { value: 'N', label: '미등록', className: 'bg-success' },
+        { value: 'R', label: '대기', className: 'bg-info text-dark' },
+        { value: 'P', label: '등록중', className: 'bg-warning text-dark' },
+        { value: 'A', label: '사용중', className: 'bg-primary' },
+        { value: 'L', label: '분실', className: 'bg-danger' },
+        { value: 'E', label: '만료', className: 'bg-secondary' },
+        { value: 'D', label: '폐기', className: 'bg-dark' },
+      ],
       columnDefs: [
         {
           headerName: "No",
@@ -375,7 +400,7 @@ export default {
     },
     applyRouteQuery() {
       const query = this.$route.query || {};
-      ["expDateStart", "expDateEnd", "esimExpDateStart", "esimExpDateEnd"].forEach(key => {
+      ["expDateStart", "expDateEnd", "esimExpDateStart", "esimExpDateEnd", "activeState"].forEach(key => {
         if(query[key] !== undefined) this.search[key] = String(query[key] || "");
       });
     },
@@ -501,16 +526,12 @@ export default {
     activeStateRenderer(params) {
       const value = this.getDeviceValue(params.data, ["activeState", "ACTIVE_STATE"]) || params.value;
       const apiName = this.getDeviceValue(params.data, ["activeStateName", "ACTIVE_STATE_NAME"]);
-      const statusMap = {
-        'N': { label: '미등록', className: 'bg-success' },
-        'R': { label: '대기', className: 'bg-info text-dark' },
-        'P': { label: '등록중', className: 'bg-warning text-dark' },
-        'A': { label: '사용중', className: 'bg-primary' },
-        'L': { label: '분실', className: 'bg-danger' },
-        'E': { label: '만료', className: 'bg-secondary' },
-        'D': { label: '폐기', className: 'bg-dark' },
+      const statusMap = this.activeStateOptions.reduce((map, item) => {
+        map[item.value] = { label: item.label, className: item.className };
+        return map;
+      }, {
         'V': { label: '등록중(구 인증완료)', className: 'bg-warning text-dark' },
-      };
+      });
       const status = statusMap[value];
       const label = apiName || (status ? status.label : value);
       if(!label) return "";
@@ -572,8 +593,10 @@ export default {
 
 
     downloadExcel() {
-      const param = this.search;
-      param.guardPhone = param.guardPhone.replaceAll("-","")
+      const param = {
+        ...this.search,
+        guardPhone: (this.search.guardPhone || "").replaceAll("-",""),
+      };
       api.downDeviceListExcel(param).then(res=>{
         let fileName = "기기리스트.xlsx"
         console.log(fileName)

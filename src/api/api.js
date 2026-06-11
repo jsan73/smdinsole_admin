@@ -41,6 +41,18 @@ export default {
 	delDevice(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/del/' + param);
 	},
+	lostDevice(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/lost', param);
+	},
+	releaseLostDevice(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/lost/release', param);
+	},
+	disposeDevice(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/dispose', param);
+	},
+	replaceDevice(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/replace', param);
+	},
 	// 단순 단말 조회
 	getDeviceInfo(deviceIMEI) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/get/' + deviceIMEI);
