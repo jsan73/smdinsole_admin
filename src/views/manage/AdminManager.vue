@@ -323,7 +323,9 @@ export default {
       if(utils.isEmpty(params.value)) return "-";
       const lockType = String(params.value);
       if(lockType === "LOGIN_FAIL") return '<span class="badge bg-warning text-dark">로그인 잠금</span>';
-      if(lockType === "INACTIVE_90DAYS" || lockType === "DORMANT") return '<span class="badge bg-danger">미접속 잠금</span>';
+      if(["INACTIVE_90D", "INACTIVE_90DAYS", "INACTIVE_180D", "DORMANT"].includes(lockType)) {
+        return '<span class="badge bg-danger">미접속 잠금</span>';
+      }
       return '<span class="badge bg-secondary">' + lockType + '</span>';
     },
     unlockRenderer(params) {

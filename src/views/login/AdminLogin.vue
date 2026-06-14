@@ -325,7 +325,7 @@ export default {
       const sourceText = `${message} ${lockType} ${lockReason}`;
 
       if (this.step === "MFA") return message || "인증번호가 일치하지 않거나 만료되었습니다.";
-      if (/90|미접속|INACTIVE|DORMANT/.test(sourceText)) return message || "90일 이상 미접속으로 잠긴 계정입니다. 수퍼관리자에게 문의하세요.";
+      if (/90|180|미접속|INACTIVE|DORMANT/.test(sourceText)) return message || "180일 이상 미접속으로 잠긴 계정입니다. 수퍼관리자에게 문의하세요.";
       if (/LOGIN_FAIL|FAIL|잠금|LOCK/.test(sourceText)) return message || "로그인 실패 횟수 초과로 잠긴 계정입니다.";
 
       return message || "로그인 실패";
