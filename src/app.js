@@ -111,7 +111,10 @@ export default {
 			}
 			Vue.prototype._routelist = this.menuGlobal;
 
-			router.addRoutes(this.menuGlobal);
+			router.addRoutes([
+				{ path: "/", redirect: "/ststs" },
+				...this.menuGlobal
+			]);
 		},
 		getRouteView() {
 			return this.menuGlobal || [];
@@ -127,6 +130,9 @@ export default {
 		}
 
 		this.makeRouteView();
+		if(this.$route.path === "/") {
+			this.$router.replace("/ststs").catch(() => {});
+		}
 
 		// 개발모드
 		if(process.env.VUE_APP_MODE === "dev") {
