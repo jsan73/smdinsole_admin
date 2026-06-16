@@ -40,7 +40,7 @@
           </tr>
           <tr v-if="isUpdateMode">
             <th class="text-center bg-light small py-2">마지막 접속일</th>
-            <td class="small ps-2">{{ guard.lastLoginDate || '-' }}</td>
+            <td class="small ps-2">{{ displayLastLoginDate }}</td>
           </tr>
           <tr>
             <th class="text-center bg-warning small py-2" style="--bs-bg-opacity: .2;">계정상태</th>
@@ -216,6 +216,9 @@ export default {
     }
   },
   computed: {
+    displayLastLoginDate() {
+      return this.formatDateTime(this.guard.lastLoginDate || this.guard.LAST_LOGIN_DATE);
+    },
     currentAccountState() {
       return this.guard.accountState || 'N';
     },
@@ -261,6 +264,46 @@ export default {
   methods: {
     getRawPhone(phone) {
       return (phone || '').replace(/[^0-9]/g, "");
+    },
+
+    padDateUnit(value) {
+      return String(value).padStart(2, "0");
+    },
+
+    isValidDateParts(year, month, day, hour, minute, second) {
+      const date = new Date(year, month - 1, day, hour, minute, second);
+      return date.getFullYear() === year
+          && date.getMonth() === month - 1
+          && date.getDate() === day
+          && date.getHours() === hour
+          && date.getMinutes() === minute
+          && date.getSeconds() === second;
+    },
+
+    formatDateTime(value) {
+      if(value === null || value === undefined) return "-";
+
+      const rawValue = String(value).trim();
+      if(!rawValue) return "-";
+
+      const compactValue = rawValue.replace(/[^0-9]/g, "");
+      if([8, 10, 12].includes(compactValue.length) || compactValue.length >= 14) {
+        const year = Number(compactValue.slice(0, 4));
+        const month = Number(compactValue.slice(4, 6));
+        const day = Number(compactValue.slice(6, 8));
+        const hour = compactValue.length >= 10 ? Number(compactValue.slice(8, 10)) : 0;
+        const minute = compactValue.length >= 12 ? Number(compactValue.slice(10, 12)) : 0;
+        const second = compactValue.length >= 14 ? Number(compactValue.slice(12, 14)) : 0;
+
+        if(this.isValidDateParts(year, month, day, hour, minute, second)) {
+          return `${year}-${this.padDateUnit(month)}-${this.padDateUnit(day)} ${this.padDateUnit(hour)}:${this.padDateUnit(minute)}:${this.padDateUnit(second)}`;
+        }
+      }
+
+      const parsedDate = new Date(rawValue);
+      if(Number.isNaN(parsedDate.getTime())) return "-";
+
+      return `${parsedDate.getFullYear()}-${this.padDateUnit(parsedDate.getMonth() + 1)}-${this.padDateUnit(parsedDate.getDate())} ${this.padDateUnit(parsedDate.getHours())}:${this.padDateUnit(parsedDate.getMinutes())}:${this.padDateUnit(parsedDate.getSeconds())}`;
     },
 
     async checkDuplicate(param) {
@@ -522,6 +565,14 @@ export default {
 
         if (res.data.status === "SUCCESS" && res.data.data.length > 0) {
           const deviceRows = res.data.data;
+          const activeState = this.getDeviceActiveStateValue(deviceRows[0]);
+          const addBlockedMessage = this.getDeviceAddBlockedMessage(activeState);
+
+          if(addBlockedMessage) {
+            alert(addBlockedMessage);
+            this.addDeviceForm.searchResult = null;
+            return;
+          }
 
           // 1. 중복 체크: 현재 사용자(guard.guardNo)가 이미 이 기기에 연결되어 있는지 확인
           const isAlreadyConnected = deviceRows.some(row => row.guardNo === this.guard.guardNo);
@@ -565,6 +616,20 @@ export default {
       } catch (e) {
         this.handleScopeError(e, "조회 중 오류가 발생했습니다.");
       }
+    },
+
+    getDeviceActiveStateValue(row) {
+      if(!row || typeof row !== "object") return "";
+      return row.activeState || row.ACTIVE_STATE || row.active_state || "";
+    },
+
+    getDeviceAddBlockedMessage(activeState) {
+      const messageMap = {
+        L: "분실 상태 기기는 사용자에게 추가할 수 없습니다.",
+        D: "폐기 상태 기기는 사용자에게 추가할 수 없습니다.",
+        E: "만료 상태 기기는 사용자에게 추가할 수 없습니다.",
+      };
+      return messageMap[activeState] || "";
     },
 
     async executeAddDevice() {

@@ -130,7 +130,7 @@
         </div>
         <div class="action-right">
           <button v-if="popupState == 'ins'" class="btn btn-primary btn-sm"  @click="regDevice">등록</button>
-          <button v-if="popupState == 'upd'" class="btn btn-outline-danger btn-sm" @click="delDevice" :disabled="!canDeleteDevice">삭제</button>
+          <button v-if="popupState == 'upd'" class="btn btn-outline-danger btn-sm" @click="delDevice">삭제</button>
           <button v-if="popupState == 'upd'" class="btn btn-primary btn-sm" @click="updDevice">수정</button>
         </div>
       </template>
@@ -372,7 +372,15 @@ export default {
       }
     },
     delDevice() {
-      if(!this.canDeleteDevice) {
+      if(this.deviceActiveStateValue === 'D') {
+        alert("폐기 상태 기기는 삭제할 수 없습니다.");
+        return;
+      }
+      if(this.deviceActiveStateValue !== 'N') {
+        alert("미등록 상태의 기기만 삭제할 수 있습니다.");
+        return;
+      }
+      if(this.linkedGuardCount > 0) {
         alert("연결된 사용자가 있는 기기는 삭제할 수 없습니다.");
         return;
       }
