@@ -38,6 +38,9 @@ export default {
 	updDevice(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/upd', param)
 	},
+	checkDeviceSerialNumber(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/list', { ...param, pageNum: 1, pageSize: 1, pageStart: 0 })
+	},
 	delDevice(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/del/' + param);
 	},

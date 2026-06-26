@@ -18,6 +18,26 @@
             </td>
           </tr>
           <tr>
+            <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">시리얼 번호</th>
+            <td>
+              <div class="serial-auth-row">
+                <input
+                    type="text"
+                    v-model="device.serialNumber"
+                    @input="clearSerialNumber"
+                    class="form-control d-inline-flex"
+                    style="width: 180px;"
+                    maxlength="14"
+                    :readonly="popupState == 'upd' || isReplaceMode"
+                ><button v-if="popupState == 'ins'" type="button" class="btn btn-secondary btn-sm" @click="chkSerialNumber">시리얼 번호 체크</button>
+                <template v-if="device.productAuthKey">
+                  <span class="serial-auth-label">제품 인증키</span>
+                  <span class="serial-auth-key">{{ device.productAuthKey }}</span>
+                </template>
+              </div>
+            </td>
+          </tr>
+          <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">ICCID</th>
             <td>
               <input type="text"  v-model="device.iccId" id="iccID" name="iccID" class="form-control d-inline-flex" style="width: 250px;" >&nbsp;
@@ -150,6 +170,8 @@ export default {
       device: {
         deviceNo:0,
         deviceIMEI:'',
+        serialNumber:'',
+        productAuthKey:'',
         iccId:'',
         iotPlan:'',
         deviceNumber:'',
@@ -177,6 +199,7 @@ export default {
       popupTitle: '기기 등록',
       originalDevice: null,
       isReplaceMode: false,
+      serialChecked: false,
       sizes: [
         { value: 0, label: '선택 안함' },
         { value: 230, label: '230' },
@@ -272,6 +295,8 @@ export default {
     applyDeviceData(data) {
       this.device = {
         ...data,
+        serialNumber: data.serialNumber || data.SERIAL_NUMBER || '',
+        productAuthKey: data.productAuthKey || data.PRODUCT_AUTH_KEY || '',
         orgcNo: data.orgcNo || data.ORGC_NO || 0,
         deviceSize: data.deviceSize || data.DEVICE_SIZE || 0,
       };
@@ -285,6 +310,7 @@ export default {
       this.memberDate = '';
       this.expDate = '';
       this.esimExpDate = '';
+      this.serialChecked = false;
 
       if(utils.isNotEmpty(this.device.deviceNumber)) {
         const phone = utils.telForm(this.device.deviceNumber).split("-");
@@ -326,6 +352,7 @@ export default {
       this.device.memberDate = String(this.memberDate || "").replace(/-/gi, "");
       this.device.expDate = String(this.expDate || "").replace(/-/gi, "");
       this.device.esimExpDate = String(this.esimExpDate || "").replace(/-/gi, "");
+      this.device.serialNumber = String(this.device.serialNumber || "").trim();
     },
 
     async insDevice() {
@@ -401,6 +428,14 @@ export default {
         return;
       }
       this.setDevice();
+      if(utils.isEmpty(this.device.serialNumber)) {
+        alert("시리얼 번호를 입력해 주세요.");
+        return;
+      }
+      if(!this.serialChecked) {
+        alert("시리얼 번호 중복 체크를 먼저 진행해 주세요.");
+        return;
+      }
       if(this.device.chkdevice === "") {
         alert("IMEI 체크를 먼저 진행해 주세요.");
         return;
@@ -535,6 +570,42 @@ export default {
         }
       }).catch(this.handleScopeError);
     },
+    clearSerialNumber() {
+      this.serialChecked = false;
+    },
+    getDeviceRows(data) {
+      if(Array.isArray(data)) return data;
+      if(!data || typeof data !== "object") return [];
+      const rowKeys = ["list", "rows", "items", "content", "deviceList"];
+      const rows = rowKeys.map(key => data[key]).find(Array.isArray);
+      return rows || [];
+    },
+    async chkSerialNumber() {
+      if(!this.isSuperAdmin) {
+        alert("대표 관리자만 수행할 수 있습니다.");
+        return;
+      }
+      const serialNumber = String(this.device.serialNumber || "").trim();
+      this.device.serialNumber = serialNumber;
+      if(utils.isEmpty(serialNumber)) {
+        alert("시리얼 번호를 입력해 주세요.");
+        return;
+      }
+      try {
+        const res = await api.checkDeviceSerialNumber({ serialNumber });
+        if(res.data.status === "SUCCESS") {
+          const data = res.data.data;
+          const available = data && typeof data.available === "boolean"
+              ? data.available
+              : this.getDeviceRows(data).length === 0 && Number(data && data.totalCount ? data.totalCount : 0) === 0;
+          this.serialChecked = available;
+          alert(available ? "사용 가능한 시리얼 번호입니다." : "이미 등록된 시리얼 번호입니다.");
+        }
+      } catch (e) {
+        this.serialChecked = false;
+        this.handleScopeError(e);
+      }
+    },
     chkIMEI() {
       if(!this.isSuperAdmin) {
         alert("대표 관리자만 수행할 수 있습니다.");
@@ -586,6 +657,10 @@ export default {
       const param = { ...this.device };
       param.orgcNo = param.orgcNo === "" || param.orgcNo === null || param.orgcNo === undefined ? 0 : param.orgcNo;
       param.deviceSize = param.deviceSize === "" || param.deviceSize === null || param.deviceSize === undefined ? 0 : param.deviceSize;
+      param.serialNumber = this.getDeviceValue(param, ["serialNumber", "SERIAL_NUMBER"]);
+      if(this.popupState == "upd") {
+        delete param.serialNumber;
+      }
       [
         "activeState",
         "activeStateName",
@@ -593,6 +668,10 @@ export default {
         "ACTIVE_STATE_NAME",
         "active_state",
         "active_state_name",
+        "SERIAL_NUMBER",
+        "productAuthKey",
+        "PRODUCT_AUTH_KEY",
+        "serialChecked",
       ].forEach(key => {
         delete param[key];
       });
@@ -686,6 +765,28 @@ export default {
 .action-right {
   justify-content: flex-end;
   margin-left: auto;
+}
+
+.serial-auth-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.serial-auth-label {
+  color: #495057;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.serial-auth-key {
+  color: #0d6efd;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 32px;
+  word-break: break-all;
 }
 
 @media (max-width: 560px) {

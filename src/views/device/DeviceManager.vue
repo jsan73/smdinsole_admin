@@ -31,6 +31,30 @@
                         @keyup.enter="selectDeviceList"
                     >
                   </div>
+                  <div class="d-flex align-items-center">
+                    <label for="serialNumber" class="fw-bold me-2" style="white-space: nowrap;">시리얼 번호</label>
+                    <input
+                        v-model="search.serialNumber"
+                        type="text"
+                        id="serialNumber"
+                        class="form-control"
+                        style="width: 170px;"
+                        placeholder="시리얼 번호"
+                        @keyup.enter="selectDeviceList"
+                    >
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <label for="productAuthKey" class="fw-bold me-2" style="white-space: nowrap;">제품 인증키</label>
+                    <input
+                        v-model="search.productAuthKey"
+                        type="text"
+                        id="productAuthKey"
+                        class="form-control"
+                        style="width: 150px;"
+                        placeholder="제품 인증키"
+                        @keyup.enter="selectDeviceList"
+                    >
+                  </div>
 <!--                  <div class="d-flex align-items-center">-->
 <!--                    <label for="ICCID" class="fw-bold me-2" style="white-space: nowrap;">ICCID</label>-->
 <!--                    <input-->
@@ -277,6 +301,8 @@ export default {
       // },
       search: {
         deviceIMEI:'',
+        serialNumber:'',
+        productAuthKey:'',
         iccId:'',
         guardPhone:'',
         orgcNo:'',
@@ -302,53 +328,63 @@ export default {
         {
           headerName: "No",
           valueGetter: this.noValueGetter,
-          width: 80,
+          width: 65,
           sortable: false,
         },
         {
           headerName: "IMEI",
           field: "DEVICE_IMEI",
-          minWidth: 160,
+          width: 150,
           cellRenderer: this.deviceLinkRenderer,
+        },
+        {
+          headerName: "시리얼 번호",
+          valueGetter: this.serialNumberValueGetter,
+          width: 150,
+        },
+        {
+          headerName: "제품 인증키",
+          valueGetter: this.productAuthKeyValueGetter,
+          width: 150,
         },
         {
           headerName: "기기 전화번호",
           field: "DEVICE_NUMBER",
-          width: 150,
+          width: 131,
           valueFormatter: this.telValueFormatter,
         },
-        { headerName: "요금제", field: "IOT_PLAN", width: 120 },
+        { headerName: "요금제", field: "IOT_PLAN", width: 94 },
         {
           headerName: "사용자 전화번호0",
           field: "GUARD_PHONE",
-          width: 160,
+          width: 140,
           valueFormatter: this.telValueFormatter,
         },
-        { headerName: "소속 기관", field: "ORG_NAME", minWidth: 160, flex: 1 },
+        { headerName: "소속 기관", field: "ORG_NAME", minWidth: 110, flex: 1 },
         {
           headerName: "만료일",
           field: "EXP_DATE",
-          width: 130,
+          width: 110,
           valueFormatter: this.dateValueFormatter,
         },
         {
           headerName: "이심사용기한",
           field: "ESIM_EXP_DATE",
-          width: 140,
+          width: 125,
           valueFormatter: this.dateValueFormatter,
         },
-        { headerName: "사이즈", field: "DEVICE_SIZE", width: 100 },
+        { headerName: "사이즈", field: "DEVICE_SIZE", width: 80 },
         {
           headerName: "마지막 신호",
           field: "STATUS",
-          width: 220,
+          width: 250,
           cellRenderer: this.lastSignalRenderer,
         },
-        { headerName: "위치전송횟수", field: "LOC_CNT", width: 130 },
+        { headerName: "위치전송횟수", field: "LOC_CNT", width: 110 },
         {
           headerName: "상태",
           field: "ACTIVE_STATE",
-          width: 110,
+          width: 95,
           cellRenderer: this.activeStateRenderer,
         },
       ],
@@ -412,7 +448,7 @@ export default {
       this.$open(
           "/devicepopup",
           "기기 등록",
-          "width=650,height=670,left=0,top=0"
+          "width=700,height=730,left=0,top=0"
       );
     },
     popupFota() {
@@ -516,9 +552,15 @@ export default {
     dateValueFormatter(params) {
       return utils.isEmpty(params.value) ? "" : this.dateForm(params.value);
     },
+    serialNumberValueGetter(params) {
+      return this.getDeviceValue(params.data, ["SERIAL_NUMBER", "serialNumber"]);
+    },
+    productAuthKeyValueGetter(params) {
+      return this.getDeviceValue(params.data, ["PRODUCT_AUTH_KEY", "productAuthKey"]);
+    },
     deviceLinkRenderer(params) {
       if(utils.isEmpty(params.value)) return "";
-      return '<a class="text-primary" href="javascript:openPopup(\'/devicepopup?device=' + params.value + '\',\'기기 수정\',\'width=650,height=670,left=0,top=0\')">' + params.value + '</a>';
+      return '<a class="text-primary" href="javascript:openPopup(\'/devicepopup?device=' + params.value + '\',\'기기 수정\',\'width=700,height=730,left=0,top=0\')">' + params.value + '</a>';
     },
     lastSignalRenderer(params) {
       return utils.isEmpty(params.value) ? "" : this.lastSignal(params.value);
