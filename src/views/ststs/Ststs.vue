@@ -13,7 +13,7 @@
       <div class="row">
         <div class="col-lg-12">
 
-          <div class="card search-card">
+          <div class="card search-card compact-search">
             <div class="card-body py-2">
               <div class="dashboard-search-bar">
                 <div class="period-control" role="group" aria-label="기간">

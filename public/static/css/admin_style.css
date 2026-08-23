@@ -1170,3 +1170,148 @@ h1, h2, h3, h4, h5, h6 {
   height: calc(100vh - 16rem);
   overflow-y: auto;
 }
+/* Admin compact search and grid */
+.compact-search {
+  font-size: 13px;
+}
+
+.compact-search .card-body {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.compact-search .row.my-3 {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  row-gap: 0.5rem;
+}
+
+.compact-search .gap-3 {
+  gap: 0.5rem !important;
+}
+
+.compact-search label,
+.compact-search .search-label,
+.compact-search .form-control,
+.compact-search .form-select,
+.compact-search .btn {
+  font-size: 13px;
+}
+
+.compact-search .form-control,
+.compact-search .form-select {
+  min-height: 32px;
+  padding: 0.25rem 0.5rem;
+}
+
+.compact-search .btn {
+  min-height: 32px;
+  padding: 0.25rem 0.65rem;
+}
+
+.grid-toolbar {
+  gap: 8px !important;
+  margin-bottom: 6px !important;
+  font-size: 13px;
+}
+
+.grid-toolbar label,
+.grid-toolbar .form-select,
+.grid-pagination .btn,
+.dataTableStyle .pagination .page-link {
+  font-size: 13px;
+}
+
+.grid-toolbar .form-select {
+  min-height: 30px;
+  padding: 0.2rem 1.75rem 0.2rem 0.5rem;
+}
+
+.grid-pagination {
+  gap: 4px !important;
+}
+
+.grid-pagination .btn,
+.dataTableStyle .pagination .page-link,
+.grid-pagination-actions .btn {
+  min-height: 30px;
+  padding: 0.2rem 0.5rem;
+  font-size: 13px;
+}
+
+.ag-theme-alpine {
+  --ag-font-size: 13px;
+  --ag-grid-size: 4px;
+}
+
+@media (max-width: 767px) {
+  .compact-search .col-auto.ms-auto {
+    margin-left: 0 !important;
+  }
+}
+
+/* Compact dashboard search controls */
+.compact-search .dashboard-search-bar {
+  gap: 8px !important;
+}
+
+.compact-search .period-option {
+  min-width: 56px;
+  padding: 5px 10px !important;
+  font-size: 13px;
+}
+
+.compact-search .date-range-control {
+  gap: 6px !important;
+}
+
+/* 목록 pagination 중앙 정렬과 우측 작업 버튼을 같은 행에 배치한다. */
+.grid-pagination-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.grid-pagination-balance {
+  grid-column: 1;
+}
+
+.grid-pagination-footer .grid-pagination-wrap {
+  grid-column: 2;
+  justify-self: center;
+  margin-top: 0 !important;
+}
+
+.grid-pagination-actions {
+  grid-column: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  justify-self: end;
+  gap: 4px;
+}
+
+.grid-pagination-actions .btn {
+  margin: 0 !important;
+}
+
+@media (max-width: 991.98px) {
+  .grid-pagination-footer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .grid-pagination-balance {
+    display: none;
+  }
+
+  .grid-pagination-footer .grid-pagination-wrap,
+  .grid-pagination-actions {
+    grid-column: 1;
+  }
+
+  .grid-pagination-actions {
+    justify-self: stretch;
+  }
+}

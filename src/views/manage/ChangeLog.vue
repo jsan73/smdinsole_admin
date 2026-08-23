@@ -8,7 +8,7 @@
     <section class="section dashboard">
       <div class="row">
         <div class="col-lg-12">
-          <div class="card">
+          <div class="card compact-search">
             <div class="card-body pb-0">
               <div class="row my-3 align-items-center g-3">
                 <div class="col-auto d-flex align-items-center">
@@ -84,7 +84,7 @@
         <div class="col-lg-12">
           <div class="card dataTableStyle overflow-auto">
             <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="grid-toolbar d-flex justify-content-between align-items-center mb-2">
                 <div class="text-muted">총 {{ totalCount }}건</div>
                 <div class="d-flex align-items-center gap-2">
                   <label for="pageSize" class="mb-0">페이지당</label>
@@ -102,8 +102,8 @@
                   :defaultColDef="defaultColDef"
                   :enableCellTextSelection="true"
                   :suppressPaginationPanel="true"
-                  :rowHeight="42"
-                  :headerHeight="42"
+                  :rowHeight="34"
+                  :headerHeight="36"
                   :overlayNoRowsTemplate="overlayNoRowsTemplate"
                   :overlayLoadingTemplate="overlayLoadingTemplate"
                   @grid-ready="onGridReady"

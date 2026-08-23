@@ -6,7 +6,7 @@
 
     <div class="card mb-3">
       <div class="card-body p-0">
-        <table class="table table-sm table-bordered mb-0 align-middle">
+        <table class="table table-sm table-bordered mb-0 align-middle popup-form-table">
           <colgroup><col style="width: 30%"><col style="width: 70%"></colgroup>
           <tbody>
           <tr>

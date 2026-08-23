@@ -11,7 +11,7 @@
       <div class="row">
         <div class="col-lg-12">
           <!-- 검색조건 -->
-          <div class="card">
+          <div class="card compact-search">
             <div class="card-body pb-0">
               <div class="row my-3 align-items-center">
                 <div class="col d-flex flex-wrap gap-3">
@@ -78,8 +78,8 @@
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"
-                  :rowHeight="42"
-                  :headerHeight="42"
+                  :rowHeight="34"
+                  :headerHeight="36"
                   :overlayNoRowsTemplate="overlayNoRowsTemplate"
                   :overlayLoadingTemplate="overlayLoadingTemplate"
                   @grid-ready="onGridReady"
@@ -131,11 +131,6 @@
                   </button>
                 </div>
               </div>
-              <p class="text-end">
-<!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>-->
-<!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>-->
-<!--                <button class="btn btn-primary mt-2 ms-1" @click="addDevice">기기 등록</button>-->
-              </p>
             </div>
           </div><!--// 목록 테이블 -->
 
@@ -398,7 +393,7 @@ export default {
         this.$open(
             "/eventpopup?device=" + params.value,
             "기기 이벤트 리스트",
-            "width=1000,height=580,left=0,top=0"
+            "width=900,height=520,left=0,top=0"
         );
       });
       return link;

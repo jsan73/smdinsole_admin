@@ -10,7 +10,7 @@
       <div class="row">
         <div class="col-lg-12">
           <!-- 검색조건 -->
-          <div class="card">
+          <div class="card compact-search">
             <div class="card-body pb-0">
               <div class="row my-3 align-items-center">
                 <div class="col d-flex flex-wrap gap-3">
@@ -58,27 +58,28 @@
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"
-                  :rowHeight="42"
-                  :headerHeight="42"
+                  :rowHeight="34"
+                  :headerHeight="36"
                   :overlayNoRowsTemplate="overlayNoRowsTemplate"
                   :overlayLoadingTemplate="overlayLoadingTemplate"
                   @grid-ready="onGridReady"
                   @pagination-changed="onPaginationChanged"
               />
-              <div class="grid-pagination-wrap">
-                <div v-if="totalPages > 1" class="grid-pagination">
-                  <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="currentPage === 1" @click="goToPage(1)">처음</button>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">이전</button>
-                  <button v-for="page in paginationPages" :key="page" type="button" class="btn btn-sm" :class="page === currentPage ? 'btn-primary' : 'btn-outline-secondary'" @click="goToPage(page)">{{ page }}</button>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">다음</button>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="currentPage === totalPages" @click="goToPage(totalPages)">마지막</button>
+              <div class="grid-pagination-footer">
+                <div class="grid-pagination-balance" aria-hidden="true"></div>
+                <div class="grid-pagination-wrap">
+                  <div v-if="totalPages > 1" class="grid-pagination">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="currentPage === 1" @click="goToPage(1)">처음</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">이전</button>
+                    <button v-for="page in paginationPages" :key="page" type="button" class="btn btn-sm" :class="page === currentPage ? 'btn-primary' : 'btn-outline-secondary'" @click="goToPage(page)">{{ page }}</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">다음</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="currentPage === totalPages" @click="goToPage(totalPages)">마지막</button>
+                  </div>
+                </div>
+                <div class="grid-pagination-actions">
+                  <button class="btn btn-primary mt-2 ms-1" @click="addOrgc">기관 등록</button>
                 </div>
               </div>
-              <p class="text-end">
-                <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>-->
-                <!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>-->
-                <button class="btn btn-primary mt-2 ms-1" @click="addOrgc">기관 등록</button>
-              </p>
             </div>
           </div><!--// 목록 테이블 -->
 
@@ -192,7 +193,7 @@ export default {
       this.$open(
           "/orgcpopup",
           "기관 등록",
-          "width=650,height=480,left=0,top=0"
+          "width=590,height=430,left=0,top=0"
       );
     },
     telForm(data) {
@@ -256,7 +257,7 @@ export default {
       link.textContent = String(name).includes(",") ? String(name).split(",")[1] : name;
       link.addEventListener("click", event => {
         event.preventDefault();
-        this.$open("/orgcpopup?orgcNo=" + this.getOrgcNo(params.data), "기관 수정", "width=650,height=480,left=0,top=0");
+        this.$open("/orgcpopup?orgcNo=" + this.getOrgcNo(params.data), "기관 수정", "width=590,height=430,left=0,top=0");
       });
       return link;
     },

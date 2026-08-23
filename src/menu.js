@@ -29,11 +29,14 @@ var menu = [
 	{ menuId: "Login", parentId: 0, menuName: "로그인", icon: "description",pagePath: "views/login",  componentName: "AdminLogin", url: "/login", meta: { layout: 'Main' }},
 	{ menuId: "PwdChange", parentId: 0, menuName: "비밀번호 변경", icon: "description",pagePath: "views/login",  componentName: "PwdChange", url: "/pwdchange", meta: { layout: 'Main' }},
 	{ menuId: "DevicePopup", parentId: 0, menuName: "기기 등록", icon: "description",pagePath: "views/device",  componentName: "DevicePopup", url: "/devicepopup", meta: { layout: 'Popup' }, popup:true},
+	{ menuId: "DeviceLocationPopup", parentId: 0, menuName: "기기 위치 기록", icon: "description",pagePath: "views/device", componentName: "DeviceLocationPopup", url: "/devicelocationpopup", meta: { layout: 'Popup' }, popup:true},
+	{ menuId: "DeviceLifecyclePopup", parentId: 0, menuName: "기기 프로토콜 상세", icon: "description",pagePath: "views/device", componentName: "DeviceLifecyclePopup", url: "/devicelifecyclepopup", meta: { layout: 'Popup' }, popup:true},
+	{ menuId: "DeviceLifecycleManagePopup", parentId: 0, menuName: "라이프사이클 관리", icon: "description",pagePath: "views/device", componentName: "DeviceLifecycleManagePopup", url: "/devicelifecyclemanagepopup", meta: { layout: 'Popup' }, popup:true},
 	{ menuId: "EventPopup", parentId: 0, menuName: "기기 이벤트 리스트", icon: "description",pagePath: "views/event",  componentName: "EventDevicePopup", url: "/eventpopup", meta: { layout: 'Popup' }, popup:true},
 	{ menuId: "GuardPopup", parentId: 0, menuName: "사용자 등록", icon: "description",pagePath: "views/guard",  componentName: "GuardPopup", url: "/guardpopup", meta: { layout: 'Popup' }, popup:true},
 	{ menuId: "AdminManagerPopup", parentId: 0, menuName: "관리자 등록", icon: "description",pagePath: "views/manage",  componentName: "AdminManagerPopup", url: "/managerpopup", meta: { layout: 'Popup' }, popup:true},
 	{ menuId: "OrgcPopup", parentId: 0, menuName: "기관 등록", icon: "description",pagePath: "views/orgc",  componentName: "OrgcPopup", url: "/orgcpopup", meta: { layout: 'Popup' }, popup:true},
-	{ menuId: "fotaPopup", parentId: 0, menuName: "Fota view", icon: "description",pagePath: "views/device",  componentName: "DeviceFotaPopup", url: "/fotapopup", meta: { layout: 'Popup' }, popup:true},
+	{ menuId: "fotaPopup", parentId: 0, menuName: "펌웨어 관리", icon: "description",pagePath: "views/device",  componentName: "DeviceFotaPopup", url: "/fotapopup", meta: { layout: 'Popup' }, popup:true},
 
 
 	// // { menuId: "MN70", parentId: 0, menuName: "콜팝업", icon: "description", pagePath: "views/ui/temp", componentName: "CallPopup", url: "/ui/callpopup", popup: true, meta: { layout: 'Popup' }, tempmenu: "temp" },

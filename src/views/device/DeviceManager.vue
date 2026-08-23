@@ -4,6 +4,7 @@
     <h4 class="my-4 ps-3">
       <i class="bi bi-calendar2-check"></i> 기기 관리
       <small class="text-muted fs-6">기기 정보를 등록 및 수정 할 수 있습니다.</small>
+      <span class="badge bg-secondary ms-2">기존 등록·엑셀 기능 LEGACY</span>
       <div class="text-end" v-if="isDev()">
         <button class="btn btn-primary mt-2 ms-1" @click="gogo()">기기 데이터 분석</button>
       </div>
@@ -14,44 +15,20 @@
       <div class="row">
         <div class="col-lg-12">
           <!-- 검색조건 -->
-          <div class="card">
+          <div class="card compact-search">
             <div class="card-body pb-0">
               <div class="row my-3 align-items-center">
                 <div class="col d-flex flex-wrap gap-3">
 
                   <div class="d-flex align-items-center">
-                    <label for="IMEI" class="fw-bold me-2" style="white-space: nowrap;">IMEI</label>
+                    <label for="deviceKeyword" class="fw-bold me-2" style="white-space: nowrap;">통합 검색</label>
                     <input
-                        v-model="search.deviceIMEI"
+                        v-model.trim="search.deviceKeyword"
                         type="text"
-                        id="IMEI"
+                        id="deviceKeyword"
                         class="form-control"
-                        style="width: 180px;"
-                        placeholder="IMEI 입력"
-                        @keyup.enter="selectDeviceList"
-                    >
-                  </div>
-                  <div class="d-flex align-items-center">
-                    <label for="serialNumber" class="fw-bold me-2" style="white-space: nowrap;">시리얼 번호</label>
-                    <input
-                        v-model="search.serialNumber"
-                        type="text"
-                        id="serialNumber"
-                        class="form-control"
-                        style="width: 170px;"
-                        placeholder="시리얼 번호"
-                        @keyup.enter="selectDeviceList"
-                    >
-                  </div>
-                  <div class="d-flex align-items-center">
-                    <label for="productAuthKey" class="fw-bold me-2" style="white-space: nowrap;">제품 인증키</label>
-                    <input
-                        v-model="search.productAuthKey"
-                        type="text"
-                        id="productAuthKey"
-                        class="form-control"
-                        style="width: 150px;"
-                        placeholder="제품 인증키"
+                        style="width: 240px;"
+                        placeholder="IMEI / 시리얼 / Device Hash"
                         @keyup.enter="selectDeviceList"
                     >
                   </div>
@@ -74,7 +51,7 @@
                         type="text"
                         id="phone"
                         class="form-control"
-                        style="width: 160px;"
+                        style="width: 128px;"
                         placeholder="번호 입력"
                         @keyup.enter="selectDeviceList"
                     >
@@ -82,18 +59,18 @@
                   <div class="d-flex align-items-center">
                     <label class="fw-bold me-2" style="white-space: nowrap;">만료일</label>
                     <div class="d-flex align-items-center gap-1">
-                      <input v-model="search.expDateStart" type="date" class="form-control" style="width: 140px;" @change="selectDeviceList">
+                      <input v-model="search.expDateStart" type="date" class="form-control" style="width: 112px;" @change="scheduleDeviceList">
                       <span>~</span>
-                      <input v-model="search.expDateEnd" type="date" class="form-control" style="width: 140px;" @change="selectDeviceList">
+                      <input v-model="search.expDateEnd" type="date" class="form-control" style="width: 112px;" @change="scheduleDeviceList">
                     </div>
                   </div>
 
                   <div class="d-flex align-items-center">
                     <label class="fw-bold me-2" style="white-space: nowrap;">이심사용기한</label>
                     <div class="d-flex align-items-center gap-1">
-                      <input v-model="search.esimExpDateStart" type="date" class="form-control" style="width: 140px;" @change="selectDeviceList">
+                      <input v-model="search.esimExpDateStart" type="date" class="form-control" style="width: 112px;" @change="scheduleDeviceList">
                       <span>~</span>
-                      <input v-model="search.esimExpDateEnd" type="date" class="form-control" style="width: 140px;" @change="selectDeviceList">
+                      <input v-model="search.esimExpDateEnd" type="date" class="form-control" style="width: 112px;" @change="scheduleDeviceList">
                     </div>
                   </div>
                   <div v-if="isSuperAdmin" class="d-flex align-items-center">
@@ -102,8 +79,8 @@
                         v-model="search.orgcNo"
                         id="group"
                         class="form-select"
-                        style="width: 200px;"
-                        @change="selectDeviceList"
+                        style="width: 160px;"
+                        @change="scheduleDeviceList"
                     >
                       <option value=""> - 선택 - </option>
                       <option v-for="(orgc, index) in orgcList" :key="index" :value="orgc.ORGC_NO">
@@ -117,8 +94,8 @@
                         v-model="search.activeState"
                         id="activeState"
                         class="form-select"
-                        style="width: 120px;"
-                        @change="selectDeviceList"
+                        style="width: 96px;"
+                        @change="scheduleDeviceList"
                     >
                       <option value="">전체</option>
                       <option v-for="option in activeStateOptions" :key="option.value" :value="option.value">
@@ -172,71 +149,79 @@
                   :rowData="deviceList"
                   :defaultColDef="defaultColDef"
                   :enableCellTextSelection="true"
+                  rowSelection="multiple"
+                  :suppressRowClickSelection="true"
+                  :rowMultiSelectWithClick="true"
+                  :isRowSelectable="isProtocolDeviceRow"
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"
-                  :rowHeight="42"
-                  :headerHeight="42"
+                  :rowHeight="34"
+                  :headerHeight="36"
                   :overlayNoRowsTemplate="overlayNoRowsTemplate"
                   :overlayLoadingTemplate="overlayLoadingTemplate"
                   @grid-ready="onGridReady"
                   @pagination-changed="onPaginationChanged"
+                  @selection-changed="onSelectionChanged"
               />
-              <div class="grid-pagination-wrap">
-                <div v-if="totalPages > 1" class="grid-pagination">
-                  <button
-                      type="button"
-                      class="btn btn-sm btn-outline-secondary"
-                      :disabled="currentPage === 1"
-                      @click="goToPage(1)"
-                  >
-                    처음
+              <div class="grid-pagination-footer">
+                <div class="grid-pagination-balance" aria-hidden="true"></div>
+                <div class="grid-pagination-wrap">
+                  <div v-if="totalPages > 1" class="grid-pagination">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        :disabled="currentPage === 1"
+                        @click="goToPage(1)"
+                    >
+                      처음
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        :disabled="currentPage === 1"
+                        @click="goToPage(currentPage - 1)"
+                    >
+                      이전
+                    </button>
+                    <button
+                        v-for="page in paginationPages"
+                        :key="page"
+                        type="button"
+                        class="btn btn-sm"
+                        :class="page === currentPage ? 'btn-primary' : 'btn-outline-secondary'"
+                        @click="goToPage(page)"
+                    >
+                      {{ page }}
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        :disabled="currentPage === totalPages"
+                        @click="goToPage(currentPage + 1)"
+                    >
+                      다음
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        :disabled="currentPage === totalPages"
+                        @click="goToPage(totalPages)"
+                    >
+                      마지막
+                    </button>
+                  </div>
+                </div>
+                <div class="grid-pagination-actions">
+                  <button v-if="hasAdminRole" class="btn btn-primary mt-2 ms-1" @click="popupFota">
+                    펌웨어/FOTA 관리<span v-if="selectedDeviceCount > 0"> ({{ selectedDeviceCount }})</span>
                   </button>
-                  <button
-                      type="button"
-                      class="btn btn-sm btn-outline-secondary"
-                      :disabled="currentPage === 1"
-                      @click="goToPage(currentPage - 1)"
-                  >
-                    이전
-                  </button>
-                  <button
-                      v-for="page in paginationPages"
-                      :key="page"
-                      type="button"
-                      class="btn btn-sm"
-                      :class="page === currentPage ? 'btn-primary' : 'btn-outline-secondary'"
-                      @click="goToPage(page)"
-                  >
-                    {{ page }}
-                  </button>
-                  <button
-                      type="button"
-                      class="btn btn-sm btn-outline-secondary"
-                      :disabled="currentPage === totalPages"
-                      @click="goToPage(currentPage + 1)"
-                  >
-                    다음
-                  </button>
-                  <button
-                      type="button"
-                      class="btn btn-sm btn-outline-secondary"
-                      :disabled="currentPage === totalPages"
-                      @click="goToPage(totalPages)"
-                  >
-                    마지막
-                  </button>
+                  <button class="btn btn-primary mt-2 ms-1" @click="downloadExcel">엑셀 다운</button>
+                  <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="openExcelUpload">엑셀 업로드</button>
+                  <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="addDevice">기기 등록</button>
+
                 </div>
               </div>
-              <p class="text-end">
-<!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:allList()">전체목록</button>-->
-<!--                <button class="btn btn-primary mt-2 ms-1" onclick="javascript:openPopUp_addcsvDevice()">기기 일괄 등록</button>-->
-                <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="popupFota">Fota view</button>
-                <button class="btn btn-primary mt-2 ms-1" @click="downloadExcel">엑셀 다운</button>
-                <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="openExcelUpload">엑셀 업로드</button>
-                <button v-if="isSuperAdmin" class="btn btn-primary mt-2 ms-1" @click="addDevice">기기 등록</button>
-
-              </p>
             </div>
           </div><!--// 목록 테이블 -->
 
@@ -277,6 +262,7 @@ export default {
       gridApi: null,
       gridModules: [ClientSideRowModelModule],
       deviceList: [],
+      selectedDeviceCount: 0,
       paginationPageSize: 20,
       pageSizeOptions: [10, 20, 50, 100],
       currentPage: 1,
@@ -300,9 +286,7 @@ export default {
       //   locCnt:0
       // },
       search: {
-        deviceIMEI:'',
-        serialNumber:'',
-        productAuthKey:'',
+        deviceKeyword:'',
         iccId:'',
         guardPhone:'',
         orgcNo:'',
@@ -328,8 +312,10 @@ export default {
         {
           headerName: "No",
           valueGetter: this.noValueGetter,
-          width: 65,
+          width: 88,
           sortable: false,
+          checkboxSelection: true,
+          headerCheckboxSelection: true,
         },
         {
           headerName: "IMEI",
@@ -343,9 +329,16 @@ export default {
           width: 150,
         },
         {
-          headerName: "제품 인증키",
-          valueGetter: this.productAuthKeyValueGetter,
+          headerName: "Device Hash",
+          valueGetter: this.deviceHashValueGetter,
           width: 150,
+          cellRenderer: this.deviceHashLinkRenderer,
+        },
+        {
+          headerName: "라이프사이클",
+          valueGetter: this.deviceLifecycleValueGetter,
+          width: 140,
+          cellRenderer: this.deviceLifecycleRenderer,
         },
         {
           headerName: "기기 전화번호",
@@ -387,6 +380,12 @@ export default {
           width: 95,
           cellRenderer: this.activeStateRenderer,
         },
+        {
+          headerName: "펌웨어",
+          valueGetter: this.firmwareValueGetter,
+          width: 105,
+          cellRenderer: this.firmwareLinkRenderer,
+        },
       ],
       showPopup: false,
       selectedFile: null,
@@ -395,6 +394,9 @@ export default {
   computed: {
     isSuperAdmin() {
       return this.$store.getters['adminStore/isSuperAdmin'] === true;
+    },
+    hasAdminRole() {
+      return this.$store.getters['adminStore/hasAnyAdminRole'] === true;
     },
     paginationPages() {
       const pageCount = 10;
@@ -414,8 +416,17 @@ export default {
     this.applyRouteQuery();
     this.selectDeviceList();
     if(this.isSuperAdmin) this.selectOrgcList();
+    window.addEventListener("message", this.onLifecycleChanged);
 
 
+  },
+  beforeDestroy() {
+    if(this._deviceFilterTimer) {
+      clearTimeout(this._deviceFilterTimer);
+      this._deviceFilterTimer = null;
+    }
+    this._listRequestSequence += 1;
+    window.removeEventListener("message", this.onLifecycleChanged);
   },
   watch: {
     "$route.query"() {
@@ -434,6 +445,14 @@ export default {
     gogo() {
       this.$router.push('/devicelog')
     },
+    scheduleDeviceList() {
+      this._listRequestSequence += 1;
+      if(this._deviceFilterTimer) clearTimeout(this._deviceFilterTimer);
+      this._deviceFilterTimer = setTimeout(() => {
+        this._deviceFilterTimer = null;
+        this.selectDeviceList();
+      }, 300);
+    },
     applyRouteQuery() {
       const query = this.$route.query || {};
       ["expDateStart", "expDateEnd", "esimExpDateStart", "esimExpDateEnd", "activeState"].forEach(key => {
@@ -448,19 +467,23 @@ export default {
       this.$open(
           "/devicepopup",
           "기기 등록",
-          "width=700,height=730,left=0,top=0"
+          "width=620,height=650,left=0,top=0"
       );
     },
     popupFota() {
-      if(!this.isSuperAdmin) {
-        alert("대표 관리자만 수행할 수 있습니다.");
+      if(!this.hasAdminRole) {
+        alert("관리자만 수행할 수 있습니다.");
         return;
       }
-      this.$open(
-          "/fotapopup",
-          "Fota view",
-          "width=650,height=430,left=0,top=0"
-      );
+      const deviceHashes = this.gridApi
+          ? this.gridApi.getSelectedRows()
+              .map(row => this.getDeviceValue(row, ["deviceHash", "DEVICE_HASH"]))
+              .filter(Boolean)
+          : [];
+      const url = deviceHashes.length
+          ? "/fotapopup?deviceHashes=" + encodeURIComponent(deviceHashes.join(","))
+          : "/fotapopup";
+      this.$open(url, "펌웨어/FOTA 관리", "width=820,height=740,left=0,top=0");
     },
     telForm(data) {
       return utils.telForm(data, 1);
@@ -468,55 +491,136 @@ export default {
     dateForm(data) {
       return utils.convertFromStrToDate(data);
     },
-    lastSignal(data) {
-      // console.log(data);
-      const signal = data.split(',')
-      //console.log(signal[2]);
-      var reportDate = signal[0];
-
-      //(GPS:4, CELL:5, WIFI:6)
-      var cell = "icon_none.svg";
-      if(signal[1] !== undefined) {
-        switch (signal[1]) {
-          case '4':
-            cell = "icon_GPS.svg";
-            break;
-          case '5':
-            cell = "icon_Cell.svg";
-            break;
-          case '6':
-            cell = "icon_WiFi.svg";
-            break;
-        }
-      }
-      var battery = "battery/0.svg";
-      switch (signal[2]) {
-        case '0':
-          battery = "battery/Warn.svg";
-          break;
-        case '1':
-        case '2':
-        case '3':
-          battery = "battery/" + signal[2] + ".svg";
-          break;
-        case '4':
-          // 충전중
-          battery = "battery/Chg.svg";
-          break;
-        case '5':
-          // 충전완료
-          battery = "battery/Complete.svg";
-          break;
-      }
-      let date1 = utils.convertFromStrToDate(reportDate)
-      let date2 = new Date()
-      const diff = utils.getTimeDiff(date1, date2);
-      if(diff > 90) {
-        cell = "icon_none.svg";
-        battery = "battery/0.svg"
+    hasLastSignalValue(value) {
+      return value !== null && value !== undefined && value !== "";
+    },
+    lastSignalParts(data) {
+      const packed = this.getDeviceValue(data, ["STATUS"]);
+      return typeof packed === "string" ? packed.split(",") : [];
+    },
+    lastSignalSource(sourceType, legacyStatus) {
+      if(this.hasLastSignalValue(sourceType)) {
+        const code = String(sourceType).toUpperCase();
+        const sourceMap = {
+          GPS: { code: "GPS", icon: "icon_GPS.svg" },
+          WPS: { code: "WPS", icon: "icon_WiFi.svg" },
+          CELL: { code: "CELL", icon: "icon_Cell.svg" },
+          NONE: { code: "NONE", icon: "icon_none.svg" },
+        };
+        return sourceMap[code] || { code, icon: "icon_none.svg" };
       }
 
-      return utils.convertFromStrToDate(reportDate) + ' <img src="/static/images/' + cell + '" alt="none" width="42" height="20">' +  ' <img src="/static/images/' + battery + '" alt="battery_charge" width="30">';
+      const legacyMap = {
+        "4": { code: "GPS", icon: "icon_GPS.svg" },
+        "5": { code: "CELL", icon: "icon_Cell.svg" },
+        "6": { code: "WPS", icon: "icon_WiFi.svg" },
+        "7": { code: "NONE", icon: "icon_none.svg" },
+      };
+      return legacyMap[String(legacyStatus)] || { code: "NONE", icon: "icon_none.svg" };
+    },
+    lastSignalBatteryIcon(batteryPct, charging, legacyBattery) {
+      if(charging === true) return "battery/Chg.svg";
+      if(this.hasLastSignalValue(batteryPct)) {
+        const percent = Number(batteryPct);
+        if(percent >= 100) return "battery/Complete.svg";
+        if(percent <= 10) return "battery/Warn.svg";
+        if(percent <= 33) return "battery/1.svg";
+        if(percent <= 66) return "battery/2.svg";
+        return "battery/3.svg";
+      }
+
+      const legacyMap = {
+        "0": "battery/Warn.svg",
+        "1": "battery/1.svg",
+        "2": "battery/2.svg",
+        "3": "battery/3.svg",
+        "4": "battery/Chg.svg",
+        "5": "battery/Complete.svg",
+      };
+      return legacyMap[String(legacyBattery)] || "battery/0.svg";
+    },
+    booleanValue(value) {
+      if(value === true || value === 1 || value === "1" || value === "true") return true;
+      if(value === false || value === 0 || value === "0" || value === "false") return false;
+      return null;
+    },
+    epochMilliseconds(value) {
+      if(!this.hasLastSignalValue(value)) return null;
+      const epoch = Number(value);
+      if(!Number.isFinite(epoch)) return null;
+      return epoch >= 1000000000000 ? epoch : epoch * 1000;
+    },
+    kstReportDateMilliseconds(value) {
+      const reportDate = String(value || "");
+      const matched = reportDate.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
+      if(!matched) return null;
+      return Date.UTC(
+          Number(matched[1]),
+          Number(matched[2]) - 1,
+          Number(matched[3]),
+          Number(matched[4]) - 9,
+          Number(matched[5]),
+          Number(matched[6])
+      );
+    },
+    formatKstEpoch(epochMilliseconds) {
+      if(!Number.isFinite(epochMilliseconds)) return "";
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Seoul",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23",
+      }).formatToParts(new Date(epochMilliseconds)).reduce((result, part) => {
+        result[part.type] = part.value;
+        return result;
+      }, {});
+      return `${parts.year}/${parts.month}/${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+    },
+    renderLastSignal(data) {
+      const packed = this.lastSignalParts(data);
+      const measuredAtEpoch = this.getDeviceValue(data, ["LAST_SIGNAL_MEASURED_AT_EPOCH"]);
+      const reportDate = this.getDeviceValue(data, ["LAST_SIGNAL_REPORT_DATE"]);
+      const sourceType = this.getDeviceValue(data, ["LAST_SIGNAL_SOURCE_TYPE"]);
+      const batteryPct = this.getDeviceValue(data, ["LAST_SIGNAL_BATTERY_PCT"]);
+      const batteryMv = this.getDeviceValue(data, ["LAST_SIGNAL_BATTERY_MV"]);
+      const charging = this.booleanValue(this.getDeviceValue(data, ["LAST_SIGNAL_IS_CHARGING"]));
+      const legacyStatusValue = this.getDeviceValue(data, ["LAST_SIGNAL_LEGACY_STATUS"]);
+      const legacyBatteryValue = this.getDeviceValue(data, ["LAST_SIGNAL_LEGACY_BATTERY"]);
+      const legacyStatus = this.hasLastSignalValue(legacyStatusValue) ? legacyStatusValue : packed[1];
+      const legacyBattery = this.hasLastSignalValue(legacyBatteryValue) ? legacyBatteryValue : packed[2];
+      const measuredAtMilliseconds = this.epochMilliseconds(measuredAtEpoch);
+      const reportDateValue = reportDate || packed[0] || "";
+      const epochMilliseconds = measuredAtMilliseconds
+          ?? this.kstReportDateMilliseconds(reportDateValue);
+      const displayDate = Number.isFinite(measuredAtMilliseconds)
+          ? this.formatKstEpoch(measuredAtMilliseconds)
+          : utils.convertFromStrToDate(reportDateValue);
+      const source = this.lastSignalSource(sourceType, legacyStatus);
+      const isInactive = Number.isFinite(epochMilliseconds)
+          && Math.abs(Date.now() - epochMilliseconds) / (60 * 1000) > 90;
+      const sourceIcon = isInactive ? "icon_none.svg" : source.icon;
+      const batteryIcon = isInactive
+          ? "battery/0.svg"
+          : this.lastSignalBatteryIcon(batteryPct, charging, legacyBattery);
+      const batteryDetails = [];
+      if(this.hasLastSignalValue(batteryPct)) batteryDetails.push(`${batteryPct}%`);
+      if(charging !== null) batteryDetails.push(charging ? "충전 중" : "미충전");
+      if(this.hasLastSignalValue(batteryMv)) batteryDetails.push(`${batteryMv}mV`);
+      if(batteryDetails.length === 0 && this.hasLastSignalValue(legacyBattery)) {
+        batteryDetails.push(`배터리 상태 ${legacyBattery}`);
+      }
+      const batteryTitle = batteryDetails.length > 0
+          ? ` title="${this.escapeHtml(batteryDetails.join(" / "))}"`
+          : "";
+
+      return this.escapeHtml(displayDate)
+          + ' <img src="/static/images/' + sourceIcon + '" alt="' + this.escapeHtml(source.code)
+          + '" title="' + this.escapeHtml(source.code) + '" width="42" height="20">'
+          + ' <img src="/static/images/' + batteryIcon + '" alt="battery" width="30"' + batteryTitle + '>';
     },
     onGridReady(params) {
       this.gridApi = params.api;
@@ -527,6 +631,12 @@ export default {
     },
     onPaginationChanged() {
       this.updatePaginationState();
+    },
+    onSelectionChanged() {
+      this.selectedDeviceCount = this.gridApi ? this.gridApi.getSelectedRows().length : 0;
+    },
+    isProtocolDeviceRow(params) {
+      return Boolean(this.getDeviceValue(params.data, ["deviceHash", "DEVICE_HASH"]));
     },
     updatePaginationState() {
       this.totalPages = this.totalRows === 0 ? 0 : Math.ceil(this.totalRows / this.paginationPageSize);
@@ -555,15 +665,33 @@ export default {
     serialNumberValueGetter(params) {
       return this.getDeviceValue(params.data, ["SERIAL_NUMBER", "serialNumber"]);
     },
-    productAuthKeyValueGetter(params) {
-      return this.getDeviceValue(params.data, ["PRODUCT_AUTH_KEY", "productAuthKey"]);
+    deviceHashValueGetter(params) {
+      return this.getDeviceValue(params.data, ["deviceHash", "DEVICE_HASH"]);
+    },
+    deviceLifecycleValueGetter(params) {
+      return this.getDeviceValue(params.data, ["deviceLifecycle", "DEVICE_LIFECYCLE"]);
+    },
+    firmwareValueGetter(params) {
+      return this.getDeviceValue(params.data, ["fwVersion", "FW_VERSION"]);
     },
     deviceLinkRenderer(params) {
       if(utils.isEmpty(params.value)) return "";
-      return '<a class="text-primary" href="javascript:openPopup(\'/devicepopup?device=' + params.value + '\',\'기기 수정\',\'width=700,height=730,left=0,top=0\')">' + params.value + '</a>';
+      return '<a class="text-primary" href="javascript:openPopup(\'/devicepopup?device=' + params.value + '\',\'기기 수정\',\'width=620,height=650,left=0,top=0\')">' + params.value + '</a>';
     },
     lastSignalRenderer(params) {
-      return utils.isEmpty(params.value) ? "" : this.lastSignal(params.value);
+      const data = params.data || {};
+      const hasLastSignal = [
+        "STATUS",
+        "LAST_SIGNAL_MEASURED_AT_EPOCH",
+        "LAST_SIGNAL_REPORT_DATE",
+        "LAST_SIGNAL_SOURCE_TYPE",
+        "LAST_SIGNAL_BATTERY_PCT",
+        "LAST_SIGNAL_BATTERY_MV",
+        "LAST_SIGNAL_IS_CHARGING",
+        "LAST_SIGNAL_LEGACY_STATUS",
+        "LAST_SIGNAL_LEGACY_BATTERY",
+      ].some(key => this.hasLastSignalValue(data[key]));
+      return hasLastSignal ? this.renderLastSignal(data) : "";
     },
     activeStateRenderer(params) {
       const value = this.getDeviceValue(params.data, ["activeState", "ACTIVE_STATE"]) || params.value;
@@ -579,6 +707,39 @@ export default {
       if(!label) return "";
       const className = status ? status.className : 'bg-secondary';
       return '<span class="badge ' + className + '">' + this.escapeHtml(label) + '</span>';
+    },
+    deviceLifecycleRenderer(params) {
+      const lifecycle = this.getDeviceValue(params.data, ["deviceLifecycle", "DEVICE_LIFECYCLE"]);
+      if(!lifecycle) return '<span class="badge bg-secondary">미적용(LEGACY)</span>';
+      const badge = '<span class="badge bg-info text-dark">' + this.escapeHtml(lifecycle) + '</span>';
+      const deviceHash = this.getDeviceValue(params.data, ["deviceHash", "DEVICE_HASH"]);
+      if(!deviceHash) return badge;
+      const url = "/devicelifecyclemanagepopup?deviceHash=" + encodeURIComponent(deviceHash);
+      return '<a href="javascript:openPopup(\'' + url
+          + '\',\'라이프사이클 관리\',\'width=690,height=700,left=0,top=0\')">' + badge + '</a>';
+    },
+    deviceHashLinkRenderer(params) {
+      const deviceHash = this.getDeviceValue(params.data, ["deviceHash", "DEVICE_HASH"]);
+      if(!deviceHash) return "";
+      const deviceIMEI = this.getDeviceValue(params.data, ["deviceIMEI", "DEVICE_IMEI"]);
+      const url = "/devicelifecyclepopup?deviceHash=" + encodeURIComponent(deviceHash)
+          + "&deviceIMEI=" + encodeURIComponent(deviceIMEI || "");
+      return '<a class="text-primary" href="javascript:openPopup(\'' + url
+          + '\',\'기기 프로토콜 상세\',\'width=690,height=700,left=0,top=0\')">'
+          + this.escapeHtml(deviceHash) + '</a>';
+    },
+    firmwareLinkRenderer(params) {
+      const firmwareVersion = this.getDeviceValue(params.data, ["fwVersion", "FW_VERSION"]);
+      const deviceHash = this.getDeviceValue(params.data, ["deviceHash", "DEVICE_HASH"]);
+      if(!firmwareVersion || !deviceHash) return "";
+      const url = "/fotapopup?deviceHashes=" + encodeURIComponent(deviceHash);
+      return '<a class="text-primary" href="javascript:openPopup(\'' + url
+          + '\',\'펌웨어/FOTA 관리\',\'width=820,height=740,left=0,top=0\')">'
+          + this.escapeHtml(firmwareVersion) + '</a>';
+    },
+    onLifecycleChanged(event) {
+      if(event?.origin !== window.location.origin || event?.data?.type !== "DEVICE_LIFECYCLE_CHANGED") return;
+      this.selectDeviceList(false);
     },
     getDeviceValue(row, keys) {
       if(!row || typeof row !== "object") return "";
@@ -603,6 +764,11 @@ export default {
       return rows || [];
     },
     async selectDeviceList(resetPage = true) {
+      if(this._deviceFilterTimer) {
+        clearTimeout(this._deviceFilterTimer);
+        this._deviceFilterTimer = null;
+      }
+      const requestSequence = ++this._listRequestSequence;
       if(resetPage) this.currentPage = 1;
       if(this.gridApi) this.gridApi.showLoadingOverlay();
       const param = {
@@ -614,11 +780,14 @@ export default {
       };
       try {
         const res = await api.selDeviceList(param);
+        if(requestSequence !== this._listRequestSequence) return;
         if(res.data.status === "SUCCESS") {
           const data = res.data.data || {};
           this.deviceList = this.toDeviceRows(data);
+          this.selectedDeviceCount = 0;
           this.totalRows = data.totalCount || this.deviceList.length;
           this.$nextTick(() => {
+            if(requestSequence !== this._listRequestSequence) return;
             this.updatePaginationState();
             if(this.gridApi && this.deviceList.length === 0) {
               this.gridApi.showNoRowsOverlay();
@@ -628,6 +797,7 @@ export default {
           });
         }
       } catch (e) {
+        if(requestSequence !== this._listRequestSequence) return;
         this.handleScopeError(e);
       }
 
@@ -721,6 +891,8 @@ export default {
   },
   created(){
     // 팝업창에서 selectDeviceList 를 호출하기 위한 설정
+    this._deviceFilterTimer = null;
+    this._listRequestSequence = 0;
     window.vueComponent = this;
   }
 }

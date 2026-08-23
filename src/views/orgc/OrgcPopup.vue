@@ -6,7 +6,7 @@
 
     <div class="card">
       <div class="card-body pb-0">
-        <table class="table table-sm table-bordered">
+        <table class="table table-sm table-bordered popup-form-table">
           <tbody>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">기관명</th>

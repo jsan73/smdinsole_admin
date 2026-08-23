@@ -60,6 +60,15 @@ export default {
 	getDeviceInfo(deviceIMEI) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/get/' + deviceIMEI);
 	},
+	getDeviceProtocol(deviceHash) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/get/' + deviceHash);
+	},
+	changeDeviceLifecycle(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/lifecycle', param);
+	},
+	getDeviceLocations(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/locations/list', param);
+	},
 	getAdminDeviceNotice(deviceNo) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/notice/get/' + deviceNo);
 	},
@@ -80,14 +89,20 @@ export default {
 	},
 
 	// Fota
-	getDeviceFotaInfo() {
-		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/fota/get`)
+	getDeviceFirmwareList(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/firmware/list`, param)
 	},
-	regDeviceFota(param) {
-		return http.postFile(process.env.VUE_APP_SERVER_URL + `/api/admin/device/fota/reg`, param)
+	uploadDeviceFirmware(param) {
+		return http.postFile(process.env.VUE_APP_SERVER_URL + `/api/admin/device/firmware/upload`, param)
 	},
-	delDeviceFota() {
-		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/fota/del`)
+	setDeviceFirmwareTarget(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/firmware/target`, param)
+	},
+	setDeviceFirmwareTargetBulk(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/firmware/target/bulk`, param)
+	},
+	clearDeviceFirmwareTarget(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/firmware/target/clear`, param)
 	},
 
 	// 사용자관리

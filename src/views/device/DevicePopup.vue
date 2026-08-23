@@ -9,7 +9,7 @@
 
     <div class="card border-0 shadow-sm">
       <div class="card-body p-3">
-        <table class="table table-sm table-bordered align-middle mb-0 device-form-table">
+        <table class="table table-sm table-bordered align-middle mb-0 device-form-table popup-form-table">
           <tbody>
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">IMEI</th>
@@ -20,7 +20,7 @@
           <tr>
             <th class="text-center align-middle bg-dark small" style="--bs-bg-opacity: .05;" scope="col" width="28%">시리얼 번호</th>
             <td>
-              <div class="serial-auth-row">
+              <div class="serial-input-row">
                 <input
                     type="text"
                     v-model="device.serialNumber"
@@ -30,10 +30,6 @@
                     maxlength="14"
                     :readonly="popupState == 'upd' || isReplaceMode"
                 ><button v-if="popupState == 'ins'" type="button" class="btn btn-secondary btn-sm" @click="chkSerialNumber">시리얼 번호 체크</button>
-                <template v-if="device.productAuthKey">
-                  <span class="serial-auth-label">제품 인증키</span>
-                  <span class="serial-auth-key">{{ device.productAuthKey }}</span>
-                </template>
               </div>
             </td>
           </tr>
@@ -155,6 +151,17 @@
         </div>
       </template>
     </div>
+    <div v-if="errorPopup.visible" class="error-popup-overlay" @click.self="closeErrorPopup">
+      <div class="error-popup card shadow">
+        <div class="card-body">
+          <h6 class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> 처리 오류</h6>
+          <p class="mb-3">{{ errorPopup.message }}</p>
+          <div class="text-end">
+            <button type="button" class="btn btn-secondary btn-sm" @click="closeErrorPopup">확인</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </template>
@@ -171,7 +178,6 @@ export default {
         deviceNo:0,
         deviceIMEI:'',
         serialNumber:'',
-        productAuthKey:'',
         iccId:'',
         iotPlan:'',
         deviceNumber:'',
@@ -200,6 +206,7 @@ export default {
       originalDevice: null,
       isReplaceMode: false,
       serialChecked: false,
+      errorPopup: { visible: false, message: "" },
       sizes: [
         { value: 0, label: '선택 안함' },
         { value: 230, label: '230' },
@@ -296,7 +303,6 @@ export default {
       this.device = {
         ...data,
         serialNumber: data.serialNumber || data.SERIAL_NUMBER || '',
-        productAuthKey: data.productAuthKey || data.PRODUCT_AUTH_KEY || '',
         orgcNo: data.orgcNo || data.ORGC_NO || 0,
         deviceSize: data.deviceSize || data.DEVICE_SIZE || 0,
       };
@@ -669,8 +675,6 @@ export default {
         "active_state",
         "active_state_name",
         "SERIAL_NUMBER",
-        "productAuthKey",
-        "PRODUCT_AUTH_KEY",
         "serialChecked",
       ].forEach(key => {
         delete param[key];
@@ -692,6 +696,16 @@ export default {
         this.handleScopeError(e);
       }
 
+    },
+    showApiError(error, fallback) {
+      const data = error?.response?.data;
+      this.showError(data?.message || data?.data?.message || error?.message || fallback);
+    },
+    showError(message) {
+      this.errorPopup = { visible: true, message };
+    },
+    closeErrorPopup() {
+      this.errorPopup = { visible: false, message: "" };
     },
     handleScopeError(e) {
       const status = e?.response?.status;
@@ -766,27 +780,26 @@ export default {
   justify-content: flex-end;
   margin-left: auto;
 }
+.error-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .45);
+}
 
-.serial-auth-row {
+.error-popup {
+  width: 420px;
+  max-width: calc(100vw - 40px);
+}
+
+.serial-input-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-}
-
-.serial-auth-label {
-  color: #495057;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.serial-auth-key {
-  color: #0d6efd;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 32px;
-  word-break: break-all;
 }
 
 @media (max-width: 560px) {

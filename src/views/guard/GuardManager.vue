@@ -8,7 +8,7 @@
     <section class="section dashboard">
       <div class="row">
         <div class="col-lg-12">
-          <div class="card">
+          <div class="card compact-search">
             <div class="card-body pb-0">
               <div class="row my-3 align-items-center">
                 <div class="col d-flex flex-wrap gap-3">
@@ -81,63 +81,66 @@
                   :pagination="false"
                   :paginationPageSize="paginationPageSize"
                   :suppressPaginationPanel="true"
-                  :rowHeight="42"
-                  :headerHeight="42"
+                  :rowHeight="34"
+                  :headerHeight="36"
                   :overlayNoRowsTemplate="overlayNoRowsTemplate"
                   :overlayLoadingTemplate="overlayLoadingTemplate"
                   @grid-ready="onGridReady"
                   @pagination-changed="onPaginationChanged"
               />
-              <div class="grid-pagination-wrap">
-                <div v-if="totalPages > 1" class="grid-pagination">
-                  <button
-                      type="button"
-                      class="btn btn-sm btn-outline-secondary"
-                      :disabled="currentPage === 1"
-                      @click="goToPage(1)"
-                  >
-                    처음
-                  </button>
-                  <button
-                      type="button"
-                      class="btn btn-sm btn-outline-secondary"
-                      :disabled="currentPage === 1"
-                      @click="goToPage(currentPage - 1)"
-                  >
-                    이전
-                  </button>
-                  <button
-                      v-for="page in paginationPages"
-                      :key="page"
-                      type="button"
-                      class="btn btn-sm"
-                      :class="page === currentPage ? 'btn-primary' : 'btn-outline-secondary'"
-                      @click="goToPage(page)"
-                  >
-                    {{ page }}
-                  </button>
-                  <button
-                      type="button"
-                      class="btn btn-sm btn-outline-secondary"
-                      :disabled="currentPage === totalPages"
-                      @click="goToPage(currentPage + 1)"
-                  >
-                    다음
-                  </button>
-                  <button
-                      type="button"
-                      class="btn btn-sm btn-outline-secondary"
-                      :disabled="currentPage === totalPages"
-                      @click="goToPage(totalPages)"
-                  >
-                    마지막
-                  </button>
+              <div class="grid-pagination-footer">
+                <div class="grid-pagination-balance" aria-hidden="true"></div>
+                <div class="grid-pagination-wrap">
+                  <div v-if="totalPages > 1" class="grid-pagination">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        :disabled="currentPage === 1"
+                        @click="goToPage(1)"
+                    >
+                      처음
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        :disabled="currentPage === 1"
+                        @click="goToPage(currentPage - 1)"
+                    >
+                      이전
+                    </button>
+                    <button
+                        v-for="page in paginationPages"
+                        :key="page"
+                        type="button"
+                        class="btn btn-sm"
+                        :class="page === currentPage ? 'btn-primary' : 'btn-outline-secondary'"
+                        @click="goToPage(page)"
+                    >
+                      {{ page }}
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        :disabled="currentPage === totalPages"
+                        @click="goToPage(currentPage + 1)"
+                    >
+                      다음
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        :disabled="currentPage === totalPages"
+                        @click="goToPage(totalPages)"
+                    >
+                      마지막
+                    </button>
+                  </div>
+                </div>
+                <div class="grid-pagination-actions">
+                  <button class="btn btn-primary mt-2 ms-1" @click="appendGuard">사용자 등록</button>
+                  <button class="btn btn-primary mt-2 ms-1" @click="allList">전체목록</button>
                 </div>
               </div>
-              <p class="text-end">
-                <button class="btn btn-primary mt-2 ms-1" @click="appendGuard">사용자 등록</button>
-                <button class="btn btn-primary mt-2 ms-1" @click="allList">전체목록</button>
-              </p>
             </div>
           </div><!--// 목록 테이블 -->
 
@@ -261,13 +264,13 @@ export default {
     openGuard(guardNo) {
       const url = `/guardPopup?guardNo=${guardNo}`;
       const name = "사용자 수정";
-      const style = "width=700,height=500,left=0,top=0";
+      const style = "width=630,height=450,left=0,top=0";
       this.$open(url, name, style);
     },
     appendGuard(){
       const url = '/guardPopup';
       const name = "사용자 추가";
-      const style = "width=650,height=500,left=0,top=0";
+      const style = "width=600,height=450,left=0,top=0";
       this.$open(url, name, style);
     },
     telForm(data) {
