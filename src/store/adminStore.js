@@ -82,15 +82,17 @@ const adminStore = {
             }
         },
         setPwdChange: (state, payload) => {
+            state.adminInfo.pwdChangeType = payload;
             sessionStorage.setItem('admin_pwdChangeType', payload);
 
         },
         // 추가: pwdChange만 별도로 초기화해야 할 경우를 대비
         clearPwdChange: (state) => {
-            state.adminInfo.pwdChange = 'N';
+            state.adminInfo.pwdChangeType = 'N';
             sessionStorage.removeItem('admin_pwdChangeType');
         },
         clearAuth: (state) => {
+            state.adminInfo.pwdChangeType = 'N';
             state.adminInfo.token = '';
             state.adminInfo.roles = [];
             state.adminInfo.adminId = '';

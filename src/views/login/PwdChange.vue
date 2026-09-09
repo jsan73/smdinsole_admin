@@ -92,10 +92,13 @@ export default {
         const params = { mgrId: this.loginId, newPwd: this.password, pwdChangeType: this.pwdChangeType };
         if (this.pwdChangeType === 'PF') params.currentPwd = this.cur_password;
         const res = await api.updChangePwd(params);
-        if (res.data.status === "SUCCESS") {
+        const response = res.data;
+        if (response.status === "SUCCESS" && response.code === 0) {
           this.isSuccess = true;
           this.clearPwdChange();
           this.commitToken('')
+        } else {
+          alert(response.message || "변경 실패");
         }
       } catch (e) { alert(e.response?.data?.message || "변경 실패"); }
     },
