@@ -44,6 +44,19 @@
         </div>
       </div>
 
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-3">
+          <h6 class="fw-bold mb-2">SOS 상태</h6>
+          <table class="table table-sm table-bordered align-middle mb-0"><tbody>
+          <tr><th>현재 긴급 모드</th><td>{{ emergencyModeLabel(commandStatus.currentEmergencyMode) }}
+            <span v-if="commandStatus.emergencyStopPending" class="badge bg-warning text-dark ms-2">&#51333;&#47308; &#51204;&#45804; &#45824;&#44592;</span>
+            <button v-if="commandStatus.currentEmergencyMode === true" type="button" class="btn btn-outline-danger btn-sm ms-2" :disabled="stoppingEmergency || commandStatus.emergencyStopPending" @click="stopEmergencyMode">긴급 모드 종료</button></td></tr>
+          <tr><th>발령 주체</th><td>{{ emergencySourceLabel(commandStatus.currentEmergencySource) }}</td></tr>
+          <tr><th>최근 보고 시각</th><td>{{ formatDate(commandStatus.reportedAt) }}</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+
       <div class="card border-0 shadow-sm">
         <div class="card-body p-3">
           <h6 class="fw-bold mb-3">최근 Diagnostics</h6>
@@ -100,6 +113,10 @@ export default {
       deviceIMEI: "",
       identity: {},
       protocol: {},
+      commandStatus: {},
+      stoppingEmergency: false,
+      commandStatusTimer: null,
+      commandStatusLoading: false,
       loading: false,
       errorPopup: { visible: false, message: "" },
     };
@@ -121,6 +138,10 @@ export default {
       return;
     }
     this.loadDetail();
+    this.commandStatusTimer = window.setInterval(this.loadCommandStatus, 10000);
+  },
+  beforeDestroy() {
+    if(this.commandStatusTimer) window.clearInterval(this.commandStatusTimer);
   },
   methods: {
     async loadDetail() {
@@ -131,6 +152,7 @@ export default {
           throw new Error(protocolResponse.data.message || "프로토콜 정보를 조회하지 못했습니다.");
         }
         this.protocol = protocolResponse.data.data || {};
+        await this.loadCommandStatus();
 
         if(this.deviceIMEI) {
           const identityResponse = await api.getDeviceInfo(this.deviceIMEI);
@@ -142,6 +164,34 @@ export default {
         this.showApiError(error, "프로토콜 정보를 조회하지 못했습니다.");
       } finally {
         this.loading = false;
+      }
+    },
+    async loadCommandStatus() {
+      if(this.commandStatusLoading) return;
+      this.commandStatusLoading = true;
+      try {
+        const response = await api.getDeviceCommandStatus(this.deviceHash);
+        if(response.data.status === "SUCCESS") this.commandStatus = response.data.data || {};
+      } catch (error) {
+        // Optional status lookup must not block the existing detail view.
+      } finally {
+        this.commandStatusLoading = false;
+      }
+    },
+    async stopEmergencyMode() {
+      if(this.stoppingEmergency || this.commandStatus.emergencyStopPending) return;
+      if(!window.confirm("긴급 모드 종료를 단말에 전달하시겠습니까? 다음 단말 요청에서 적용됩니다.")) return;
+      this.stoppingEmergency = true;
+      try {
+        const response = await api.requestDeviceEmergencyStop({ deviceHash: this.deviceHash });
+        if(response.data.status !== "SUCCESS") throw new Error(response.data.message || "긴급 모드 종료를 요청하지 못했습니다.");
+        const stopPending = response.data.data && response.data.data.stopPending === true;
+        this.commandStatus = { ...this.commandStatus, emergencyStopPending: stopPending };
+        await this.loadCommandStatus();
+      } catch (error) {
+        this.showApiError(error, "긴급 모드 종료를 요청하지 못했습니다.");
+      } finally {
+        this.stoppingEmergency = false;
       }
     },
     openLocationRecordPopup() {
@@ -169,6 +219,15 @@ export default {
       };
       if(!value) return "-";
       return labels[value] ? labels[value] + " (" + value + ")" : value;
+    },
+    emergencyModeLabel(value) {
+      if(value === true) return "SOS 활성";
+      if(value === false) return "SOS 비활성";
+      return "미보고";
+    },
+    emergencySourceLabel(value) {
+      const labels = { USER: "단말 사용자 (USER)", SERVER: "서버 (SERVER)" };
+      return labels[value] || value || "-";
     },
     identityValue(keys) {
       const key = keys.find(item => this.identity[item] !== undefined && this.identity[item] !== null);

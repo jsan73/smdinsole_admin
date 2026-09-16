@@ -1,7 +1,7 @@
 <template>
   <div class="device-lifecycle-manage-popup p-4">
     <div class="d-flex align-items-center justify-content-between mb-3">
-      <h5 class="mb-0"><i class="bi bi-caret-right-square"></i> 라이프사이클 관리</h5>
+      <h5 class="mb-0"><i class="bi bi-caret-right-square"></i> Device settings</h5>
       <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="loading" @click="loadDetail">새로고침</button>
     </div>
 
@@ -66,6 +66,52 @@
         </div>
       </div>
 
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-3">
+          <h6 class="fw-bold mb-3">SOS</h6>
+          <table class="table table-sm table-bordered align-middle mb-0">
+            <tbody>
+            <tr><th>현재 상태</th><td>{{ emergencyModeLabel(commandStatus.currentEmergencyMode) }}</td></tr>
+            <tr><th>발령 주체</th><td>{{ displayValue(commandStatus.currentEmergencySource) }}</td></tr>
+            <tr><th>최근 보고 시각</th><td>{{ formatDate(commandStatus.reportedAt) }}</td></tr>
+            <tr><th>종료 요청</th><td>
+              <span v-if="commandStatus.emergencyStopPending" class="badge bg-warning text-dark me-2">종료 전달 대기</span>
+              <button v-if="commandStatus.currentEmergencyMode === true" type="button" class="btn btn-outline-danger btn-sm" :disabled="stoppingEmergency || commandStatus.emergencyStopPending" @click="stopEmergencyMode">긴급 모드 종료</button>
+              <span v-else class="text-muted">요청할 SOS가 없습니다.</span>
+            </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-3">
+          <h6 class="fw-bold mb-3">Timetable</h6>
+          <table class="table table-sm table-bordered align-middle mb-3"><tbody>
+          <tr><th>현재 mode</th><td>{{ displayValue(protocol.scheduleMode) }}</td></tr>
+          <tr><th>목표 version</th><td>{{ displayValue(protocol.targetScheduleVersion) }}</td></tr>
+          <tr><th>단말 보고 version</th><td>{{ displayValue(protocol.reportedScheduleVersion) }}</td></tr>
+          <tr><th>Timetable</th><td class="text-break">{{ displayValue(protocol.scheduleTimetable) }}</td></tr>
+          </tbody></table>
+          <div class="row g-2 align-items-end">
+            <div class="col-md-3"><label for="scheduleMode" class="form-label">변경 mode</label><select id="scheduleMode" v-model="scheduleMode" class="form-select"><option value="DAILY">DAILY</option><option value="OUTDOOR">OUTDOOR</option><option value="CUSTOM">CUSTOM</option></select></div>
+            <div class="col-md-7"><label for="scheduleTimeSet" class="form-label">CUSTOM timeSet</label><input id="scheduleTimeSet" v-model.trim="scheduleTimeSetText" type="text" class="form-control" placeholder="예: 0910,1000,1520" :disabled="scheduleMode !== 'CUSTOM'"><small class="text-muted">CUSTOM일 때 HHmm(10분 단위)를 쉼표로 구분합니다.</small></div>
+            <div class="col-md-2"><button type="button" class="btn btn-primary btn-sm w-100" :disabled="savingSchedule" @click="saveSchedule">{{ savingSchedule ? '저장 중...' : '저장' }}</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-3">
+          <h6 class="fw-bold mb-3">기기별 FOTA Target</h6>
+          <table class="table table-sm table-bordered align-middle mb-3"><tbody>
+          <tr><th>현재 target</th><td>{{ displayValue(protocol.targetFirmwareVersion) }} <span v-if="targetCatalogAvailable === false" class="badge bg-warning text-dark ms-2">Catalog 없음</span></td></tr>
+          </tbody></table>
+          <div class="row g-2 align-items-end"><div class="col-md-8"><label for="targetFirmwareVersion" class="form-label">Target version</label><input id="targetFirmwareVersion" v-model.trim="targetFirmwareVersion" type="text" class="form-control" placeholder="예: 1.1.15"></div><div class="col-md-2"><button type="button" class="btn btn-primary btn-sm w-100" :disabled="savingFirmwareTarget || !targetFirmwareVersion" @click="setFirmwareTarget">설정</button></div><div class="col-md-2"><button type="button" class="btn btn-outline-secondary btn-sm w-100" :disabled="savingFirmwareTarget || !protocol.targetFirmwareVersion" @click="clearFirmwareTarget">해제</button></div></div>
+          <small class="text-muted d-block mt-2">Target은 단말이 판단해 적용하며, catalog 삭제 시 자동 해제되지 않습니다.</small>
+        </div>
+      </div>
+
       <div class="card border-0 shadow-sm">
         <div class="card-body p-3">
           <h6 class="fw-bold mb-3">변경 이력</h6>
@@ -115,9 +161,11 @@ import api from "@/api/api";
 import utils from "@/utils/utils";
 
 const ADMIN_TRANSITIONS = {
-  AS_MODE: ["READY", "INACTIVE"],
-  READY: ["ACTIVE", "INACTIVE"],
-  ACTIVE: ["AS_MODE", "INACTIVE"],
+  FACTORY_MODE: [],
+  AS_MODE: ["READY", "INACTIVE", "FACTORY_MODE"],
+  READY: ["ACTIVE", "INACTIVE", "FACTORY_MODE"],
+  ACTIVE: ["AS_MODE", "INACTIVE", "FACTORY_MODE"],
+  INACTIVE: ["FACTORY_MODE"],
 };
 
 export default {
@@ -130,6 +178,14 @@ export default {
       reason: "",
       loading: false,
       changing: false,
+      commandStatus: {},
+      stoppingEmergency: false,
+      scheduleMode: "DAILY",
+      scheduleTimeSetText: "",
+      savingSchedule: false,
+      targetFirmwareVersion: "",
+      savingFirmwareTarget: false,
+      targetCatalogAvailable: null,
       errorPopup: { visible: false, message: "" },
     };
   },
@@ -160,6 +216,10 @@ export default {
         this.protocol = response.data.data || {};
         this.targetLifecycle = "";
         this.reason = "";
+        this.scheduleMode = this.protocol.scheduleMode || "DAILY";
+        this.scheduleTimeSetText = "";
+        this.targetFirmwareVersion = this.protocol.targetFirmwareVersion || "";
+        await Promise.all([this.loadCommandStatus(), this.loadTargetCatalogState()]);
       } catch (error) {
         this.showApiError(error, "라이프사이클 정보를 조회하지 못했습니다.");
       } finally {
@@ -173,8 +233,10 @@ export default {
       }
       const currentLifecycle = this.protocol.deviceLifecycle;
       const targetLifecycle = this.targetLifecycle;
-      if(!window.confirm(`${currentLifecycle} → ${targetLifecycle}로 변경하시겠습니까?\n변경 후 단말 동작에 즉시 반영됩니다.`)) return;
-
+      const warning = targetLifecycle === "FACTORY_MODE"
+          ? currentLifecycle + " -> FACTORY_MODE: revoke existing keys and require registration with matching IMEI/ICCID/SERIAL. Continue?"
+          : currentLifecycle + " -> " + targetLifecycle + ": Continue?";
+      if(!window.confirm(warning)) return;
       this.changing = true;
       try {
         const response = await api.changeDeviceLifecycle({
@@ -197,6 +259,92 @@ export default {
       } finally {
         this.changing = false;
       }
+    },
+    async loadCommandStatus() {
+      try {
+        const response = await api.getDeviceCommandStatus(this.deviceHash);
+        if(response.data.status === "SUCCESS") this.commandStatus = response.data.data || {};
+      } catch (error) {
+        this.commandStatus = {};
+      }
+    },
+    async stopEmergencyMode() {
+      if(this.stoppingEmergency || this.commandStatus.emergencyStopPending) return;
+      if(!window.confirm("긴급 모드 종료를 다음 단말 요청 응답에 전달하시겠습니까?")) return;
+      this.stoppingEmergency = true;
+      try {
+        const response = await api.requestDeviceEmergencyStop({ deviceHash: this.deviceHash });
+        if(response.data.status !== "SUCCESS") throw new Error(response.data.message || "긴급 모드 종료를 요청하지 못했습니다.");
+        await this.loadCommandStatus();
+      } catch (error) {
+        this.showApiError(error, "긴급 모드 종료를 요청하지 못했습니다.");
+      } finally {
+        this.stoppingEmergency = false;
+      }
+    },
+    scheduleTimeSet() {
+      if(this.scheduleMode !== "CUSTOM") return undefined;
+      return this.scheduleTimeSetText.split(",").map(value => value.trim()).filter(Boolean);
+    },
+    async saveSchedule() {
+      this.savingSchedule = true;
+      try {
+        const response = await api.updateDeviceSchedule({ deviceHash: this.deviceHash, mode: this.scheduleMode, timeSet: this.scheduleTimeSet() });
+        if(response.data.status !== "SUCCESS") throw new Error(response.data.message || "시간표를 저장하지 못했습니다.");
+        const result = response.data.data || {};
+        this.protocol = { ...this.protocol, scheduleMode: result.mode, targetScheduleVersion: result.scheduleVersion, scheduleTimetable: result.timetable };
+        this.scheduleMode = result.mode || this.scheduleMode;
+        this.scheduleTimeSetText = Array.isArray(result.timeSet) ? result.timeSet.join(",") : "";
+      } catch (error) {
+        this.showApiError(error, "시간표를 저장하지 못했습니다.");
+      } finally {
+        this.savingSchedule = false;
+      }
+    },
+    async loadTargetCatalogState() {
+      const version = String(this.protocol.targetFirmwareVersion || "").trim();
+      if(!version) { this.targetCatalogAvailable = null; return; }
+      try {
+        const response = await api.getDeviceFirmwareList({ pageNo: 1, pageSize: 20, searchKeyword: version });
+        if(response.data.status !== "SUCCESS") { this.targetCatalogAvailable = null; return; }
+        const items = response.data.data && Array.isArray(response.data.data.items) ? response.data.data.items : [];
+        this.targetCatalogAvailable = items.some(item => item.version === version);
+      } catch (error) {
+        this.targetCatalogAvailable = null;
+      }
+    },
+    async setFirmwareTarget() {
+      this.savingFirmwareTarget = true;
+      try {
+        const response = await api.setDeviceFirmwareTarget({ deviceHash: this.deviceHash, targetVersion: this.targetFirmwareVersion });
+        if(response.data.status !== "SUCCESS") throw new Error(response.data.message || "FOTA Target을 설정하지 못했습니다.");
+        this.protocol = { ...this.protocol, targetFirmwareVersion: this.targetFirmwareVersion };
+        this.targetCatalogAvailable = true;
+      } catch (error) {
+        this.showApiError(error, "FOTA Target을 설정하지 못했습니다.");
+      } finally {
+        this.savingFirmwareTarget = false;
+      }
+    },
+    async clearFirmwareTarget() {
+      if(!window.confirm("FOTA Target을 해제하시겠습니까?")) return;
+      this.savingFirmwareTarget = true;
+      try {
+        const response = await api.clearDeviceFirmwareTarget({ deviceHash: this.deviceHash });
+        if(response.data.status !== "SUCCESS") throw new Error(response.data.message || "FOTA Target을 해제하지 못했습니다.");
+        this.protocol = { ...this.protocol, targetFirmwareVersion: null };
+        this.targetFirmwareVersion = "";
+        this.targetCatalogAvailable = null;
+      } catch (error) {
+        this.showApiError(error, "FOTA Target을 해제하지 못했습니다.");
+      } finally {
+        this.savingFirmwareTarget = false;
+      }
+    },
+    emergencyModeLabel(value) {
+      if(value === true) return "SOS 활성";
+      if(value === false) return "SOS 비활성";
+      return "미보고";
     },
     displayValue(value) {
       return value === null || value === undefined || value === "" ? "-" : value;

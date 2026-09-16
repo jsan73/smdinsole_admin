@@ -37,6 +37,7 @@
               <th>원본 파일명</th>
               <th>크기</th>
               <th>등록일</th>
+              <th v-if="isSuperAdmin">관리</th>
             </tr>
             </thead>
             <tbody>
@@ -46,9 +47,10 @@
               <td>{{ item.originalFileName }}</td>
               <td>{{ formatFileSize(item.fileSize) }}</td>
               <td>{{ formatDate(item.regDate) }}</td>
+              <td v-if="isSuperAdmin" class="text-center"><button type="button" class="btn btn-outline-danger btn-sm" :disabled="deletingVersion === item.version" @click.stop="deleteFirmware(item)">{{ deletingVersion === item.version ? '삭제 중...' : '삭제' }}</button></td>
             </tr>
             <tr v-if="firmwareItems.length === 0">
-              <td colspan="5" class="text-center text-muted py-3">등록된 펌웨어가 없습니다.</td>
+              <td :colspan="isSuperAdmin ? 6 : 5" class="text-center text-muted py-3">등록된 펌웨어가 없습니다.</td>
             </tr>
             </tbody>
           </table>
@@ -112,6 +114,7 @@ export default {
       pageSize: 20,
       totalCount: 0,
       deviceHashes: [],
+      deletingVersion: "",
       errorPopup: { visible: false, message: "" },
     };
   },
@@ -190,6 +193,23 @@ export default {
         this.showApiError(error, "펌웨어를 업로드하지 못했습니다.");
       } finally {
         this.uploading = false;
+      }
+    },
+    async deleteFirmware(item) {
+      if(!this.isSuperAdmin || !item || !item.version) return;
+      if(!window.confirm(item.version + " 펌웨어 catalog와 저장 파일을 삭제하시겠습니까? 이 작업은 복구할 수 없습니다.")) return;
+      this.deletingVersion = item.version;
+      try {
+        const response = await api.deleteDeviceFirmware({ version: item.version });
+        this.requireSuccess(response, "펌웨어를 삭제하지 못했습니다.");
+        if(this.selectedVersion === item.version) this.selectedVersion = "";
+        const remaining = this.firmwareItems.length - 1;
+        if(remaining === 0 && this.pageNo > 1) this.pageNo -= 1;
+        await this.loadFirmwareList();
+      } catch (error) {
+        this.showApiError(error, "펌웨어를 삭제하지 못했습니다.");
+      } finally {
+        this.deletingVersion = "";
       }
     },
     async setSelectedTargets() {

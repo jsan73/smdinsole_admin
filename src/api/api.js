@@ -63,11 +63,29 @@ export default {
 	getDeviceProtocol(deviceHash) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/get/' + deviceHash);
 	},
+	getDeviceCommandStatus(deviceHash) {
+		return http.get(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/command-status/' + deviceHash);
+	},
+    requestDeviceEmergencyStop(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/emergency/stop', param);
+	},
 	changeDeviceLifecycle(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/lifecycle', param);
 	},
 	getDeviceLocations(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/locations/list', param);
+	},
+	getDeviceLocationDetail(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/locations/detail', param);
+	},
+	getDeviceLocationMap(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/locations/map', param);
+	},
+	deleteDeviceLocation(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/locations/delete', param);
+	},
+	updateDeviceSchedule(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/schedule', param);
 	},
 	getAdminDeviceNotice(deviceNo) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/notice/get/' + deviceNo);
@@ -103,6 +121,9 @@ export default {
 	},
 	clearDeviceFirmwareTarget(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/firmware/target/clear`, param)
+	},
+	deleteDeviceFirmware(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + `/api/admin/device/firmware/delete`, param)
 	},
 
 	// 사용자관리

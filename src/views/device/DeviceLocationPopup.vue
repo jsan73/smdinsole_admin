@@ -1,382 +1,196 @@
 <template>
-  <div class="device-location-popup p-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
+  <div class="location-log-popup">
+    <header class="page-header">
       <div>
-        <h5 class="mb-1"><i class="bi bi-caret-right-square"></i> 기기 위치 기록</h5>
-        <small class="text-muted">Device Hash: {{ deviceHash || "-" }}</small>
+        <div class="breadcrumb-line">Device Management <i class="bi bi-chevron-right"></i> Location Log</div>
+        <h4 v-if="view === 'MAP'" class="page-title">Location Map</h4><h4 v-else class="page-title">Location Log <span>— {{ viewTitle }}</span></h4>
+        <div class="device-identity">
+          <span><b>Hash</b>{{ deviceHash || "-" }}</span>
+          <span><b>IMEI</b>{{ deviceIMEI || "-" }}</span>
+          <span><b>SERIAL</b>{{ serialNumber || "-" }}</span>
+        </div>
       </div>
-      <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="locationLoading" @click="loadLocations">새로고침</button>
-    </div>
+      <div class="header-actions">
+        <button v-if="view !== 'LIST'" type="button" class="btn btn-light btn-sm" @click="back">
+          <i class="bi bi-arrow-left"></i> {{ view === "DETAIL" && previousView === "MAP" ? "지도로" : "위치 로그 목록" }}
+        </button>
+        <button v-if="view === 'LIST'" type="button" class="btn btn-primary btn-sm" :disabled="loading" @click="openMap()">
+          <i class="bi bi-map"></i> 지도에서 위치 보기
+        </button>
+      </div>
+    </header>
 
-    <div class="card border-0 shadow-sm">
-      <div class="card-body p-3">
-        <form class="row g-2 align-items-end mb-3" @submit.prevent="searchLocations">
-          <div class="col-md-4">
-            <label for="locationStartDate" class="form-label mb-1">시작일</label>
-            <input id="locationStartDate" v-model="locationStartDate" type="date" class="form-control form-control-sm">
-          </div>
-          <div class="col-md-4">
-            <label for="locationEndDate" class="form-label mb-1">종료일</label>
-            <input id="locationEndDate" v-model="locationEndDate" type="date" class="form-control form-control-sm">
-          </div>
-          <div class="col-md-4 d-flex align-items-center gap-2">
-            <button type="submit" class="btn btn-primary btn-sm" :disabled="locationLoading">검색</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="locationLoading" @click="resetLocationSearch">기간 초기화</button>
-          </div>
+    <main v-if="view === 'LIST'" class="view-body list-view">
+      <div class="filter-panel">
+        <div class="lifecycle-filter">
+          <span class="filter-label">Lifecycle</span>
+          <button
+              v-for="item in lifecycleOptions"
+              :key="item"
+              type="button"
+              class="status-chip"
+              :class="{ active: listState.lifecycle === item }"
+              @click="selectLifecycle(item)"
+          >{{ item }}</button>
+        </div>
+        <form class="search-row" @submit.prevent="search">
+          <input v-model="listState.startDate" type="date" class="form-control form-control-sm" aria-label="시작일">
+          <span class="range-separator">~</span>
+          <input v-model="listState.endDate" type="date" class="form-control form-control-sm" aria-label="종료일">
+          <select v-model="listState.sourceType" class="form-select form-select-sm" aria-label="Source">
+            <option value="">전체 Source</option><option v-for="item in sourceTypes" :key="item">{{ item }}</option>
+          </select>
+          <button class="btn btn-dark btn-sm" :disabled="loading">조회</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="loading" @click="resetSearch">초기화</button>
+          <button type="button" class="btn btn-link btn-sm ms-auto" :disabled="loading" @click="loadList"><i class="bi bi-arrow-clockwise"></i> 새로고침</button>
         </form>
-
-        <div v-if="locationLoading" class="text-center text-muted py-4">
-          <span class="spinner-border spinner-border-sm me-2"></span>위치 기록 조회 중...
-        </div>
-        <div v-else class="table-responsive unified-location-table-wrap">
-          <table class="table table-sm table-striped table-bordered align-middle mb-0">
-            <thead>
-            <tr>
-              <th>위치 번호</th>
-              <th>순번</th>
-              <th>측정 시각</th>
-              <th>수신 시각</th>
-              <th>Source</th>
-              <th>배터리</th>
-              <th>전압(mV)</th>
-              <th>충전</th>
-              <th>위도</th>
-              <th>경도</th>
-              <th>정확도</th>
-              <th>Fix age</th>
-              <th>처리상태</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="location in locationRows" :key="location.locationNo">
-              <td>{{ displayValue(location.locationNo) }}</td>
-              <td>{{ displayValue(location.recordIndex) }}</td>
-              <td>{{ formatMeasuredAt(location) }}</td>
-              <td>{{ formatDate(location.reportDate) }}</td>
-              <td>{{ displayValue(location.sourceType) }}</td>
-              <td>{{ nullableSuffix(location.batteryPct, "%") }}</td>
-              <td>{{ displayValue(location.batteryMv) }}</td>
-              <td>{{ booleanLabel(location.charging) }}</td>
-              <td>{{ displayValue(location.lat) }}</td>
-              <td>{{ displayValue(location.lng) }}</td>
-              <td>{{ displayValue(location.accuracy) }}</td>
-              <td>{{ nullableSuffix(location.fixAgeSec, "초") }}</td>
-              <td>{{ processingStatusLabel(location.processingStatus) }}</td>
-            </tr>
-            <tr v-if="locationRows.length === 0">
-              <td colspan="13" class="text-center text-muted py-3">조회된 위치 기록이 없습니다.</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="location-grid-footer">
-          <div class="location-total-count">총 {{ locationTotalRows }}건</div>
-          <div v-if="locationTotalPages > 1" class="grid-pagination">
-            <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="locationPageNo === 1" @click="goToLocationPage(1)">처음</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="locationPageNo === 1" @click="goToLocationPage(locationPageNo - 1)">이전</button>
-            <button v-for="page in locationPaginationPages" :key="page" type="button" class="btn btn-sm" :class="page === locationPageNo ? 'btn-primary' : 'btn-outline-secondary'" @click="goToLocationPage(page)">{{ page }}</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="locationPageNo === locationTotalPages" @click="goToLocationPage(locationPageNo + 1)">다음</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="locationPageNo === locationTotalPages" @click="goToLocationPage(locationTotalPages)">마지막</button>
-          </div>
-          <div v-else class="grid-pagination-placeholder" aria-hidden="true"></div>
-          <div class="location-page-size">
-            <label for="locationPageSize" class="form-label mb-0">페이지당</label>
-            <select id="locationPageSize" v-model.number="locationPageSize" class="form-select form-select-sm page-size-select" @change="onLocationPageSizeChange">
-              <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}개</option>
-            </select>
-          </div>
-        </div>
       </div>
-    </div>
 
-    <div v-if="errorPopup.visible" class="error-popup-overlay" @click.self="closeErrorPopup">
-      <div class="error-popup card shadow">
-        <div class="card-body">
-          <h6 class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> 처리 오류</h6>
-          <p class="mb-3">{{ errorPopup.message }}</p>
-          <div class="text-end"><button type="button" class="btn btn-secondary btn-sm" @click="closeErrorPopup">확인</button></div>
-        </div>
+      <div v-if="loading" class="empty-state"><span class="spinner-border spinner-border-sm"></span> 위치 기록 조회 중...</div>
+      <div v-else ref="listScroll" class="receipt-list" @scroll="saveScroll">
+        <article
+            v-for="group in visibleReceiptGroups"
+            :key="group.key"
+            class="receipt-card"
+            :class="{ selected: group.records.some(item => item.locationNo === listState.selectedLocationNo) }"
+        >
+          <div class="receipt-header">
+            <div class="receipt-number"><span class="receipt-icon"><i class="bi bi-inbox"></i></span><div><small>수신 번호</small><strong>수신 #{{ group.receiptNo }}</strong></div></div>
+            <div class="received-time"><small>RECEIVED</small><strong>{{ receivedTime(group).kst }} KST</strong><span>{{ receivedTime(group).utc }} UTC · TS {{ receivedTime(group).ts }}</span></div>
+            <span class="lifecycle-badge">{{ deviceLifecycle || "UNKNOWN" }}</span>
+            <div class="receipt-result"><span v-if="group.result" class="coordinate-result"><i class="bi bi-geo-alt-fill"></i> {{ group.result.lat }}, {{ group.result.lng }} <em>±{{ value(group.result.accuracy) }}m</em></span><span v-else class="no-coordinate">좌표 없음</span><span class="processing-badge">{{ status(group.status) }}</span><span class="record-count">{{ group.records.length }} records</span></div>
+            <button type="button" class="icon-button" title="첫 기록 상세" @click="openDetail(group.records[0], 'LIST')"><i class="bi bi-box-arrow-up-right"></i></button>
+          </div>
+          <div class="record-table">
+            <div class="record-row record-head"><span>측위 시간 (KST / UTC / TS)</span><span>배터리</span><span>Source</span><span>좌표 / 상세</span><span></span></div>
+            <div v-for="row in group.records" :key="row.locationNo" class="record-row" :class="{ selected: row.locationNo === listState.selectedLocationNo }" @click="listState.selectedLocationNo = row.locationNo">
+              <span class="time-stack"><b>{{ measuredTime(row).kst }} KST</b><small>{{ measuredTime(row).utc }} UTC</small><small>TS {{ measuredTime(row).ts }}</small></span>
+              <span class="battery-stack"><b>{{ suffix(row.batteryPct, "%") }}</b><small>{{ suffix(row.batteryMv, "mV") }} · {{ charging(row) }}</small></span>
+              <span><span class="source-badge" :class="sourceClass(row.sourceType)">{{ value(row.sourceType) }}</span></span>
+              <span class="location-summary"><template v-if="validPoint(row)"><b>{{ row.lat }}, {{ row.lng }}</b><small>정확도 {{ suffix(row.accuracy, "m") }} · Fix age {{ suffix(row.fixAgeSec, "초") }}</small></template><template v-else-if="row.sourceType === 'WPS'"><b>Wi-Fi positioning</b><small>AP 정보는 상세에서 확인</small></template><template v-else-if="row.sourceType === 'CELL'"><b>Cell positioning</b><small>cell_id / tac는 상세에서 확인</small></template><template v-else><b>좌표 없음</b><small>{{ status(row.processingStatus) }}</small></template></span>
+              <span class="record-actions"><button v-if="validPoint(row)" type="button" class="icon-button" title="지도" @click.stop="openMap(row)"><i class="bi bi-geo"></i></button><button type="button" class="icon-button" title="상세" @click.stop="openDetail(row, 'LIST')"><i class="bi bi-code-square"></i></button><button type="button" class="delete-button" :disabled="deleting === row.locationNo" title="삭제 후 복구할 수 없습니다" @click.stop="remove(row)"><i class="bi bi-trash3"></i></button></span>
+            </div>
+          </div>
+        </article>
+        <div v-if="visibleReceiptGroups.length === 0" class="empty-state">조회된 위치 기록이 없습니다.</div>
       </div>
-    </div>
+
+      <footer class="list-footer"><span>총 {{ total }}건</span><div class="pagination-buttons"><button class="btn btn-outline-secondary btn-sm" :disabled="listState.pageNo === 1" @click="page(1)">처음</button><button v-for="number in pageNumbers" :key="number" class="btn btn-sm" :class="number === listState.pageNo ? 'btn-dark' : 'btn-outline-secondary'" @click="page(number)">{{ number }}</button><button class="btn btn-outline-secondary btn-sm" :disabled="listState.pageNo === totalPages" @click="page(totalPages)">마지막</button></div><label class="page-size">페이지당 <select v-model.number="listState.pageSize" class="form-select form-select-sm" @change="resize"><option v-for="size in pageSizes" :key="size" :value="size">{{ size }}개</option></select></label></footer>
+    </main>
+
+    <main v-else-if="view === 'DETAIL'" class="view-body detail-view">
+      <div v-if="detailLoading" class="empty-state">상세 조회 중...</div>
+      <template v-else-if="detail">
+        <section class="detail-summary">
+          <div><small>수신 번호</small><strong>수신 #{{ receiptNumber(detail) }}</strong></div><div><small>LOCATION</small><strong>#{{ detail.locationNo }}</strong></div><div><small>측위 시간</small><strong>{{ measuredTime(detail).kst }} KST</strong><span>{{ measuredTime(detail).utc }} UTC · TS {{ measuredTime(detail).ts }}</span></div><span class="source-badge" :class="sourceClass(detail.sourceType)">{{ value(detail.sourceType) }}</span><span class="processing-badge">{{ status(detail.processingStatus) }}</span><div v-if="validPoint(detail)" class="detail-coordinate"><strong>{{ detail.lat }}, {{ detail.lng }}</strong><small>정확도 {{ suffix(detail.accuracy, "m") }}</small></div>
+        </section>
+        <section class="payload-section"><div class="payload-title"><span><i class="bi bi-phone"></i> Request</span><small>단말 → 서버 · 복호화 payload</small></div><pre class="payload-code">{{ rawPayload(detail.deviceRequestJson) }}</pre></section>
+        <section class="payload-section"><div class="payload-title"><span><i class="bi bi-server"></i> Response</span><div><span v-if="responseBadge" class="result-badge">{{ responseBadge }}</span><small>서버 → 단말</small></div></div><pre class="payload-code">{{ rawPayload(detail.serverResponseJson) }}</pre></section>
+        <div class="detail-footer"><button type="button" class="btn btn-outline-secondary btn-sm" @click="back"><i class="bi bi-arrow-left"></i> Location 목록으로</button></div>
+      </template>
+    </main>
+
+    <main v-else class="view-body map-view">
+      <div v-if="mapState.mode === 'SINGLE'" class="single-map-notice"><i class="bi bi-pin-map-fill"></i><span><b>단일 위치 표시</b> 수신 #{{ receiptNumber(points[0] || {}) }} · Location #{{ mapState.selectedLocationNo }}</span></div>
+      <div v-else class="map-toolbar">
+        <div class="preset-row"><span class="toolbar-label">기간</span><button v-for="preset in datePresets" :key="preset.value" type="button" class="preset-button" :class="{ active: mapState.datePreset === preset.value }" @click="applyDatePreset(preset.value)">{{ preset.label }}</button><template v-if="mapState.datePreset === 'CUSTOM'"><input v-model="mapState.startDate" type="date" class="form-control form-control-sm"><span>~</span><input v-model="mapState.endDate" type="date" class="form-control form-control-sm"><button class="btn btn-dark btn-sm" :disabled="mapLoading" @click="loadMap">조회</button></template></div>
+        <div class="data-row"><span class="toolbar-label">위치 데이터</span><span class="count-badge all">전체 포인트 <b>{{ counts.totalCount }}</b></span><span class="count-badge gps">GPS <b>{{ counts.gpsCount }}</b></span><span class="count-badge wps">WPS <b>{{ counts.wpsCount }}</b></span><span class="count-badge cell">CELL <b>{{ counts.cellCount }}</b></span><span class="toolbar-divider"></span><label v-for="source in displaySourceOptions" :key="source" class="check-option"><input v-model="mapState.visibleSources[source]" type="checkbox" @change="renderMap"> {{ source }} 표시</label><label class="check-option"><input v-model="mapState.showRoute" type="checkbox" @change="renderMap"> 이동 궤적</label><label class="check-option"><input v-model="mapState.showAccuracy" type="checkbox" @change="renderMap"> 오차 반경</label></div>
+      </div>
+      <div v-if="mapLoading" class="empty-state">지도 데이터 조회 중...</div>
+      <template v-else>
+        <div class="map-wrap wide-map"><div ref="googleMap" class="google-map"></div><div v-if="mapMessage" class="map-message"><i class="bi bi-geo-alt"></i><strong>{{ mapMessage }}</strong><small>통계와 좌표 목록은 계속 확인할 수 있습니다.</small></div><button v-if="mapState.mode === 'ALL' && displayedPoints.length > 1" type="button" class="fit-route-button btn btn-light btn-sm" @click="fitMapBounds"><i class="bi bi-arrows-fullscreen"></i> 전체 경로 한눈에 보기</button></div>
+        <section class="map-point-table-wrap"><div class="map-point-table-title"><strong>위치 포인트 목록</strong><span>총 {{ displayedPoints.length }}건 · 행 클릭 시 지도 이동</span></div><div class="table-responsive"><table class="table table-sm align-middle mb-0 map-point-table"><thead><tr><th>순번</th><th>수신 일시 (KST / UTC)</th><th>소스</th><th>위도 / 경도</th><th>정확도</th><th>배터리</th><th>상세 / Raw</th></tr></thead><tbody><tr v-for="(point, index) in latestDisplayedPoints" :key="point.locationNo" :class="{ selected: point.locationNo === mapState.selectedLocationNo, latest: index === 0 }" @click="selectPoint(point)"><td>{{ point.routeSequence }}<span v-if="index === 0" class="latest-badge">최신</span></td><td><b>{{ timeParts(point.reportDate).kst }} KST</b><small>{{ timeParts(point.reportDate).utc }} UTC</small></td><td><span class="source-badge" :class="sourceClass(point.sourceType)">{{ point.sourceType }}</span></td><td><b>{{ point.lat }}</b><small>{{ point.lng }}</small></td><td>{{ suffix(point.accuracy, "m") }}</td><td><span v-if="hasBattery(point)" class="map-battery" :title="batteryTitle(point)"><b>{{ suffix(point.batteryPct, "%") }}</b><small>{{ suffix(point.batteryMv, "mV") }}<template v-if="point.chargingStatus"> · {{ charging(point) }}</template></small></span><span v-else>-</span></td><td><button type="button" class="icon-button" title="상세 및 Raw" @click.stop="openDetail(point, 'MAP')"><i class="bi bi-code-square"></i></button></td></tr><tr v-if="displayedPoints.length === 0"><td colspan="7" class="text-center text-muted py-3">표시할 좌표가 없습니다.</td></tr></tbody></table></div></section>
+      </template>
+    </main>
+
+    <div v-if="error.visible" class="error-overlay" @click.self="error.visible = false"><div class="card shadow error-card"><div class="card-body"><h6 class="text-danger fw-bold">처리 오류</h6><p>{{ error.message }}</p><div class="text-end"><button class="btn btn-secondary btn-sm" @click="error.visible = false">확인</button></div></div></div></div>
   </div>
 </template>
 
 <script>
 import api from "@/api/api";
 
+const GOOGLE_MAPS_SCRIPT_ID = "kokasin-google-maps";
+
 export default {
   name: "DeviceLocationPopup",
   data() {
     return {
-      deviceHash: "",
-      deviceNo: null,
-      locationStartDate: "",
-      locationEndDate: "",
-      locationPageNo: 1,
-      locationPageSize: 20,
-      pageSizeOptions: [10, 20, 50, 100],
-      locationTotalRows: 0,
-      locationRows: [],
-      locationLoading: false,
-      errorPopup: { visible: false, message: "" },
+      deviceHash: "", deviceNo: null, deviceIMEI: "", serialNumber: "", deviceLifecycle: "", view: "LIST", previousView: "LIST",
+      lifecycleOptions: ["전체", "FACTORY_MODE", "AS_MODE", "READY", "ACTIVE", "INACTIVE"], sourceTypes: ["GPS", "WPS", "CELL", "NONE"], pageSizes: [10, 20, 50, 100],
+      listState: { startDate: "", endDate: "", sourceType: "", lifecycle: "전체", pageNo: 1, pageSize: 20, scrollTop: 0, selectedLocationNo: null }, rows: [], total: 0, loading: false, deleting: null,
+      detail: null, detailLoading: false,
+      mapState: { mode: "ALL", datePreset: "SEARCH", startDate: "", endDate: "", startApi: null, endApi: null, sourceType: "", selectedLocationNo: null, visibleSources: { GPS: true, WPS: true, CELL: true }, showRoute: true, showAccuracy: false }, points: [], counts: { totalCount: 0, gpsCount: 0, wpsCount: 0, cellCount: 0, noneCount: 0 }, mapLoading: false, mapMessage: "", mapRequestSeq: 0, googleMaps: null, googleMap: null, mapMarkers: [], mapCircles: [], mapPolyline: null, mapBounds: null,
+      error: { visible: false, message: "" },
+      datePresets: [{ value: "TODAY", label: "오늘" }, { value: "H24", label: "최근 24시간" }, { value: "D3", label: "최근 3일" }, { value: "D7", label: "최근 7일" }, { value: "D30", label: "최근 30일" }, { value: "ALL", label: "전체" }, { value: "CUSTOM", label: "직접 지정" }], displaySourceOptions: ["GPS", "WPS", "CELL"],
     };
   },
   computed: {
-    locationTotalPages() {
-      return this.locationTotalRows === 0 ? 0 : Math.ceil(this.locationTotalRows / this.locationPageSize);
-    },
-    locationPaginationPages() {
-      const start = Math.floor((this.locationPageNo - 1) / 10) * 10 + 1;
-      const end = Math.min(start + 9, this.locationTotalPages);
-      const pages = [];
-      for(let page = start; page <= end; page += 1) pages.push(page);
-      return pages;
-    },
+    viewTitle() { return { LIST: "전체", DETAIL: "수신 상세", MAP: "Location Map" }[this.view]; },
+    isSuperAdmin() { return this.$store.getters["adminStore/isSuperAdmin"]; },
+    totalPages() { return this.total ? Math.ceil(this.total / this.listState.pageSize) : 0; },
+    pageNumbers() { const start = Math.floor((this.listState.pageNo - 1) / 10) * 10 + 1; const end = Math.min(start + 9, this.totalPages); const result = []; for(let number = start; number <= end; number += 1) result.push(number); return result; },
+    receiptGroups() { const groups = []; const index = {}; this.rows.forEach(row => { const key = row.protocolBatchNo ? "receipt-" + row.protocolBatchNo : "location-" + row.locationNo; if(!index[key]) { index[key] = { key, receiptNo: this.receiptNumber(row), records: [], status: row.processingStatus, result: null }; groups.push(index[key]); } index[key].records.push(row); if(!index[key].result && this.validPoint(row)) index[key].result = row; }); return groups; },
+    visibleReceiptGroups() { if(this.listState.lifecycle === "전체" || this.listState.lifecycle === this.deviceLifecycle) return this.receiptGroups; return []; },
+    responseBadge() { if(!this.isSuperAdmin || !this.detail?.serverResponseJson) return ""; try { const data = JSON.parse(this.detail.serverResponseJson); return data.wps_gps || data.positioning || data.source_type || ""; } catch(error) { return ""; } },
+    displayedPoints() { return this.points.filter(point => this.validPoint(point) && this.mapState.visibleSources[point.sourceType] !== false).map((point, index) => ({ point, index })).sort((a, b) => this.compareRoutePoint(a.point, b.point) || a.index - b.index).map((entry, index) => Object.assign({}, entry.point, { routeSequence: index + 1 })); },
+    latestDisplayedPoints() { return this.displayedPoints.slice().reverse(); },
   },
   mounted() {
-    this.deviceHash = String(this.$route.query.deviceHash || "").trim();
-    const deviceNo = Number(this.$route.query.deviceNo);
-    this.deviceNo = Number.isSafeInteger(deviceNo) && deviceNo > 0 ? deviceNo : null;
-    if(!this.deviceHash && !this.deviceNo) {
-      this.showError("기기 식별 정보가 없어 위치 기록을 조회할 수 없습니다.");
-      return;
-    }
-    this.loadLocations();
+    this.deviceHash = String(this.$route.query.deviceHash || "").trim(); this.deviceIMEI = String(this.$route.query.deviceIMEI || "").trim(); this.serialNumber = String(this.$route.query.serialNumber || "").trim(); this.deviceLifecycle = String(this.$route.query.deviceLifecycle || "").trim();
+    const number = Number(this.$route.query.deviceNo); this.deviceNo = Number.isSafeInteger(number) && number > 0 ? number : null;
+    if(!this.deviceHash && !this.deviceNo) this.showError("기기 식별 정보가 없어 위치 기록을 조회할 수 없습니다."); else this.loadList();
   },
+  beforeDestroy() { this.clearMap(); },
   methods: {
-    async loadLocations() {
-      if(!this.deviceHash && !this.deviceNo) return;
-      this.locationLoading = true;
-      try {
-        const startDate = this.toApiDate(this.locationStartDate, "시작일", "000000");
-        const endDate = this.toApiDate(this.locationEndDate, "종료일", "235959");
-        if(startDate && endDate && startDate > endDate) {
-          throw new Error("시작일은 종료일보다 늦을 수 없습니다.");
-        }
-        const response = await api.getDeviceLocations({
-          deviceHash: this.deviceHash,
-          deviceNo: this.deviceNo || undefined,
-          startDate,
-          endDate,
-          pageNo: this.locationPageNo,
-          pageSize: this.locationPageSize,
-        });
-        if(response.data.status !== "SUCCESS") throw new Error(response.data.message || "위치 기록을 조회하지 못했습니다.");
-        const data = response.data.data || {};
-        this.locationRows = Array.isArray(data.items) ? data.items : [];
-        this.locationTotalRows = Number(data.totalCount) || 0;
-        this.locationPageNo = Number(data.pageNo) || this.locationPageNo;
-        this.locationPageSize = Number(data.pageSize) || this.locationPageSize;
-      } catch (error) {
-        this.locationRows = [];
-        this.locationTotalRows = 0;
-        this.showApiError(error, "위치 기록을 조회하지 못했습니다.");
-      } finally {
-        this.locationLoading = false;
-      }
-    },
-    searchLocations() {
-      this.locationPageNo = 1;
-      this.loadLocations();
-    },
-    resetLocationSearch() {
-      this.locationStartDate = "";
-      this.locationEndDate = "";
-      this.locationPageNo = 1;
-      this.loadLocations();
-    },
-    onLocationPageSizeChange() {
-      this.locationPageNo = 1;
-      this.loadLocations();
-    },
-    goToLocationPage(page) {
-      if(page < 1 || page > this.locationTotalPages || page === this.locationPageNo) return;
-      this.locationPageNo = page;
-      this.loadLocations();
-    },
-    toApiDate(value, label, time) {
-      const text = String(value || "").trim();
-      if(!text) return undefined;
-      const match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if(!match) throw new Error(label + " 형식이 올바르지 않습니다.");
-      const year = Number(match[1]);
-      const month = Number(match[2]);
-      const day = Number(match[3]);
-      const date = new Date(year, month - 1, day);
-      if(
-        date.getFullYear() !== year
-        || date.getMonth() !== month - 1
-        || date.getDate() !== day
-      ) {
-        throw new Error(label + " 값이 올바르지 않습니다.");
-      }
-      return match[1] + match[2] + match[3] + time;
-    },
-    processingStatusLabel(value) {
-      return {
-        PROCESSED: "정상 처리",
-        DUPLICATE: "중복",
-        FAILED: "실패",
-        NO_LOCATION: "위치 없음",
-      }[value] || value || "-";
-    },
-    displayValue(value) {
-      return value === null || value === undefined || value === "" ? "-" : value;
-    },
-    nullableSuffix(value, suffix) {
-      return value === null || value === undefined || value === "" ? "-" : String(value) + suffix;
-    },
-    booleanLabel(value) {
-      if(value === true || value === 1 || value === "Y" || value === "true") return "충전 중";
-      if(value === false || value === 0 || value === "N" || value === "false") return "미충전";
-      return "-";
-    },
-    formatMeasuredAt(location) {
-      const measuredAt = this.formatEpoch(location.measuredAtEpoch);
-      return measuredAt !== "-" ? measuredAt : this.formatDate(location.reportDate);
-    },
-    formatEpoch(value) {
-      if(value === null || value === undefined || value === "") return "-";
-      const number = Number(value);
-      if(!Number.isFinite(number)) return "-";
-      const milliseconds = number > 999999999999 ? number : number * 1000;
-      return this.formatDateObject(new Date(milliseconds));
-    },
-    formatDate(value) {
-      if(value === null || value === undefined || value === "") return "-";
-      if(typeof value === "number") return this.formatEpoch(value);
-      const text = String(value).trim();
-      if(/^\d{10,13}$/.test(text)) return this.formatEpoch(text);
-      if(/^\d{14}$/.test(text)) {
-        return text.slice(0, 4) + "-" + text.slice(4, 6) + "-" + text.slice(6, 8)
-            + " " + text.slice(8, 10) + ":" + text.slice(10, 12) + ":" + text.slice(12, 14);
-      }
-      const date = new Date(text);
-      return Number.isNaN(date.getTime()) ? text : this.formatDateObject(date);
-    },
-    formatDateObject(date) {
-      if(Number.isNaN(date.getTime())) return "-";
-      const pad = value => String(value).padStart(2, "0");
-      return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate())
-          + " " + pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds());
-    },
-    showApiError(error, fallback) {
-      const data = error?.response?.data;
-      this.showError(data?.message || data?.data?.message || error?.message || fallback);
-    },
-    showError(message) {
-      this.errorPopup = { visible: true, message };
-    },
-    closeErrorPopup() {
-      this.errorPopup = { visible: false, message: "" };
-    },
+    async loadList() { this.loading = true; try { const dateRange = this.range(this.listState); const response = await api.getDeviceLocations({ deviceHash: this.deviceHash || undefined, deviceNo: this.deviceNo || undefined, startDate: dateRange.startDate, endDate: dateRange.endDate, sourceType: this.listState.sourceType || undefined, pageNo: this.listState.pageNo, pageSize: this.listState.pageSize }); const data = this.unwrap(response, "위치 기록을 조회하지 못했습니다."); this.rows = Array.isArray(data.items) ? data.items : []; this.total = Number(data.totalCount) || 0; this.listState.pageNo = Number(data.pageNo) || this.listState.pageNo; this.listState.pageSize = Number(data.pageSize) || this.listState.pageSize; this.$nextTick(this.restoreScroll); } catch(error) { this.rows = []; this.total = 0; this.apiError(error, "위치 기록을 조회하지 못했습니다."); } finally { this.loading = false; } },
+    selectLifecycle(value) { this.listState.lifecycle = value; this.listState.selectedLocationNo = null; },
+    search() { Object.assign(this.listState, { pageNo: 1, scrollTop: 0, selectedLocationNo: null }); this.loadList(); },
+    resetSearch() { Object.assign(this.listState, { startDate: "", endDate: "", sourceType: "", lifecycle: "전체", pageNo: 1, scrollTop: 0, selectedLocationNo: null }); this.loadList(); },
+    resize() { this.listState.pageNo = 1; this.listState.scrollTop = 0; this.loadList(); },
+    page(number) { if(number < 1 || number > this.totalPages || number === this.listState.pageNo) return; this.listState.pageNo = number; this.listState.scrollTop = 0; this.loadList(); },
+    saveScroll(event) { this.listState.scrollTop = event.target.scrollTop; }, rememberScroll() { if(this.$refs.listScroll) this.listState.scrollTop = this.$refs.listScroll.scrollTop; }, restoreScroll() { if(this.$refs.listScroll) this.$refs.listScroll.scrollTop = this.listState.scrollTop; },
+    async openDetail(row, origin) { this.rememberScroll(); this.previousView = origin; this.listState.selectedLocationNo = row.locationNo; this.view = "DETAIL"; this.detail = null; this.detailLoading = true; try { this.detail = this.unwrap(await api.getDeviceLocationDetail({ locationNo: row.locationNo }), "위치 상세를 조회하지 못했습니다."); } catch(error) { this.apiError(error, "위치 상세를 조회하지 못했습니다."); } finally { this.detailLoading = false; } },
+    back() { if(this.view === "DETAIL" && this.previousView === "MAP") { this.view = "MAP"; this.$nextTick(this.renderMap); return; } this.view = "LIST"; this.clearMap(); this.$nextTick(this.restoreScroll); },
+    async remove(row) { if(!window.confirm("Location #" + row.locationNo + "을(를) 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.")) return; this.deleting = row.locationNo; try { const data = this.unwrap(await api.deleteDeviceLocation({ locationNo: row.locationNo }), "위치 기록을 삭제하지 못했습니다."); if(data.deleted !== true) throw new Error("삭제 완료 응답을 확인하지 못했습니다."); this.rows = this.rows.filter(item => item.locationNo !== row.locationNo); this.total = Math.max(0, this.total - 1); if(this.listState.selectedLocationNo === row.locationNo) this.listState.selectedLocationNo = null; if(this.rows.length === 0 && this.listState.pageNo > 1) this.listState.pageNo -= 1; await this.loadList(); } catch(error) { this.apiError(error, "위치 기록을 삭제하지 못했습니다."); } finally { this.deleting = null; } },
+    openMap(selectedRow) { this.rememberScroll(); this.clearMap(); this.mapMessage = ""; if(selectedRow) { this.mapRequestSeq += 1; this.mapState = { mode: "SINGLE", datePreset: "SINGLE", startDate: "", endDate: "", startApi: null, endApi: null, sourceType: selectedRow.sourceType || "", selectedLocationNo: selectedRow.locationNo, visibleSources: { GPS: true, WPS: true, CELL: true }, showRoute: false, showAccuracy: true }; this.points = [selectedRow]; this.counts = this.singleCounts(selectedRow); this.view = "MAP"; this.$nextTick(this.renderMap); return; } this.mapState = { mode: "ALL", datePreset: "SEARCH", startDate: this.listState.startDate, endDate: this.listState.endDate, startApi: null, endApi: null, sourceType: this.listState.sourceType, selectedLocationNo: null, visibleSources: { GPS: true, WPS: true, CELL: true }, showRoute: true, showAccuracy: false }; this.view = "MAP"; this.loadMap(); },
+    singleCounts(row) { const counts = { totalCount: 1, gpsCount: 0, wpsCount: 0, cellCount: 0, noneCount: 0 }; const key = String(row.sourceType || "NONE").toLowerCase() + "Count"; if(Object.prototype.hasOwnProperty.call(counts, key)) counts[key] = 1; return counts; },
+    applyDatePreset(value) { this.mapState.mode = "ALL"; this.mapState.datePreset = value; this.mapState.selectedLocationNo = null; this.mapState.startApi = null; this.mapState.endApi = null; if(value === "CUSTOM") return; if(value === "ALL") { this.mapState.startDate = ""; this.mapState.endDate = ""; this.loadMap(); return; } const now = new Date(); const end = now; let start = new Date(now.getTime()); if(value === "TODAY") { const today = this.kstDate(now); this.mapState.startApi = today.replace(/-/g, "") + "000000"; } else { const days = { H24: 1, D3: 3, D7: 7, D30: 30 }[value]; start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000); this.mapState.startApi = this.apiTimestamp(start); } this.mapState.endApi = this.apiTimestamp(end); this.mapState.startDate = this.kstDate(start); this.mapState.endDate = this.kstDate(end); this.loadMap(); },
+    async loadMap() { if(this.mapState.mode === "SINGLE") { await this.$nextTick(); await this.renderMap(); return; } const requestSeq = ++this.mapRequestSeq; let loaded = false; this.mapLoading = true; try { const dateRange = this.mapRequestRange(); const data = this.unwrap(await api.getDeviceLocationMap({ deviceHash: this.deviceHash || undefined, deviceNo: this.deviceNo || undefined, startDate: dateRange.startDate, endDate: dateRange.endDate, sourceType: this.mapState.sourceType || undefined }), "지도 데이터를 조회하지 못했습니다."); if(requestSeq !== this.mapRequestSeq) return; this.points = Array.isArray(data.points) ? data.points : []; this.counts = Object.assign({ totalCount: 0, gpsCount: 0, wpsCount: 0, cellCount: 0, noneCount: 0 }, data.sourceCounts || {}); this.mapState.selectedLocationNo = null; loaded = true; } catch(error) { if(requestSeq !== this.mapRequestSeq) return; this.points = []; this.clearMap(); this.apiError(error, "지도 데이터를 조회하지 못했습니다."); } finally { if(requestSeq === this.mapRequestSeq) this.mapLoading = false; } if(!loaded || requestSeq !== this.mapRequestSeq) return; await this.$nextTick(); if(requestSeq !== this.mapRequestSeq) return; await this.renderMap(); },
+    mapRequestRange() { if(this.mapState.datePreset !== "CUSTOM" && (this.mapState.startApi || this.mapState.endApi)) return { startDate: this.mapState.startApi || undefined, endDate: this.mapState.endApi || undefined }; return this.range(this.mapState); },
+    selectPoint(point) { this.mapState.selectedLocationNo = point.locationNo; this.renderMap(true); },
+    async loadGoogleMaps() { if(window.google?.maps) return window.google.maps; const key = String(process.env.VUE_APP_GOOGLE_MAPS_API_KEY || "").trim(); if(!key) throw new Error("Google Maps API 키가 설정되지 않았습니다."); const existing = document.getElementById(GOOGLE_MAPS_SCRIPT_ID); if(existing) return new Promise((resolve, reject) => { existing.addEventListener("load", () => resolve(window.google.maps), { once: true }); existing.addEventListener("error", () => reject(new Error("Google Maps를 불러오지 못했습니다.")), { once: true }); }); return new Promise((resolve, reject) => { const script = document.createElement("script"); script.id = GOOGLE_MAPS_SCRIPT_ID; script.async = true; script.defer = true; script.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key); script.onload = () => resolve(window.google.maps); script.onerror = () => reject(new Error("Google Maps를 불러오지 못했습니다.")); document.head.appendChild(script); }); },
+    async renderMap(focusSelected) { const valid = this.displayedPoints; if(!valid.length) { this.clearMap(); this.mapMessage = "표시할 유효 좌표가 없습니다."; return; } try { const maps = await this.loadGoogleMaps(); if(this.view !== "MAP") return; this.googleMaps = maps; if(!this.$refs.googleMap) { this.mapMessage = "지도 영역을 준비하지 못했습니다."; return; } this.clearMap(); this.mapMessage = ""; this.googleMap = new maps.Map(this.$refs.googleMap, { mapTypeControl: false, streetViewControl: false }); const bounds = new maps.LatLngBounds(); const route = valid; const colors = { GPS: "#2563eb", WPS: "#f59e0b", CELL: "#7c3aed" }; route.forEach(point => { const position = { lat: Number(point.lat), lng: Number(point.lng) }; bounds.extend(position); const selected = point.locationNo === this.mapState.selectedLocationNo; const marker = new maps.Marker({ map: this.googleMap, position, title: "#" + point.routeSequence + " / Location #" + point.locationNo + " / " + point.sourceType, label: { text: String(point.routeSequence), color: "#ffffff", fontSize: "9px", fontWeight: "700" }, icon: { path: maps.SymbolPath.CIRCLE, scale: selected ? 12 : 10, fillColor: selected ? "#dc2626" : (colors[point.sourceType] || "#64748b"), fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 } }); marker.addListener("click", () => this.openDetail(point, "MAP")); this.mapMarkers.push(marker); const accuracy = Number(point.accuracy); if(this.mapState.showAccuracy && Number.isFinite(accuracy) && accuracy > 0) this.mapCircles.push(new maps.Circle({ map: this.googleMap, center: position, radius: accuracy, strokeColor: colors[point.sourceType] || "#64748b", strokeOpacity: .55, strokeWeight: 1, fillColor: colors[point.sourceType] || "#64748b", fillOpacity: .1 })); }); if(this.mapState.mode === "ALL" && this.mapState.showRoute && route.length > 1) this.mapPolyline = new maps.Polyline({ map: this.googleMap, path: route.map(point => ({ lat: Number(point.lat), lng: Number(point.lng) })), strokeColor: "#2563eb", strokeOpacity: .85, strokeWeight: 4 }); this.mapBounds = bounds; this.applyMapViewport(route, maps); if(focusSelected) { const selected = route.find(point => point.locationNo === this.mapState.selectedLocationNo); if(selected) { this.googleMap.panTo({ lat: Number(selected.lat), lng: Number(selected.lng) }); this.googleMap.setZoom(17); } } } catch(error) { this.clearMap(); this.mapMessage = error.message || "Google Maps를 표시하지 못했습니다."; } },
+    fitMapBounds() { if(this.mapState.mode !== "ALL") return; const points = this.displayedPoints; if(!this.googleMap || !this.googleMaps) { this.mapMessage = "지도가 준비되지 않아 전체 경로를 표시할 수 없습니다."; return; } this.mapState.showRoute = true; if(this.mapPolyline) this.mapPolyline.setMap(null); this.mapPolyline = null; const route = points; if(route.length > 1) this.mapPolyline = new this.googleMaps.Polyline({ map: this.googleMap, path: route.map(point => ({ lat: Number(point.lat), lng: Number(point.lng) })), strokeColor: "#2563eb", strokeOpacity: .85, strokeWeight: 4 }); this.applyMapViewport(route, this.googleMaps); },
+    applyMapViewport(points, maps) { if(!this.googleMap || !maps) { this.mapMessage = "지도가 준비되지 않아 표시 범위를 조정할 수 없습니다."; return; } const valid = points.filter(this.validPoint); if(!valid.length) { this.mapMessage = "표시 범위를 조정할 유효 좌표가 없습니다."; return; } this.mapMessage = ""; maps.event.trigger(this.googleMap, "resize"); const firstLat = Number(valid[0].lat); const firstLng = Number(valid[0].lng); const samePosition = valid.every(point => Number(point.lat) === firstLat && Number(point.lng) === firstLng); if(valid.length === 1 || samePosition) { this.googleMap.setCenter({ lat: Number(valid[0].lat), lng: Number(valid[0].lng) }); this.googleMap.setZoom(16); return; } const bounds = new maps.LatLngBounds(); valid.forEach(point => bounds.extend({ lat: Number(point.lat), lng: Number(point.lng) })); this.mapBounds = bounds; this.googleMap.fitBounds(bounds); },
+    clearMap() { this.mapMarkers.forEach(marker => marker.setMap(null)); this.mapCircles.forEach(circle => circle.setMap(null)); this.mapMarkers = []; this.mapCircles = []; if(this.mapPolyline) this.mapPolyline.setMap(null); this.mapPolyline = null; this.mapBounds = null; this.googleMap = null; },
+    compareRoutePoint(a, b) { const timestampOrder = String(a.reportDate || "").localeCompare(String(b.reportDate || "")); if(timestampOrder) return timestampOrder; const aNo = Number(a.locationNo); const bNo = Number(b.locationNo); if(Number.isFinite(aNo) && Number.isFinite(bNo) && aNo !== bNo) return aNo - bNo; return String(a.locationNo || "").localeCompare(String(b.locationNo || "")); },
+    validPoint(point) { if(point?.lat === null || point?.lat === undefined || point?.lat === "" || point?.lng === null || point?.lng === undefined || point?.lng === "") return false; const lat = Number(point.lat); const lng = Number(point.lng); return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180; },
+    receiptNumber(row) { return row.protocolBatchNo || row.locationNo; },
+    receivedTime(group) { const dates = group.records.map(row => String(row.reportDate || "")).filter(value => /^\d{14}$/.test(value)).sort(); return this.timeParts(dates.length ? dates[dates.length - 1] : ""); },
+    measuredTime(row) { if(row.measuredAtEpoch !== null && row.measuredAtEpoch !== undefined && row.measuredAtEpoch !== "") return this.epochParts(row.measuredAtEpoch); return this.timeParts(row.reportDate); },
+    timeParts(value) { const text = String(value || ""); if(!/^\d{14}$/.test(text)) return { kst: "-", utc: "-", ts: text || "-" }; const kst = text.slice(0, 4) + "-" + text.slice(4, 6) + "-" + text.slice(6, 8) + " " + text.slice(8, 10) + ":" + text.slice(10, 12) + ":" + text.slice(12); const utcDate = new Date(Date.UTC(+text.slice(0, 4), +text.slice(4, 6) - 1, +text.slice(6, 8), +text.slice(8, 10) - 9, +text.slice(10, 12), +text.slice(12))); return { kst, utc: this.utcDate(utcDate), ts: text }; },
+    epochParts(value) { const number = Number(value); if(!Number.isFinite(number)) return { kst: "-", utc: "-", ts: "-" }; const milliseconds = number > 999999999999 ? number : number * 1000; const date = new Date(milliseconds); return { kst: this.localDate(date), utc: this.utcDate(date), ts: String(value) }; },
+    localDate(date) { if(Number.isNaN(date.getTime())) return "-"; const parts = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(date); const part = type => parts.find(item => item.type === type)?.value || ""; return part("year") + "-" + part("month") + "-" + part("day") + " " + part("hour") + ":" + part("minute") + ":" + part("second"); },
+    utcDate(date) { if(Number.isNaN(date.getTime())) return "-"; const pad = value => String(value).padStart(2, "0"); return date.getUTCFullYear() + "-" + pad(date.getUTCMonth() + 1) + "-" + pad(date.getUTCDate()) + " " + pad(date.getUTCHours()) + ":" + pad(date.getUTCMinutes()) + ":" + pad(date.getUTCSeconds()); },
+    kstDate(date) { return this.localDate(date).slice(0, 10); }, apiTimestamp(date) { const pad = value => String(value).padStart(2, "0"); const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(date); const part = type => parts.find(item => item.type === type)?.value || pad(0); return part("year") + part("month") + part("day") + part("hour") + part("minute") + part("second"); },
+    sourceClass(source) { return "source-" + String(source || "none").toLowerCase(); },
+    rawPayload(input) { if(!this.isSuperAdmin) return "SADMIN 권한에서만 원문을 확인할 수 있습니다."; if(!input) return "제공되지 않음"; try { return JSON.stringify(JSON.parse(input), null, 2); } catch(error) { return String(input); } },
+    unwrap(response, fallback) { if(response?.data?.status !== "SUCCESS") throw new Error(response?.data?.message || fallback); return response.data.data || {}; },
+    range(state) { const startDate = this.apiDate(state.startDate, "시작일", "000000"); const endDate = this.apiDate(state.endDate, "종료일", "235959"); if(startDate && endDate && startDate > endDate) throw new Error("시작일은 종료일보다 늦을 수 없습니다."); return { startDate, endDate }; },
+    apiDate(input, label, time) { if(!input) return undefined; const match = String(input).match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!match) throw new Error(label + " 형식이 올바르지 않습니다."); const date = new Date(+match[1], +match[2] - 1, +match[3]); if(date.getFullYear() !== +match[1] || date.getMonth() !== +match[2] - 1 || date.getDate() !== +match[3]) throw new Error(label + " 값이 올바르지 않습니다."); return match[1] + match[2] + match[3] + time; },
+    hasBattery(item) { return item.batteryPct !== null && item.batteryPct !== undefined && item.batteryPct !== ""; }, batteryTitle(item) { const details = [this.suffix(item.batteryPct, "%"), this.suffix(item.batteryMv, "mV"), item.chargingStatus ? this.charging(item) : ""].filter(value => value && value !== "-"); return details.join(" · "); },
+    value(item) { return item === null || item === undefined || item === "" ? "-" : item; }, suffix(item, unit) { return item === null || item === undefined || item === "" ? "-" : item + unit; },
+    status(item) { return { PROCESSED: "정상 처리", DUPLICATE: "중복", FAILED: "실패", NO_LOCATION: "위치 없음" }[item] || item || "-"; },
+    charging(item) { const labels = { DISCHARGING: "방전", CHARGING: "충전 중", FULL: "완충" }; if(labels[item.chargingStatus]) return labels[item.chargingStatus]; if(item.charging === true || item.charging === 1 || item.charging === "Y") return "충전 중"; if(item.charging === false || item.charging === 0 || item.charging === "N") return "방전"; return "-"; },
+    formatDate(item) { return this.timeParts(item).kst; },
+    apiError(error, fallback) { const data = error?.response?.data; this.showError(data?.message || data?.data?.message || error?.message || fallback); }, showError(message) { this.error = { visible: true, message }; },
   },
 };
 </script>
 
 <style scoped>
-.device-location-popup {
-  box-sizing: border-box;
-  min-width: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: #f6f8fb;
-}
-
-.grid-pagination {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-}
-
-.device-location-popup > .card {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.device-location-popup > .card > .card-body {
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.location-grid-footer {
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: minmax(130px, 1fr) auto minmax(130px, 1fr);
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.location-total-count {
-  justify-self: start;
-  white-space: nowrap;
-}
-
-.location-page-size {
-  justify-self: end;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.page-size-select {
-  width: auto;
-}
-
-.unified-location-table-wrap {
-  flex: 1 1 auto;
-  min-height: 180px;
-  overflow: auto;
-}
-
-.unified-location-table-wrap th,
-.unified-location-table-wrap td {
-  white-space: nowrap;
-}
-
-.unified-location-table-wrap th {
-  background: rgba(33, 37, 41, .05);
-}
-
-@media (max-width: 767.98px) {
-  .location-grid-footer {
-    grid-template-columns: 1fr;
-  }
-
-  .location-total-count,
-  .location-page-size {
-    justify-self: center;
-  }
-
-  .grid-pagination {
-    order: 3;
-  }
-
-  .grid-pagination-placeholder {
-    display: none;
-  }
-}
-
-.error-popup-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, .45);
-}
-
-.error-popup {
-  width: 420px;
-  max-width: calc(100vw - 40px);
-}
+.location-log-popup { --ink: #152238; --muted: #687386; --line: #dfe4eb; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: #f4f6f9; color: var(--ink); font-size: 13px; }.page-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px 14px; color: #fff; background: #17263d; }.breadcrumb-line { margin-bottom: 4px; color: #9cabc0; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }.breadcrumb-line i { margin: 0 5px; font-size: 9px; }.page-title { margin: 0; font-size: 21px; font-weight: 700; }.page-title span { color: #b7c2d1; font-weight: 400; }.device-identity { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; color: #d9e0e9; font-size: 12px; }.device-identity b { margin-right: 6px; color: #8394ab; font-size: 10px; letter-spacing: .06em; }.header-actions { display: flex; gap: 6px; }.view-body { flex: 1 1 auto; min-height: 0; padding: 14px 18px; overflow: hidden; }.list-view, .map-view { display: flex; flex-direction: column; }.filter-panel, .map-filter { flex: 0 0 auto; margin-bottom: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }.lifecycle-filter, .search-row, .date-filter, .source-filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }.filter-label, .date-filter label { margin-right: 5px; color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }.status-chip { padding: 3px 9px; border: 1px solid #d8dee7; border-radius: 13px; color: #607086; background: #f7f8fa; font-size: 11px; }.status-chip.active { border-color: #2b6be6; color: #fff; background: #2b6be6; }.search-row { margin-top: 9px; padding-top: 9px; border-top: 1px solid #edf0f4; }.search-row input, .date-filter input { width: 140px; }.search-row select { width: 130px; }.range-separator { color: #8b95a4; }.receipt-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 3px; }.receipt-card { margin-bottom: 10px; overflow: hidden; border: 1px solid #dce2ea; border-radius: 9px; background: #fff; box-shadow: 0 2px 8px rgba(35, 50, 70, .05); }.receipt-card.selected { border-color: #6a9bec; box-shadow: 0 0 0 2px rgba(43, 107, 230, .1); }.receipt-header { display: grid; grid-template-columns: 160px minmax(220px, 1fr) auto minmax(330px, 1.5fr) 28px; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1px solid #e5e9ef; background: #f8fafc; }.receipt-number { display: flex; align-items: center; gap: 8px; }.receipt-icon { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 7px; color: #245cc4; background: #e6efff; }.receipt-number small, .received-time small, .detail-summary small { display: block; color: #8792a1; font-size: 9px; font-weight: 700; letter-spacing: .06em; }.receipt-number strong, .received-time strong { display: block; font-size: 12px; }.received-time span { color: #778397; font-size: 10px; }.lifecycle-badge, .processing-badge, .record-count, .coordinate-result, .no-coordinate, .result-badge { display: inline-flex; align-items: center; width: fit-content; padding: 3px 7px; border-radius: 4px; white-space: nowrap; font-size: 10px; font-style: normal; }.lifecycle-badge { color: #6941c6; background: #eee7ff; }.processing-badge { color: #087443; background: #dff7ea; }.record-count { color: #526176; background: #e9edf2; }.coordinate-result { color: #1f5dba; background: #e5efff; }.coordinate-result em { margin-left: 5px; color: #55739f; }.no-coordinate { color: #6f7782; background: #e9ecef; }.receipt-result { display: flex; justify-content: flex-end; align-items: center; gap: 5px; min-width: 0; }.icon-button, .delete-button { width: 26px; height: 26px; display: inline-grid; place-items: center; padding: 0; border: 1px solid #d7dee7; border-radius: 5px; color: #53657d; background: #fff; }.delete-button { border-color: transparent; color: #a06969; background: transparent; }.record-table { min-width: 0; }.record-row { display: grid; grid-template-columns: minmax(210px, 1.3fr) minmax(120px, .8fr) 80px minmax(220px, 1.5fr) 100px; align-items: center; gap: 10px; min-width: 0; padding: 8px 12px; border-top: 1px solid #f0f2f5; }.record-row:first-child { border-top: 0; }.record-row:not(.record-head):hover, .record-row.selected { background: #f1f6ff; }.record-head { padding-top: 6px; padding-bottom: 6px; color: #8490a0; background: #fbfcfd; font-size: 10px; font-weight: 700; text-transform: uppercase; }.time-stack, .battery-stack, .location-summary { min-width: 0; display: flex; flex-direction: column; }.time-stack b, .battery-stack b, .location-summary b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }.time-stack small, .battery-stack small, .location-summary small { color: #798596; font-size: 10px; }.record-actions { display: flex; justify-content: flex-end; gap: 4px; }.source-badge { display: inline-flex; justify-content: center; min-width: 48px; padding: 3px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; }.source-gps { color: #075db5; background: #ddecff; }.source-wps { color: #7b4c00; background: #fff0c7; }.source-cell { color: #6951b7; background: #eee8ff; }.source-none { color: #6d7480; background: #e9ecef; }.list-footer { flex: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding-top: 9px; }.pagination-buttons { display: flex; gap: 4px; }.page-size { justify-self: end; display: flex; align-items: center; gap: 5px; white-space: nowrap; }.page-size select { width: auto; }.empty-state { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 120px; color: #7a8595; }.detail-view { overflow-y: auto; }.detail-summary { display: grid; grid-template-columns: 130px 90px minmax(260px, 1fr) auto auto minmax(180px, auto); align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }.detail-summary strong { display: block; font-size: 12px; }.detail-summary span { color: #7e8998; font-size: 10px; }.detail-coordinate { text-align: right; }.detail-coordinate small { font-weight: 400; letter-spacing: 0; }.payload-section { margin-top: 12px; overflow: hidden; border: 1px solid #28364b; border-radius: 7px; }.payload-title { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; color: #dce4ef; background: #263449; }.payload-title span { font-weight: 700; }.payload-title small { margin-left: 8px; color: #9eabbc; }.payload-code { min-height: 150px; max-height: 280px; margin: 0; overflow: auto; padding: 14px; color: #d6deeb; background: #111a28; font: 11px/1.55 Consolas, Monaco, monospace; white-space: pre-wrap; word-break: break-word; }.result-badge { margin-right: 6px; color: #8ce8ba; background: #174e3b; }.detail-footer { padding: 12px 0 4px; }.map-filter { display: flex; justify-content: space-between; align-items: center; gap: 10px; }.source-filter-button { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #dae0e8; border-radius: 5px; color: #566477; background: #fff; font-size: 10px; }.source-filter-button b { min-width: 20px; padding: 1px 5px; border-radius: 9px; background: #edf0f4; }.source-filter-button.active { border-color: #2563eb; box-shadow: 0 0 0 1px #2563eb inset; }.map-layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(420px, 2fr) minmax(290px, 1fr); gap: 10px; }.map-wrap { position: relative; min-height: 300px; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #e9edf2; }.google-map { width: 100%; height: 100%; }.map-message { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: #697586; background: rgba(239, 242, 246, .94); }.point-panel { overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }.point-panel-title { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--line); background: #f8fafc; }.point-panel-title small { display: block; color: #8791a0; font-size: 10px; }.route-legend { color: #758196; font-size: 10px; }.route-legend i { display: inline-block; width: 18px; margin-right: 4px; border-top: 3px solid #2563eb; }.point-item { width: 100%; display: grid; grid-template-columns: 52px 1fr 12px; align-items: center; gap: 7px; padding: 9px 10px; border: 0; border-bottom: 1px solid #edf0f4; background: #fff; text-align: left; }.point-item:hover, .point-item.selected { background: #eef5ff; }.point-item strong, .point-item span, .point-item small { display: block; }.point-item strong { font-size: 11px; }.point-item span, .point-item small { color: #7a8696; font-size: 10px; }.error-overlay { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .45); }.error-card { width: 420px; max-width: calc(100vw - 40px); }
+.single-map-notice { flex: 0 0 auto; display: flex; align-items: center; gap: 9px; margin-bottom: 10px; padding: 9px 12px; border: 1px solid #bfd3f4; border-radius: 7px; color: #2458a6; background: #eef5ff; }.single-map-notice b { margin-right: 8px; }.map-toolbar { flex: 0 0 auto; margin-bottom: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }.preset-row, .data-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }.data-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid #edf0f4; }.toolbar-label { min-width: 64px; color: #6b7687; font-size: 10px; font-weight: 700; text-transform: uppercase; }.preset-button { padding: 4px 9px; border: 1px solid #d9dfe7; border-radius: 5px; color: #536176; background: #fff; font-size: 10px; }.preset-button.active { border-color: #253c5d; color: #fff; background: #253c5d; }.preset-row input { width: 138px; }.count-badge { padding: 3px 7px; border-radius: 10px; font-size: 10px; background: #edf0f4; }.count-badge.gps { color: #075db5; background: #ddecff; }.count-badge.wps { color: #7b4c00; background: #fff0c7; }.count-badge.cell { color: #6951b7; background: #eee8ff; }.toolbar-divider { height: 18px; margin: 0 4px; border-left: 1px solid #dce1e8; }.check-option { display: inline-flex; align-items: center; gap: 3px; color: #536176; font-size: 10px; }.wide-map { flex: 1 1 auto; min-height: 310px; }.fit-route-button { position: absolute; z-index: 10; pointer-events: auto; right: 10px; top: 10px; box-shadow: 0 2px 6px rgba(0, 0, 0, .16); }.map-point-table-wrap { flex: 0 0 auto; max-height: 245px; margin-top: 10px; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #fff; }.map-point-table-title { display: flex; align-items: baseline; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: #f8fafc; }.map-point-table-title span { color: #7d8897; font-size: 10px; }.map-point-table-wrap .table-responsive { max-height: 195px; overflow-y: auto; }.map-point-table th, .map-point-table td { padding: 5px 8px; white-space: nowrap; font-size: 10px; }.map-point-table th { position: sticky; top: 0; z-index: 1; color: #788494; background: #fbfcfd; }.map-point-table tbody tr { cursor: pointer; }.map-point-table tbody tr:hover, .map-point-table tbody tr.selected { background: #eef5ff; }.map-point-table td b, .map-point-table td small { display: block; }.latest-badge { margin-left: 5px; padding: 2px 4px; border-radius: 3px; color: #fff; background: #2563eb; font-size: 8px; }.map-battery { display: inline-flex; flex-direction: column; align-items: flex-start; }.map-battery b { padding: 2px 6px; border-radius: 8px; color: #166534; background: #dcfce7; font-size: 10px; }.map-battery small { margin-top: 2px; color: #748094; font-size: 9px; }
+@media (max-width: 900px) { .receipt-header { grid-template-columns: 150px 1fr auto; }.receipt-result { grid-column: 1 / -1; justify-content: flex-start; }.record-row { grid-template-columns: minmax(190px, 1.2fr) 110px 70px minmax(190px, 1.2fr) 90px; }.map-filter { align-items: flex-start; flex-direction: column; }.detail-summary { grid-template-columns: repeat(3, 1fr); }.map-layout { grid-template-columns: 1fr; overflow-y: auto; }.map-wrap { min-height: 360px; }.point-panel { max-height: 300px; } }
 </style>

@@ -373,6 +373,12 @@ export default {
           width: 250,
           cellRenderer: this.lastSignalRenderer,
         },
+        {
+          headerName: "Location",
+          width: 100,
+          sortable: false,
+          cellRenderer: this.locationLogRenderer,
+        },
         { headerName: "위치전송횟수", field: "LOC_CNT", width: 110 },
         {
           headerName: "상태",
@@ -518,7 +524,9 @@ export default {
       };
       return legacyMap[String(legacyStatus)] || { code: "NONE", icon: "icon_none.svg" };
     },
-    lastSignalBatteryIcon(batteryPct, charging, legacyBattery) {
+    lastSignalBatteryIcon(batteryPct, chargingStatus, charging, legacyBattery) {
+      if(chargingStatus === "FULL") return "battery/Complete.svg";
+      if(chargingStatus === "CHARGING") return "battery/Chg.svg";
       if(charging === true) return "battery/Chg.svg";
       if(this.hasLastSignalValue(batteryPct)) {
         const percent = Number(batteryPct);
@@ -587,6 +595,10 @@ export default {
       const sourceType = this.getDeviceValue(data, ["LAST_SIGNAL_SOURCE_TYPE"]);
       const batteryPct = this.getDeviceValue(data, ["LAST_SIGNAL_BATTERY_PCT"]);
       const batteryMv = this.getDeviceValue(data, ["LAST_SIGNAL_BATTERY_MV"]);
+      const chargingStatusValue = this.getDeviceValue(data, ["LAST_SIGNAL_CHARGING_STATUS"]);
+      const chargingStatus = this.hasLastSignalValue(chargingStatusValue)
+          ? String(chargingStatusValue).toUpperCase()
+          : "";
       const charging = this.booleanValue(this.getDeviceValue(data, ["LAST_SIGNAL_IS_CHARGING"]));
       const legacyStatusValue = this.getDeviceValue(data, ["LAST_SIGNAL_LEGACY_STATUS"]);
       const legacyBatteryValue = this.getDeviceValue(data, ["LAST_SIGNAL_LEGACY_BATTERY"]);
@@ -605,10 +617,12 @@ export default {
       const sourceIcon = isInactive ? "icon_none.svg" : source.icon;
       const batteryIcon = isInactive
           ? "battery/0.svg"
-          : this.lastSignalBatteryIcon(batteryPct, charging, legacyBattery);
+          : this.lastSignalBatteryIcon(batteryPct, chargingStatus, charging, legacyBattery);
       const batteryDetails = [];
       if(this.hasLastSignalValue(batteryPct)) batteryDetails.push(`${batteryPct}%`);
-      if(charging !== null) batteryDetails.push(charging ? "충전 중" : "미충전");
+      const chargingLabels = { DISCHARGING: "방전", CHARGING: "충전 중", FULL: "완충" };
+      if(chargingLabels[chargingStatus]) batteryDetails.push(chargingLabels[chargingStatus]);
+      else if(charging !== null) batteryDetails.push(charging ? "충전 중" : "방전");
       if(this.hasLastSignalValue(batteryMv)) batteryDetails.push(`${batteryMv}mV`);
       if(batteryDetails.length === 0 && this.hasLastSignalValue(legacyBattery)) {
         batteryDetails.push(`배터리 상태 ${legacyBattery}`);
@@ -678,6 +692,24 @@ export default {
       if(utils.isEmpty(params.value)) return "";
       return '<a class="text-primary" href="javascript:openPopup(\'/devicepopup?device=' + params.value + '\',\'기기 수정\',\'width=620,height=650,left=0,top=0\')">' + params.value + '</a>';
     },
+    locationLogRenderer(params) {
+      if(!this.isProtocolDeviceRow(params)) return "";
+      const deviceHash = this.getDeviceValue(params.data, ["deviceHash", "DEVICE_HASH"]);
+      const deviceNo = this.getDeviceValue(params.data, ["deviceNo", "DEVICE_NO"]);
+      const deviceIMEI = this.getDeviceValue(params.data, ["deviceIMEI", "DEVICE_IMEI"]);
+      const serialNumber = this.getDeviceValue(params.data, ["serialNumber", "SERIAL_NUMBER"]);
+      const deviceLifecycle = this.getDeviceValue(params.data, ["deviceLifecycle", "DEVICE_LIFECYCLE"]);
+      if(!deviceHash && !deviceNo) return "";
+      const query = [];
+      if(deviceHash) query.push("deviceHash=" + encodeURIComponent(deviceHash));
+      if(deviceNo) query.push("deviceNo=" + encodeURIComponent(deviceNo));
+      if(deviceIMEI) query.push("deviceIMEI=" + encodeURIComponent(deviceIMEI));
+      if(serialNumber) query.push("serialNumber=" + encodeURIComponent(serialNumber));
+      if(deviceLifecycle) query.push("deviceLifecycle=" + encodeURIComponent(deviceLifecycle));
+      const url = "/devicelocationpopup?" + query.join("&");
+      return '<a class="text-primary" href="javascript:openPopup(\'' + url
+          + '\',\'Location Log\',\'width=1100,height=820,left=0,top=0\')">조회</a>';
+    },
     lastSignalRenderer(params) {
       const data = params.data || {};
       const hasLastSignal = [
@@ -687,6 +719,7 @@ export default {
         "LAST_SIGNAL_SOURCE_TYPE",
         "LAST_SIGNAL_BATTERY_PCT",
         "LAST_SIGNAL_BATTERY_MV",
+        "LAST_SIGNAL_CHARGING_STATUS",
         "LAST_SIGNAL_IS_CHARGING",
         "LAST_SIGNAL_LEGACY_STATUS",
         "LAST_SIGNAL_LEGACY_BATTERY",
