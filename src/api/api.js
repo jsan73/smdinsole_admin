@@ -87,6 +87,12 @@ export default {
 	updateDeviceSchedule(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/schedule', param);
 	},
+	changeDeviceLocationRequestMode(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/location-request-mode', param);
+	},
+	changeDeviceEmergencyMode(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/emergency-mode', param);
+	},
 	getAdminDeviceNotice(deviceNo) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/notice/get/' + deviceNo);
 	},

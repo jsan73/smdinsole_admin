@@ -57,7 +57,7 @@
           <div class="receipt-header">
             <div class="receipt-number"><span class="receipt-icon"><i class="bi bi-inbox"></i></span><div><small>수신 번호</small><strong>수신 #{{ group.receiptNo }}</strong></div></div>
             <div class="received-time"><small>RECEIVED</small><strong>{{ receivedTime(group).kst }} KST</strong><span>{{ receivedTime(group).utc }} UTC · TS {{ receivedTime(group).ts }}</span></div>
-            <span class="lifecycle-badge">{{ deviceLifecycle || "UNKNOWN" }}</span>
+            <span class="lifecycle-badge">{{ group.receivedLifecycle || "LEGACY" }}</span>
             <div class="receipt-result"><span v-if="group.result" class="coordinate-result"><i class="bi bi-geo-alt-fill"></i> {{ group.result.lat }}, {{ group.result.lng }} <em>±{{ value(group.result.accuracy) }}m</em></span><span v-else class="no-coordinate">좌표 없음</span><span class="processing-badge">{{ status(group.status) }}</span><span class="record-count">{{ group.records.length }} records</span></div>
             <button type="button" class="icon-button" title="첫 기록 상세" @click="openDetail(group.records[0], 'LIST')"><i class="bi bi-box-arrow-up-right"></i></button>
           </div>
@@ -117,7 +117,7 @@ export default {
   data() {
     return {
       deviceHash: "", deviceNo: null, deviceIMEI: "", serialNumber: "", deviceLifecycle: "", view: "LIST", previousView: "LIST",
-      lifecycleOptions: ["전체", "FACTORY_MODE", "AS_MODE", "READY", "ACTIVE", "INACTIVE"], sourceTypes: ["GPS", "WPS", "CELL", "NONE"], pageSizes: [10, 20, 50, 100],
+      lifecycleOptions: ["전체", "FACTORY_MODE", "AS_MODE", "READY", "ACTIVE", "INACTIVE", "LEGACY"], sourceTypes: ["GPS", "WPS", "CELL", "NONE"], pageSizes: [10, 20, 50, 100],
       listState: { startDate: "", endDate: "", sourceType: "", lifecycle: "전체", pageNo: 1, pageSize: 20, scrollTop: 0, selectedLocationNo: null }, rows: [], total: 0, loading: false, deleting: null,
       detail: null, detailLoading: false,
       mapState: { mode: "ALL", datePreset: "SEARCH", startDate: "", endDate: "", startApi: null, endApi: null, sourceType: "", selectedLocationNo: null, visibleSources: { GPS: true, WPS: true, CELL: true }, showRoute: true, showAccuracy: false }, points: [], counts: { totalCount: 0, gpsCount: 0, wpsCount: 0, cellCount: 0, noneCount: 0 }, mapLoading: false, mapMessage: "", mapRequestSeq: 0, googleMaps: null, googleMap: null, mapMarkers: [], mapCircles: [], mapPolyline: null, mapBounds: null,
@@ -130,8 +130,8 @@ export default {
     isSuperAdmin() { return this.$store.getters["adminStore/isSuperAdmin"]; },
     totalPages() { return this.total ? Math.ceil(this.total / this.listState.pageSize) : 0; },
     pageNumbers() { const start = Math.floor((this.listState.pageNo - 1) / 10) * 10 + 1; const end = Math.min(start + 9, this.totalPages); const result = []; for(let number = start; number <= end; number += 1) result.push(number); return result; },
-    receiptGroups() { const groups = []; const index = {}; this.rows.forEach(row => { const key = row.protocolBatchNo ? "receipt-" + row.protocolBatchNo : "location-" + row.locationNo; if(!index[key]) { index[key] = { key, receiptNo: this.receiptNumber(row), records: [], status: row.processingStatus, result: null }; groups.push(index[key]); } index[key].records.push(row); if(!index[key].result && this.validPoint(row)) index[key].result = row; }); return groups; },
-    visibleReceiptGroups() { if(this.listState.lifecycle === "전체" || this.listState.lifecycle === this.deviceLifecycle) return this.receiptGroups; return []; },
+    receiptGroups() { const groups = []; const index = {}; this.rows.forEach(row => { const key = row.protocolBatchNo ? "receipt-" + row.protocolBatchNo : "location-" + row.locationNo; const receivedLifecycle = String(row.receivedLifecycle || "").trim(); if(!index[key]) { index[key] = { key, receiptNo: this.receiptNumber(row), records: [], status: row.processingStatus, result: null, receivedLifecycle }; groups.push(index[key]); } else if(!index[key].receivedLifecycle && receivedLifecycle) index[key].receivedLifecycle = receivedLifecycle; index[key].records.push(row); if(!index[key].result && this.validPoint(row)) index[key].result = row; }); return groups; },
+    visibleReceiptGroups() { if(this.listState.lifecycle === "전체") return this.receiptGroups; return this.receiptGroups.filter(group => (group.receivedLifecycle || "LEGACY") === this.listState.lifecycle); },
     responseBadge() { if(!this.isSuperAdmin || !this.detail?.serverResponseJson) return ""; try { const data = JSON.parse(this.detail.serverResponseJson); return data.wps_gps || data.positioning || data.source_type || ""; } catch(error) { return ""; } },
     displayedPoints() { return this.points.filter(point => this.validPoint(point) && this.mapState.visibleSources[point.sourceType] !== false).map((point, index) => ({ point, index })).sort((a, b) => this.compareRoutePoint(a.point, b.point) || a.index - b.index).map((entry, index) => Object.assign({}, entry.point, { routeSequence: index + 1 })); },
     latestDisplayedPoints() { return this.displayedPoints.slice().reverse(); },

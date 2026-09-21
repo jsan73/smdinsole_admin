@@ -754,11 +754,9 @@ export default {
     deviceHashLinkRenderer(params) {
       const deviceHash = this.getDeviceValue(params.data, ["deviceHash", "DEVICE_HASH"]);
       if(!deviceHash) return "";
-      const deviceIMEI = this.getDeviceValue(params.data, ["deviceIMEI", "DEVICE_IMEI"]);
-      const url = "/devicelifecyclepopup?deviceHash=" + encodeURIComponent(deviceHash)
-          + "&deviceIMEI=" + encodeURIComponent(deviceIMEI || "");
+      const url = "/devicelifecyclemanagepopup?deviceHash=" + encodeURIComponent(deviceHash);
       return '<a class="text-primary" href="javascript:openPopup(\'' + url
-          + '\',\'기기 프로토콜 상세\',\'width=690,height=700,left=0,top=0\')">'
+          + '\',\'Device settings\',\'width=690,height=700,left=0,top=0\')">'
           + this.escapeHtml(deviceHash) + '</a>';
     },
     firmwareLinkRenderer(params) {

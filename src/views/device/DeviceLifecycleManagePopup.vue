@@ -66,6 +66,9 @@
         </div>
       </div>
 
+      <div class="card border-0 shadow-sm mb-3"><div class="card-body p-3"><h6 class="fw-bold mb-2">Location Request Mode</h6><button class="btn btn-outline-primary btn-sm me-1" @click="saveLocationMode('ON')">ON</button><button class="btn btn-outline-secondary btn-sm" @click="saveLocationMode('OFF')">OFF</button></div></div>
+      <div class="card border-0 shadow-sm mb-3"><div class="card-body p-3"><h6 class="fw-bold mb-2">Emergency Mode</h6><button class="btn btn-outline-danger btn-sm me-1" @click="saveEmergencyMode('ON')">ON</button><button class="btn btn-outline-secondary btn-sm" @click="saveEmergencyMode('OFF')">OFF</button><small class="text-muted d-block mt-2">저장 성공은 단말 적용 완료가 아니며 다음 요청 응답에서 전달됩니다.</small></div></div>
+
       <div class="card border-0 shadow-sm mb-3">
         <div class="card-body p-3">
           <h6 class="fw-bold mb-3">SOS</h6>
@@ -93,11 +96,18 @@
           <tr><th>단말 보고 version</th><td>{{ displayValue(protocol.reportedScheduleVersion) }}</td></tr>
           <tr><th>Timetable</th><td class="text-break">{{ displayValue(protocol.scheduleTimetable) }}</td></tr>
           </tbody></table>
-          <div class="row g-2 align-items-end">
-            <div class="col-md-3"><label for="scheduleMode" class="form-label">변경 mode</label><select id="scheduleMode" v-model="scheduleMode" class="form-select"><option value="DAILY">DAILY</option><option value="OUTDOOR">OUTDOOR</option><option value="CUSTOM">CUSTOM</option></select></div>
-            <div class="col-md-7"><label for="scheduleTimeSet" class="form-label">CUSTOM timeSet</label><input id="scheduleTimeSet" v-model.trim="scheduleTimeSetText" type="text" class="form-control" placeholder="예: 0910,1000,1520" :disabled="scheduleMode !== 'CUSTOM'"><small class="text-muted">CUSTOM일 때 HHmm(10분 단위)를 쉼표로 구분합니다.</small></div>
-            <div class="col-md-2"><button type="button" class="btn btn-primary btn-sm w-100" :disabled="savingSchedule" @click="saveSchedule">{{ savingSchedule ? '저장 중...' : '저장' }}</button></div>
+          <div class="row g-2 align-items-end mb-3">
+            <div class="col-md-8"><label for="scheduleMode" class="form-label">변경 mode</label><select id="scheduleMode" v-model="scheduleMode" class="form-select"><option value="DAILY">DAILY</option><option value="OUTDOOR">OUTDOOR</option><option value="CUSTOM">CUSTOM</option></select></div>
+            <div class="col-md-4"><button type="button" class="btn btn-primary btn-sm w-100" :disabled="savingSchedule || (scheduleMode === 'CUSTOM' && selectedScheduleTimes.length === 0)" @click="saveSchedule">{{ savingSchedule ? '저장 중...' : '저장' }}</button></div>
           </div>
+          <div class="schedule-grid-wrap">
+            <table class="table table-sm table-bordered align-middle mb-0 schedule-grid">
+              <thead><tr><th>시</th><th v-for="minute in scheduleMinutes" :key="minute"><label class="schedule-group-check"><input type="checkbox" :checked="isScheduleGroupAll(scheduleTimesForMinute(minute))" :indeterminate.prop="isScheduleGroupPartial(scheduleTimesForMinute(minute))" :disabled="scheduleMode !== 'CUSTOM'" :aria-label="minute + '분 열 전체 선택'" @change="toggleScheduleGroup(scheduleTimesForMinute(minute), $event.target.checked)"><span>{{ minute }}분</span></label></th></tr></thead>
+              <tbody><tr v-for="hour in scheduleHours" :key="hour"><th><label class="schedule-group-check"><input type="checkbox" :checked="isScheduleGroupAll(scheduleTimesForHour(hour))" :indeterminate.prop="isScheduleGroupPartial(scheduleTimesForHour(hour))" :disabled="scheduleMode !== 'CUSTOM'" :aria-label="hour + '시 행 전체 선택'" @change="toggleScheduleGroup(scheduleTimesForHour(hour), $event.target.checked)"><span>{{ hour }}시</span></label></th><td v-for="minute in scheduleMinutes" :key="hour + minute"><label class="schedule-slot" :class="{ selected: isScheduleTimeSelected(hour + minute), readonly: scheduleMode !== 'CUSTOM' }"><input type="checkbox" :checked="isScheduleTimeSelected(hour + minute)" :disabled="scheduleMode !== 'CUSTOM'" :aria-label="hour + ':' + minute" @change="toggleScheduleTime(hour + minute)"><span>{{ hour }}:{{ minute }}</span></label></td></tr></tbody>
+            </table>
+          </div>
+          <small class="text-muted d-block mt-2">CUSTOM은 10분 단위 슬롯을 선택합니다. DAILY/OUTDOOR은 서버 timetable의 선택 상태를 읽기 전용으로 표시합니다.</small>
+
         </div>
       </div>
 
@@ -105,7 +115,8 @@
         <div class="card-body p-3">
           <h6 class="fw-bold mb-3">기기별 FOTA Target</h6>
           <table class="table table-sm table-bordered align-middle mb-3"><tbody>
-          <tr><th>현재 target</th><td>{{ displayValue(protocol.targetFirmwareVersion) }} <span v-if="targetCatalogAvailable === false" class="badge bg-warning text-dark ms-2">Catalog 없음</span></td></tr>
+          <tr><th>단말 보고 version</th><td>{{ displayValue(commandStatus.reportedFwVersion) }}</td></tr>
+          <tr><th>Target version</th><td>{{ displayValue(protocol.targetFirmwareVersion) }} <span v-if="targetCatalogAvailable === false" class="badge bg-warning text-dark ms-2">Catalog 없음</span></td></tr>
           </tbody></table>
           <div class="row g-2 align-items-end"><div class="col-md-8"><label for="targetFirmwareVersion" class="form-label">Target version</label><input id="targetFirmwareVersion" v-model.trim="targetFirmwareVersion" type="text" class="form-control" placeholder="예: 1.1.15"></div><div class="col-md-2"><button type="button" class="btn btn-primary btn-sm w-100" :disabled="savingFirmwareTarget || !targetFirmwareVersion" @click="setFirmwareTarget">설정</button></div><div class="col-md-2"><button type="button" class="btn btn-outline-secondary btn-sm w-100" :disabled="savingFirmwareTarget || !protocol.targetFirmwareVersion" @click="clearFirmwareTarget">해제</button></div></div>
           <small class="text-muted d-block mt-2">Target은 단말이 판단해 적용하며, catalog 삭제 시 자동 해제되지 않습니다.</small>
@@ -160,14 +171,6 @@
 import api from "@/api/api";
 import utils from "@/utils/utils";
 
-const ADMIN_TRANSITIONS = {
-  FACTORY_MODE: [],
-  AS_MODE: ["READY", "INACTIVE", "FACTORY_MODE"],
-  READY: ["ACTIVE", "INACTIVE", "FACTORY_MODE"],
-  ACTIVE: ["AS_MODE", "INACTIVE", "FACTORY_MODE"],
-  INACTIVE: ["FACTORY_MODE"],
-};
-
 export default {
   name: "DeviceLifecycleManagePopup",
   data() {
@@ -181,20 +184,28 @@ export default {
       commandStatus: {},
       stoppingEmergency: false,
       scheduleMode: "DAILY",
-      scheduleTimeSetText: "",
+      selectedScheduleTimes: [],
       savingSchedule: false,
       targetFirmwareVersion: "",
       savingFirmwareTarget: false,
       targetCatalogAvailable: null,
+      savingLocationMode: false,
+      savingEmergencyMode: false,
       errorPopup: { visible: false, message: "" },
     };
   },
   computed: {
     allowedTargets() {
-      return ADMIN_TRANSITIONS[this.protocol.deviceLifecycle] || [];
+      return ["FACTORY_MODE", "AS_MODE", "READY", "ACTIVE", "INACTIVE"].filter(value => value !== this.protocol.deviceLifecycle);
     },
     history() {
       return Array.isArray(this.protocol.history) ? this.protocol.history : [];
+    },
+    scheduleHours() {
+      return Array.from({ length: 24 }, (value, hour) => String(hour).padStart(2, "0"));
+    },
+    scheduleMinutes() {
+      return ["00", "10", "20", "30", "40", "50"];
     },
   },
   mounted() {
@@ -217,7 +228,7 @@ export default {
         this.targetLifecycle = "";
         this.reason = "";
         this.scheduleMode = this.protocol.scheduleMode || "DAILY";
-        this.scheduleTimeSetText = "";
+        this.selectedScheduleTimes = this.normalizeScheduleTimes(this.protocol.timeSet);
         this.targetFirmwareVersion = this.protocol.targetFirmwareVersion || "";
         await Promise.all([this.loadCommandStatus(), this.loadTargetCatalogState()]);
       } catch (error) {
@@ -282,19 +293,38 @@ export default {
         this.stoppingEmergency = false;
       }
     },
-    scheduleTimeSet() {
-      if(this.scheduleMode !== "CUSTOM") return undefined;
-      return this.scheduleTimeSetText.split(",").map(value => value.trim()).filter(Boolean);
+    async saveLocationMode(target) {
+      try {
+        const response = await api.changeDeviceLocationRequestMode({ deviceHash: this.deviceHash, target });
+        if(response.data.status !== "SUCCESS") throw new Error(response.data.message || "저장 실패");
+        await this.loadCommandStatus();
+      } catch(error) { this.showApiError(error, "Location Request Mode을 저장하지 못했습니다."); }
     },
+    async saveEmergencyMode(target) {
+      try {
+        const response = await api.changeDeviceEmergencyMode({ deviceHash: this.deviceHash, target });
+        if(response.data.status !== "SUCCESS") throw new Error(response.data.message || "저장 실패");
+        await this.loadCommandStatus();
+      } catch(error) { this.showApiError(error, "Emergency Mode를 저장하지 못했습니다."); }
+    },
+    normalizeScheduleTimes(values) { if(!Array.isArray(values)) return []; return [...new Set(values.map(value => String(value || "").trim()).filter(value => /^(?:[01]\d|2[0-3])(?:00|10|20|30|40|50)$/.test(value)))].sort(); },
+    isScheduleTimeSelected(value) { return this.selectedScheduleTimes.includes(value); },
+    toggleScheduleTime(value) { if(this.scheduleMode !== "CUSTOM") return; this.selectedScheduleTimes = this.isScheduleTimeSelected(value) ? this.selectedScheduleTimes.filter(item => item !== value) : this.normalizeScheduleTimes([...this.selectedScheduleTimes, value]); },
+    scheduleTimesForHour(hour) { return this.scheduleMinutes.map(minute => hour + minute); },
+    scheduleTimesForMinute(minute) { return this.scheduleHours.map(hour => hour + minute); },
+    isScheduleGroupAll(values) { return values.length > 0 && values.every(value => this.isScheduleTimeSelected(value)); },
+    isScheduleGroupPartial(values) { const selectedCount = values.filter(value => this.isScheduleTimeSelected(value)).length; return selectedCount > 0 && selectedCount < values.length; },
+    toggleScheduleGroup(values, checked) { if(this.scheduleMode !== "CUSTOM") return; const targets = new Set(values); this.selectedScheduleTimes = checked ? this.normalizeScheduleTimes([...this.selectedScheduleTimes, ...values]) : this.selectedScheduleTimes.filter(value => !targets.has(value)); },
+    schedulePayloadTimeSet() { if(this.scheduleMode !== "CUSTOM") return undefined; return this.selectedScheduleTimes.slice(); },
     async saveSchedule() {
       this.savingSchedule = true;
       try {
-        const response = await api.updateDeviceSchedule({ deviceHash: this.deviceHash, mode: this.scheduleMode, timeSet: this.scheduleTimeSet() });
+        const response = await api.updateDeviceSchedule({ deviceHash: this.deviceHash, mode: this.scheduleMode, timeSet: this.schedulePayloadTimeSet() });
         if(response.data.status !== "SUCCESS") throw new Error(response.data.message || "시간표를 저장하지 못했습니다.");
         const result = response.data.data || {};
         this.protocol = { ...this.protocol, scheduleMode: result.mode, targetScheduleVersion: result.scheduleVersion, scheduleTimetable: result.timetable };
         this.scheduleMode = result.mode || this.scheduleMode;
-        this.scheduleTimeSetText = Array.isArray(result.timeSet) ? result.timeSet.join(",") : "";
+        this.selectedScheduleTimes = this.normalizeScheduleTimes(result.timeSet);
       } catch (error) {
         this.showApiError(error, "시간표를 저장하지 못했습니다.");
       } finally {
@@ -388,6 +418,72 @@ th {
 .lifecycle-history-table th {
   width: auto;
   white-space: nowrap;
+}
+
+.schedule-grid-wrap {
+  max-height: 430px;
+  overflow: auto;
+  border: 1px solid #dee2e6;
+}
+
+.schedule-grid {
+  min-width: 590px;
+  table-layout: fixed;
+}
+
+.schedule-group-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin: 0;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.schedule-group-check input:disabled {
+  cursor: default;
+}
+
+.schedule-grid th,
+.schedule-grid td {
+  width: auto;
+  padding: 3px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.schedule-grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f4f6f8;
+}
+
+.schedule-slot {
+  display: block;
+  margin: 0;
+  padding: 4px 2px;
+  border-radius: 4px;
+  color: #6c757d;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.schedule-slot input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.schedule-slot.selected {
+  color: #fff;
+  background: #0d6efd;
+  font-weight: 600;
+}
+
+.schedule-slot.readonly {
+  cursor: default;
 }
 
 .reason-cell {

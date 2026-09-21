@@ -34,7 +34,6 @@
             <tr>
               <th class="select-column">선택</th>
               <th>버전</th>
-              <th>원본 파일명</th>
               <th>크기</th>
               <th>등록일</th>
               <th v-if="isSuperAdmin">관리</th>
@@ -44,7 +43,6 @@
             <tr v-for="item in firmwareItems" :key="item.firmwareNo" :class="{ 'table-primary': selectedVersion === item.version }" @click="selectedVersion = item.version">
               <td class="text-center"><input v-model="selectedVersion" type="radio" :value="item.version" aria-label="펌웨어 선택"></td>
               <td>{{ item.version }}</td>
-              <td>{{ item.originalFileName }}</td>
               <td>{{ formatFileSize(item.fileSize) }}</td>
               <td>{{ formatDate(item.regDate) }}</td>
               <td v-if="isSuperAdmin" class="text-center"><button type="button" class="btn btn-outline-danger btn-sm" :disabled="deletingVersion === item.version" @click.stop="deleteFirmware(item)">{{ deletingVersion === item.version ? '삭제 중...' : '삭제' }}</button></td>
