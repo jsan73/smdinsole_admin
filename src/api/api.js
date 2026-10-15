@@ -84,6 +84,9 @@ export default {
 	deleteDeviceLocation(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/locations/delete', param);
 	},
+	changeDeviceLocationWcl(param) {
+		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/locations/wcl', param);
+	},
 	updateDeviceSchedule(param) {
 		return http.post(process.env.VUE_APP_SERVER_URL + '/api/admin/device/protocol/schedule', param);
 	},
